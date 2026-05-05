@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/TUTORA_ISPW.iml" filepath="$PROJECT_DIR$/.idea/TUTORA_ISPW.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tutora.iml" filepath="$PROJECT_DIR$/tutora.iml" />
     </modules>
   </component>
 </project>
