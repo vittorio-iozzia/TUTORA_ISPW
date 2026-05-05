@@ -1,7 +1,8 @@
 package it.ispw.tutora.model;
 
-import java.time.LocalDateTime;
+import it.ispw.tutora.enums.Role;
 
+import java.time.LocalDateTime;
 public class Tutor extends User{
     private double rating;
     private int ratingCount;

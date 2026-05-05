@@ -1,4 +1,4 @@
-package it.ispw.tutora.model;
+package it.ispw.tutora.enums;
 
 public enum Role {
     ADMIN,

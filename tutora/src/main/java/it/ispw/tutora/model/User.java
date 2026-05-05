@@ -1,5 +1,7 @@
 package it.ispw.tutora.model;
 
+import it.ispw.tutora.enums.Role;
+
 import java.time.LocalDateTime;
 
 
