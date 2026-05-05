@@ -9,9 +9,9 @@ public class Student extends User {
 
     // Il costruttore di Student deve "passare" i dati al costruttore di User
     public Student(String username, String email, String name, String surname, String passwordHash,
-                   Role role, String description, boolean isActive, LocalDateTime createdAt, LocalDateTime updatedAt,
+                   String description, boolean isActive, LocalDateTime createdAt, LocalDateTime updatedAt,
                    double budget){
-        super(username, email, name, surname, passwordHash, role, description, isActive, createdAt, updatedAt);
+        super(username, email, name, surname, passwordHash, Role.STUDENT, description, isActive, createdAt, updatedAt);
         this.budget = budget;
     }
 

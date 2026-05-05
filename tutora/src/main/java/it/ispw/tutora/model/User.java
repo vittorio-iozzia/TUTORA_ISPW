@@ -5,7 +5,7 @@ import it.ispw.tutora.enums.Role;
 import java.time.LocalDateTime;
 
 
-public class User {
+public abstract class User {
     private String username;
     private String email;
     private String name;
