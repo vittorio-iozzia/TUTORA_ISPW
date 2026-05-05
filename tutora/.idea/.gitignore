@@ -9,4 +9,4 @@
 /dataSources/
 /dataSources.local.xml
 #db.properties info
-tutora/src/main/resources/db.properties
+src/main/resources/db.properties
