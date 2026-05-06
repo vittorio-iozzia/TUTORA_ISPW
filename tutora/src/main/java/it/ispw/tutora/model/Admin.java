@@ -9,5 +9,4 @@ public class Admin extends User{
                  String description, boolean isActive, LocalDateTime createdAt, LocalDateTime updatedAt){
         super(username, email, name, surname, passwordHash, Role.ADMIN, description, isActive, createdAt, updatedAt);
     }
-
 }
