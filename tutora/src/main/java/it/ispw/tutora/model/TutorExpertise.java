@@ -67,6 +67,9 @@ public class TutorExpertise {
         this.status = newStatus;
     }
     private boolean isTransitionValid(Status from, Status to) {
+        if (from == null || to == null) {
+            return false;
+        }
         return switch (from) {
             case PENDING  -> to == Status.APPROVED || to == Status.REJECTED;
             case APPROVED -> to == Status.REJECTED;
