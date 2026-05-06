@@ -7,17 +7,16 @@ import java.time.LocalDateTime;
 
 public abstract class User {
     private final String username;
-    private String email;
+    private final String email;
     private final String name;
     private final String surname;
-    private String passwordHash;
-    private Role role;
+    private final String passwordHash;
+    private final Role role;
     private String description;
     private boolean isActive;
     private final LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
     public User(String username, String email, String name, String surname, String passwordHash,
-                Role role, String description, boolean isActive, LocalDateTime createdAt, LocalDateTime updatedAt){
+                Role role, String description, boolean isActive, LocalDateTime createdAt){
         this.username=username;
         this.email=email;
         this.name=name;
@@ -27,7 +26,6 @@ public abstract class User {
         this.description=description;
         this.isActive=isActive;
         this.createdAt=createdAt;
-        this.updatedAt=updatedAt;
     }
     public String getUsername(){
         return username;
@@ -43,7 +41,6 @@ public abstract class User {
     public String getSurname() {
         return surname;
     }
-
     public Role getRole() {
         return role;
     }
@@ -58,28 +55,12 @@ public abstract class User {
         return createdAt;
     }
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
     public void setDescription(String description) {
         this.description = description;
     }
 
     public void setIsActive(boolean isActive) {
         this.isActive = isActive;
-    }
-
-    public void setRole(Role role) {
-        this.role = role;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
     }
 
 }
