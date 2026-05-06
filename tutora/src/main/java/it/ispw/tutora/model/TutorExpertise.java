@@ -58,8 +58,20 @@ public class TutorExpertise {
         checkprice(newhourlyprice);
         this.hourlyprice = newhourlyprice;
     }
-    public void setStatus(Status status) {
-        this.status = status;
+    public void updateStatus(Status newStatus) {
+        if (!isTransitionValid(this.status, newStatus)) {
+            throw new IllegalArgumentException(
+                    "Invalid Transaction: " + this.status + " → " + newStatus
+            );
+        }
+        this.status = newStatus;
+    }
+    private boolean isTransitionValid(Status from, Status to) {
+        return switch (from) {
+            case PENDING  -> to == Status.APPROVED || to == Status.REJECTED;
+            case APPROVED -> to == Status.REJECTED;
+            case REJECTED -> false;
+        };
     }
     public List<Tag> getExpertisetag() {
         return Collections.unmodifiableList(expertisetag);
