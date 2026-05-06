@@ -5,6 +5,7 @@ import it.ispw.tutora.enums.Status;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class TutorExpertise {
@@ -13,17 +14,15 @@ public class TutorExpertise {
     private BigDecimal hourlyprice;
     private Status status;
     private final LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
     private final List<Tag> expertisetag;
     public TutorExpertise(Tutor tutor, SubCategory subcategory, BigDecimal hourlyprice,
-                          Status status, LocalDateTime createdAt, LocalDateTime updatedAt){
+                          Status status, LocalDateTime createdAt){
         checkprice(hourlyprice);
         this.tutor=tutor;
         this.subcategory=subcategory;
         this.hourlyprice=hourlyprice;
         this.status=status;
         this.createdAt=createdAt;
-        this.updatedAt=updatedAt;
         this.expertisetag=new ArrayList<>();
     }
     public void addTag(Tag tag){
@@ -55,22 +54,14 @@ public class TutorExpertise {
         return createdAt;
     }
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
     public void setHourlyprice(BigDecimal newhourlyprice) {
         checkprice(newhourlyprice);
         this.hourlyprice = newhourlyprice;
-
     }
     public void setStatus(Status status) {
         this.status = status;
     }
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
     public List<Tag> getExpertisetag() {
-        return expertisetag;
+        return Collections.unmodifiableList(expertisetag);
     }
 }

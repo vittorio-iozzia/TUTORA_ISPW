@@ -20,6 +20,7 @@ public class SubCategory {
     }
     @Override
     public String toString() {
-        return name + " (" + parentname.getName() + ")";
+        String categoryName = parentname != null ? parentname.getName() : "N/A";
+        return name + " (" + categoryName + ")";
     }
 }

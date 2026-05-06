@@ -8,9 +8,9 @@ public class Tutor extends User{
     private BigDecimal rating;
     private int ratingCount;
     public Tutor(String username, String email, String name, String surname, String passwordHash,
-                 String description, boolean isActive, LocalDateTime createdAt, LocalDateTime updatedAt,
+                 String description, boolean isActive, LocalDateTime createdAt,
                  BigDecimal rating, int ratingCount){
-        super(username, email, name, surname, passwordHash, Role.TUTOR, description, isActive, createdAt, updatedAt);
+        super(username, email, name, surname, passwordHash, Role.TUTOR, description, isActive, createdAt);
         this.rating=rating;
         this.ratingCount=ratingCount;
     }
