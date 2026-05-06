@@ -118,7 +118,7 @@ public class TutorApplication {
      */
     public boolean isReadyToSubmit(List<Requirement> requirements) {
         for (Requirement req : requirements) {
-            if (!req.isRequired()) continue;
+            if (req.isOptional()) continue;
             boolean found = items.stream()
                     .anyMatch(item ->
                             item.getRequirementName().equals(req.getName())  // Il nome del documento deve coincidere con il nome el requisito

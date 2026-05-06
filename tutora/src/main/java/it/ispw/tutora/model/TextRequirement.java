@@ -32,7 +32,7 @@ public class TextRequirement extends Requirement {
      * @return true se il testo rispetta i limiti di caratteri
      */
     public boolean isValidText(String text) {
-        if (text == null) return !isRequired();  // La validità del testo dipende da se il requisito è obbligatorio o meno
+        if (text == null) return isOptional();  // La validità del testo dipende da se il requisito è obbligatorio o meno
         int len = text.trim().length();
         return len >= minChar && len <= maxChar;
     }

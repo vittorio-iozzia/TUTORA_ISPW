@@ -45,6 +45,15 @@ public abstract class Requirement {
     public String  getDescription()  { return description; }
     public boolean isRequired()      { return required; }
 
+    /**
+     * Restituisce true se il requisito è facoltativo.
+     * Metodo aggiunto per evitare la negazione di isRequired()
+     * nei punti di chiamata, migliorando la leggibilità del codice.
+     */
+    public boolean isOptional() {
+        return !required;
+    }
+
     @Override
     public String toString() {
         return getClass().getSimpleName()

@@ -38,6 +38,16 @@
         <plugin.javafx.version>0.0.8</plugin.javafx.version>
         <plugin.surefire.version>3.2.5</plugin.surefire.version>
         <plugin.jar.version>3.3.0</plugin.jar.version>
+        <plugin.sonar.version>3.11.0.3922</plugin.sonar.version>
+
+        <!-- ======================================================== -->
+        <!-- SonarQube Cloud                                           -->
+        <!-- ======================================================== -->
+        <sonar.organization>vittorio-iozzia</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.projectKey>vittorio-iozzia_TUTORA_ISPW</sonar.projectKey>
+        <!-- sonar.token va passato da riga di comando, MAI committato -->
+        <!-- mvn sonar:sonar -Dsonar.token=IL_TUO_TOKEN                -->
     </properties>
 
     <!-- ============================================================ -->
@@ -142,6 +152,13 @@
                         </manifest>
                     </archive>
                 </configuration>
+            </plugin>
+
+            <!-- SonarQube – mvn sonar:sonar -Dsonar.token=TOKEN -->
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>${plugin.sonar.version}</version>
             </plugin>
 
         </plugins>
