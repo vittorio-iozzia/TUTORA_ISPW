@@ -15,10 +15,10 @@ import it.ispw.tutora.enums.ItemType;
  */
 public abstract class Requirement {
 
-    private final String  categoryName;
-    private final String  name;
-    private final String  label;
-    private final String  description;
+    private final String categoryName;
+    private final String name;
+    private final String label;
+    private final String description;
     private final boolean required;
 
     protected Requirement(String categoryName,
@@ -27,10 +27,10 @@ public abstract class Requirement {
                           String description,
                           boolean required) {
         this.categoryName = categoryName;
-        this.name         = name;
-        this.label        = label;
-        this.description  = description;
-        this.required     = required;
+        this.name = name;
+        this.label = label;
+        this.description = description;
+        this.required = required;
     }
 
     /**
@@ -39,11 +39,11 @@ public abstract class Requirement {
      */
     public abstract ItemType getItemType();
 
-    public String  getCategoryName() { return categoryName; }
-    public String  getName()         { return name; }
-    public String  getLabel()        { return label; }
-    public String  getDescription()  { return description; }
-    public boolean isRequired()      { return required; }
+    public String getCategoryName() { return categoryName; }
+    public String getName() { return name; }
+    public String getLabel() { return label; }
+    public String getDescription() { return description; }
+    public boolean isRequired() { return required; }
 
     /**
      * Restituisce true se il requisito è facoltativo.

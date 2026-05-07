@@ -72,26 +72,26 @@ public class Lesson {
 
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
-    private final int            id;
+    private final int id;
     private final TutorExpertise expertise;
-    private       LocalDateTime  startTime;
-    private       LocalDateTime  endTime;
-    private       boolean        isRemote;
-    private       BigDecimal     listedPrice;
-    private       LessonStatus   lessonStatus;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private boolean isRemote;
+    private BigDecimal listedPrice;
+    private LessonStatus lessonStatus;
     private final LocalDateTime  createdAt;
 
     private Lesson(Builder builder) {
         checkPrice(builder.listedPrice);
         checkTime(builder.startTime, builder.endTime);
-        this.id           = builder.id;
-        this.expertise    = builder.expertise;
-        this.startTime    = builder.startTime;
-        this.endTime      = builder.endTime;
-        this.isRemote     = builder.isRemote;
-        this.listedPrice  = builder.listedPrice;
+        this.id = builder.id;
+        this.expertise = builder.expertise;
+        this.startTime = builder.startTime;
+        this.endTime = builder.endTime;
+        this.isRemote = builder.isRemote;
+        this.listedPrice = builder.listedPrice;
         this.lessonStatus = builder.lessonStatus;
-        this.createdAt    = builder.createdAt;
+        this.createdAt = builder.createdAt;
     }
 
     // ----------------------------------------------------------------
@@ -100,14 +100,14 @@ public class Lesson {
 
     public static class Builder {
 
-        private int            id;
+        private int id;
         private TutorExpertise expertise;
-        private LocalDateTime  startTime;
-        private LocalDateTime  endTime;
-        private boolean        isRemote;
-        private BigDecimal     listedPrice;
-        private LessonStatus   lessonStatus;
-        private LocalDateTime  createdAt;
+        private LocalDateTime startTime;
+        private LocalDateTime endTime;
+        private boolean isRemote;
+        private BigDecimal listedPrice;
+        private LessonStatus lessonStatus;
+        private LocalDateTime createdAt;
 
         public Builder id(int id) {
             this.id = id;
@@ -214,7 +214,7 @@ public class Lesson {
         return switch (from) {
             case AVAILABLE -> to == LessonStatus.BOOKED
                     || to == LessonStatus.CANCELLED;
-            case BOOKED    -> to == LessonStatus.COMPLETED
+            case BOOKED -> to == LessonStatus.COMPLETED
                     || to == LessonStatus.CANCELLED;
             case COMPLETED,
                  CANCELLED -> false;
@@ -225,19 +225,19 @@ public class Lesson {
     // Getter e setter
     // ----------------------------------------------------------------
 
-    public int            getId()           { return id; }
-    public TutorExpertise getExpertise()    { return expertise; }
-    public LocalDateTime  getStartTime()    { return startTime; }
-    public LocalDateTime  getEndTime()      { return endTime; }
-    public boolean        isRemote()        { return isRemote; }
-    public BigDecimal     getListedPrice()  { return listedPrice; }
-    public LessonStatus   getLessonStatus() { return lessonStatus; }
-    public LocalDateTime  getCreatedAt()    { return createdAt; }
+    public int getId() { return id; }
+    public TutorExpertise getExpertise() { return expertise; }
+    public LocalDateTime  getStartTime() { return startTime; }
+    public LocalDateTime  getEndTime() { return endTime; }
+    public boolean isRemote() { return isRemote; }
+    public BigDecimal getListedPrice() { return listedPrice; }
+    public LessonStatus getLessonStatus() { return lessonStatus; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
 
     public void setLessonTime(LocalDateTime startTime, LocalDateTime endTime) {
         checkTime(startTime, endTime);
         this.startTime = startTime;
-        this.endTime   = endTime;
+        this.endTime = endTime;
     }
 
     public void setRemote(boolean remote) { this.isRemote = remote; }

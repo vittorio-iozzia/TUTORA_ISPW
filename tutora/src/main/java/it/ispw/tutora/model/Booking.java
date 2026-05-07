@@ -70,24 +70,24 @@ public class Booking {
     // Infrastruttura Observer di Java standard (java.beans)
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
-    private final int           id;
-    private final Lesson        lesson;
-    private final Student       student;
+    private final int id;
+    private final Lesson lesson;
+    private final Student student;
     private final LocalDateTime bookedAt;
-    private final BigDecimal    pricePaid;
-    private       PaymentStatus paymentStatus;
-    private final String        paymentRef;
+    private final BigDecimal pricePaid;
+    private PaymentStatus paymentStatus;
+    private final String paymentRef;
 
     // Costruttore privato: accessibile solo tramite Builder
     private Booking(Builder builder) {
         checkPayment(builder.pricePaid);
-        this.id            = builder.id;
-        this.lesson        = builder.lesson;
-        this.student       = builder.student;
-        this.bookedAt      = builder.bookedAt;
-        this.pricePaid     = builder.pricePaid;
+        this.id = builder.id;
+        this.lesson = builder.lesson;
+        this.student = builder.student;
+        this.bookedAt = builder.bookedAt;
+        this.pricePaid = builder.pricePaid;
         this.paymentStatus = builder.paymentStatus;
-        this.paymentRef    = builder.paymentRef;
+        this.paymentRef = builder.paymentRef;
     }
 
     // ----------------------------------------------------------------
@@ -96,13 +96,13 @@ public class Booking {
 
     public static class Builder {
 
-        private int           id;
-        private Lesson        lesson;
-        private Student       student;
+        private int id;
+        private Lesson lesson;
+        private Student student;
         private LocalDateTime bookedAt;
-        private BigDecimal    pricePaid;
+        private BigDecimal pricePaid;
         private PaymentStatus paymentStatus;
-        private String        paymentRef;
+        private String paymentRef;
 
         public Builder id(int id) {
             this.id = id;
@@ -198,7 +198,7 @@ public class Booking {
         if (from == null || to == null) return false;
         return switch (from) {
             case PENDING  -> to == PaymentStatus.PAID;
-            case PAID     -> to == PaymentStatus.REFUNDED;
+            case PAID -> to == PaymentStatus.REFUNDED;
             case REFUNDED -> false;
         };
     }
@@ -207,11 +207,11 @@ public class Booking {
     // Getter
     // ----------------------------------------------------------------
 
-    public int           getId()            { return id; }
-    public Lesson        getLesson()        { return lesson; }
-    public Student       getStudent()       { return student; }
-    public LocalDateTime getBookedAt()      { return bookedAt; }
-    public BigDecimal    getPricePaid()     { return pricePaid; }
+    public int getId() { return id; }
+    public Lesson getLesson() { return lesson; }
+    public Student getStudent() { return student; }
+    public LocalDateTime getBookedAt() { return bookedAt; }
+    public BigDecimal getPricePaid() { return pricePaid; }
     public PaymentStatus getPaymentStatus() { return paymentStatus; }
-    public String        getPaymentRef()    { return paymentRef; }
+    public String getPaymentRef() { return paymentRef; }
 }

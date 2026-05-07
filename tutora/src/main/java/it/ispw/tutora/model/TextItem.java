@@ -29,5 +29,5 @@ public class TextItem extends ApplicationItem {
     }
 
     public String getTextContent() { return textContent; }
-    public void   setTextContent(String text) { this.textContent = text; }
+    public void setTextContent(String text) { this.textContent = text; }
 }

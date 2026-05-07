@@ -49,15 +49,15 @@ public abstract class User {
     // ----------------------------------------------------------------
 
     protected User(Builder<?> builder, Role role) {
-        this.username     = builder.username;
-        this.email        = builder.email;
-        this.name         = builder.name;
-        this.surname      = builder.surname;
+        this.username = builder.username;
+        this.email = builder.email;
+        this.name = builder.name;
+        this.surname = builder.surname;
         this.passwordHash = builder.passwordHash;
-        this.role         = role;
-        this.description  = builder.description;
-        this.isActive     = builder.active;
-        this.createdAt    = builder.createdAt;
+        this.role = role;
+        this.description = builder.description;
+        this.isActive = builder.active;
+        this.createdAt = builder.createdAt;
     }
 
     // ----------------------------------------------------------------
@@ -148,14 +148,14 @@ public abstract class User {
     // Getter
     // ----------------------------------------------------------------
 
-    public String        getUsername()    { return username; }
-    public String        getEmail()       { return email; }
-    public String        getName()        { return name; }
-    public String        getSurname()     { return surname; }
-    public Role          getRole()        { return role; }
-    public String        getDescription() { return description; }
-    public boolean       isActive()       { return isActive; }
-    public LocalDateTime getCreatedAt()   { return createdAt; }
+    public String getUsername() { return username; }
+    public String getEmail() { return email; }
+    public String getName() { return name; }
+    public String getSurname() { return surname; }
+    public Role  getRole() { return role; }
+    public String getDescription() { return description; }
+    public boolean isActive() { return isActive; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
 
     /**
      * Restituisce nome e cognome concatenati.
@@ -171,7 +171,7 @@ public abstract class User {
     // ----------------------------------------------------------------
 
     public void setDescription(String description) { this.description = description; }
-    public void setActive(boolean isActive)        { this.isActive = isActive; }
+    public void setActive(boolean isActive) { this.isActive = isActive; }
 
     @Override
     public String toString() {

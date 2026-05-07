@@ -55,12 +55,12 @@ public class TutorExpertise {
     // Infrastruttura Observer di Java standard (java.beans)
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
-    private final Tutor         tutor;
-    private final SubCategory   subcategory;
-    private       BigDecimal    hourlyPrice;
-    private       Status        status;
+    private final Tutor tutor;
+    private final SubCategory subcategory;
+    private BigDecimal hourlyPrice;
+    private Status status;
     private final LocalDateTime createdAt;
-    private final List<Tag>     expertiseTags;
+    private final List<Tag> expertiseTags;
 
     public TutorExpertise(Tutor tutor,
                           SubCategory subcategory,
@@ -68,11 +68,11 @@ public class TutorExpertise {
                           Status status,
                           LocalDateTime createdAt) {
         checkPrice(hourlyPrice);
-        this.tutor         = tutor;
-        this.subcategory   = subcategory;
-        this.hourlyPrice   = hourlyPrice;
-        this.status        = status;
-        this.createdAt     = createdAt;
+        this.tutor = tutor;
+        this.subcategory = subcategory;
+        this.hourlyPrice = hourlyPrice;
+        this.status = status;
+        this.createdAt = createdAt;
         this.expertiseTags = new ArrayList<>();
     }
 
@@ -154,11 +154,11 @@ public class TutorExpertise {
     // Getter e setter
     // ----------------------------------------------------------------
 
-    public Tutor         getTutor()       { return tutor; }
-    public SubCategory   getSubcategory() { return subcategory; }
-    public Status        getStatus()      { return status; }
-    public LocalDateTime getCreatedAt()   { return createdAt; }
-    public BigDecimal    getHourlyPrice() { return hourlyPrice; }
+    public Tutor getTutor() { return tutor; }
+    public SubCategory getSubcategory() { return subcategory; }
+    public Status getStatus() { return status; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public BigDecimal getHourlyPrice() { return hourlyPrice; }
 
     public void setHourlyPrice(BigDecimal newHourlyPrice) {
         checkPrice(newHourlyPrice);

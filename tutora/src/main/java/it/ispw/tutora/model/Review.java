@@ -36,23 +36,23 @@ import java.time.LocalDateTime;
  */
 public class Review {
 
-    private final int           id;
-    private final Booking       booking;
-    private final Student       student;
-    private final Tutor         tutor;
-    private       int           rating;
-    private       String        comment;
+    private final int id;
+    private final Booking booking;
+    private final Student student;
+    private final Tutor tutor;
+    private int rating;
+    private String comment;
     private final LocalDateTime createdAt;
 
     // Costruttore privato: accessibile solo tramite Builder
     private Review(Builder builder) {
         checkRating(builder.rating);
-        this.id        = builder.id;
-        this.booking   = builder.booking;
-        this.student   = builder.student;
-        this.tutor     = builder.tutor;
-        this.rating    = builder.rating;
-        this.comment   = builder.comment;
+        this.id = builder.id;
+        this.booking = builder.booking;
+        this.student = builder.student;
+        this.tutor = builder.tutor;
+        this.rating = builder.rating;
+        this.comment = builder.comment;
         this.createdAt = builder.createdAt;
     }
 
@@ -62,12 +62,12 @@ public class Review {
 
     public static class Builder {
 
-        private int           id;
-        private Booking       booking;
-        private Student       student;
-        private Tutor         tutor;
-        private int           rating;
-        private String        comment;
+        private int id;
+        private Booking booking;
+        private Student student;
+        private Tutor tutor;
+        private int rating;
+        private String comment;
         private LocalDateTime createdAt;
 
         public Builder id(int id) {
@@ -126,12 +126,12 @@ public class Review {
     // Getter e setter
     // ----------------------------------------------------------------
 
-    public int           getId()        { return id; }
-    public Booking       getBooking()   { return booking; }
-    public Student       getStudent()   { return student; }
-    public Tutor         getTutor()     { return tutor; }
-    public int           getRating()    { return rating; }
-    public String        getComment()   { return comment; }
+    public int getId() { return id; }
+    public Booking getBooking() { return booking; }
+    public Student getStudent() { return student; }
+    public Tutor getTutor() { return tutor; }
+    public int getRating() { return rating; }
+    public String getComment() { return comment; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 
     public void setRating(int rating) {

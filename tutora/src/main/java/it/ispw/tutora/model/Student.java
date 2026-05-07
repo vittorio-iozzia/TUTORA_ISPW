@@ -47,16 +47,16 @@ import java.util.List;
  */
 public class Student extends User {
 
-    private       BigDecimal       budget;
-    private final List<Tutor>      preferredTutors;
-    private final List<Category>   interests;
+    private BigDecimal budget;
+    private final List<Tutor> preferredTutors;
+    private final List<Category> interests;
 
     // Costruttore privato: accessibile solo tramite Builder
     private Student(Builder builder) {
         super(builder, Role.STUDENT);
-        this.budget          = builder.budget;
+        this.budget = builder.budget;
         this.preferredTutors = new ArrayList<>();
-        this.interests       = new ArrayList<>();
+        this.interests = new ArrayList<>();
     }
 
     // ----------------------------------------------------------------
@@ -101,7 +101,7 @@ public class Student extends User {
         interests.add(category);
     }
 
-    public List<Tutor>    getPreferredTutors() {
+    public List<Tutor> getPreferredTutors() {
         return Collections.unmodifiableList(preferredTutors);
     }
 

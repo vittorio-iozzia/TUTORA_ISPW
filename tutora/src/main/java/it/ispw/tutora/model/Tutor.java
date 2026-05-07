@@ -41,12 +41,12 @@ import java.math.BigDecimal;
 public class Tutor extends User {
 
     private BigDecimal rating;
-    private int        ratingCount;
+    private int ratingCount;
 
     // Costruttore privato: accessibile solo tramite Builder
     private Tutor(Builder builder) {
         super(builder, Role.TUTOR);
-        this.rating      = builder.rating;
+        this.rating = builder.rating;
         this.ratingCount = builder.ratingCount;
     }
 
@@ -78,8 +78,8 @@ public class Tutor extends User {
     // Getter
     // ----------------------------------------------------------------
 
-    public BigDecimal getRating()      { return rating; }
-    public int        getRatingCount() { return ratingCount; }
+    public BigDecimal getRating() { return rating; }
+    public int getRatingCount() { return ratingCount; }
 
     // ----------------------------------------------------------------
     // Setter atomico
@@ -94,7 +94,7 @@ public class Tutor extends User {
      * @param ratingCount nuovo conteggio delle recensioni
      */
     public void setRating(BigDecimal rating, int ratingCount) {
-        this.rating      = rating;
+        this.rating = rating;
         this.ratingCount = ratingCount;
     }
 }
