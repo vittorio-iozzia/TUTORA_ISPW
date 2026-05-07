@@ -19,37 +19,110 @@ import java.time.LocalDateTime;
  * internamente dal metodo matchesPassword() per la verifica
  * delle credenziali durante il login. Non circola mai fuori
  * dalla classe. Il cambio password passa sempre dal DAO.
+ *
+ * -----------------------------------------------------------------------
+ * Pattern Builder (GoF – Creazionale)
+ * -----------------------------------------------------------------------
+ * User espone un Builder astratto generico che le sottoclassi
+ * estendono per ereditare i campi comuni senza duplicarli.
+ * Ogni sottoclasse definisce il proprio Builder concreto:
+ *
+ *   public static class Builder extends User.Builder<Builder> { ... }
+ *
+ * Questo elimina la ripetizione di username, email, name, surname,
+ * passwordHash, description, active, createdAt in ogni sottoclasse.
  */
 public abstract class User {
 
-    private final String        username;
-    private final String        email;
-    private final String        name;
-    private final String        surname;
-    private final String        passwordHash;
-    private final Role          role;
-    private       String        description;
-    private       boolean       isActive;
+    private final String username;
+    private final String email;
+    private final String name;
+    private final String surname;
+    private final String passwordHash;
+    private final Role role;
+    private String description;
+    private boolean isActive;
     private final LocalDateTime createdAt;
 
-    protected User(String username,
-                   String email,
-                   String name,
-                   String surname,
-                   String passwordHash,
-                   Role role,
-                   String description,
-                   boolean isActive,
-                   LocalDateTime createdAt) {
-        this.username     = username;
-        this.email        = email;
-        this.name         = name;
-        this.surname      = surname;
-        this.passwordHash = passwordHash;
+    // ----------------------------------------------------------------
+    // Costruttore protetto — chiamato dai Builder delle sottoclassi
+    // ----------------------------------------------------------------
+
+    protected User(Builder<?> builder, Role role) {
+        this.username     = builder.username;
+        this.email        = builder.email;
+        this.name         = builder.name;
+        this.surname      = builder.surname;
+        this.passwordHash = builder.passwordHash;
         this.role         = role;
-        this.description  = description;
-        this.isActive     = isActive;
-        this.createdAt    = createdAt;
+        this.description  = builder.description;
+        this.isActive     = builder.active;
+        this.createdAt    = builder.createdAt;
+    }
+
+    // ----------------------------------------------------------------
+    // Builder astratto generico
+    // ----------------------------------------------------------------
+
+    /**
+     * Builder astratto parametrico.
+     * Il parametro T consente il method chaining nelle sottoclassi:
+     *   new Student.Builder().username("x").email("y").budget(...).build()
+     * senza dover fare cast.
+     *
+     * @param <T> tipo del Builder concreto della sottoclasse
+     */
+    @SuppressWarnings("unchecked")
+    public abstract static class Builder<T extends Builder<T>> {
+
+        private String username;
+        private String email;
+        private String name;
+        private String surname;
+        private String passwordHash;
+        private String description;
+        private boolean active;
+        private LocalDateTime createdAt;
+
+        public T username(String username) {
+            this.username = username;
+            return (T) this;
+        }
+
+        public T email(String email) {
+            this.email = email;
+            return (T) this;
+        }
+
+        public T name(String name) {
+            this.name = name;
+            return (T) this;
+        }
+
+        public T surname(String surname) {
+            this.surname = surname;
+            return (T) this;
+        }
+
+        public T passwordHash(String passwordHash) {
+            this.passwordHash = passwordHash;
+            return (T) this;
+        }
+
+        public T description(String description) {
+            this.description = description;
+            return (T) this;
+        }
+
+        public T active(boolean active) {
+            this.active = active;
+            return (T) this;
+        }
+
+        public T createdAt(LocalDateTime createdAt) {
+            this.createdAt = createdAt;
+            return (T) this;
+        }
     }
 
     // ----------------------------------------------------------------
@@ -103,6 +176,6 @@ public abstract class User {
     @Override
     public String toString() {
         return getClass().getSimpleName()
-               + "{username='" + username + "', role=" + role + "}";
+                + "{username='" + username + "', role=" + role + "}";
     }
 }

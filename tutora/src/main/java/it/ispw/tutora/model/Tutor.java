@@ -3,7 +3,6 @@ package it.ispw.tutora.model;
 import it.ispw.tutora.enums.Role;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 /**
  * Entity che rappresenta un tutor del sistema.
@@ -13,9 +12,7 @@ import java.time.LocalDateTime;
  * -----------------------------------------------------------------------
  * Pattern Builder (GoF – Creazionale)
  * -----------------------------------------------------------------------
- * Il costruttore ha molti parametri ereditati da User più quelli
- * specifici di Tutor. Il Builder rende la costruzione leggibile
- * e a prova di errore.
+ * Estende User.Builder per ereditare i campi comuni senza duplicarli.
  *
  * Utilizzo:
  *   Tutor tutor = new Tutor.Builder()
@@ -48,75 +45,19 @@ public class Tutor extends User {
 
     // Costruttore privato: accessibile solo tramite Builder
     private Tutor(Builder builder) {
-        super(builder.username,
-              builder.email,
-              builder.name,
-              builder.surname,
-              builder.passwordHash,
-              Role.TUTOR,
-              builder.description,
-              builder.active,
-              builder.createdAt);
+        super(builder, Role.TUTOR);
         this.rating      = builder.rating;
         this.ratingCount = builder.ratingCount;
     }
 
     // ----------------------------------------------------------------
-    // Builder – classe interna statica
+    // Builder – estende User.Builder
     // ----------------------------------------------------------------
 
-    public static class Builder {
+    public static class Builder extends User.Builder<Builder> {
 
-        private String        username;
-        private String        email;
-        private String        name;
-        private String        surname;
-        private String        passwordHash;
-        private String        description;
-        private boolean       active;
-        private LocalDateTime createdAt;
-        private BigDecimal    rating;
-        private int           ratingCount;
-
-        public Builder username(String username) {
-            this.username = username;
-            return this;
-        }
-
-        public Builder email(String email) {
-            this.email = email;
-            return this;
-        }
-
-        public Builder name(String name) {
-            this.name = name;
-            return this;
-        }
-
-        public Builder surname(String surname) {
-            this.surname = surname;
-            return this;
-        }
-
-        public Builder passwordHash(String passwordHash) {
-            this.passwordHash = passwordHash;
-            return this;
-        }
-
-        public Builder description(String description) {
-            this.description = description;
-            return this;
-        }
-
-        public Builder active(boolean active) {
-            this.active = active;
-            return this;
-        }
-
-        public Builder createdAt(LocalDateTime createdAt) {
-            this.createdAt = createdAt;
-            return this;
-        }
+        private BigDecimal rating;
+        private int        ratingCount;
 
         public Builder rating(BigDecimal rating) {
             this.rating = rating;
@@ -147,7 +88,7 @@ public class Tutor extends User {
     /**
      * Aggiorna rating e ratingCount dopo una rilettura dal DB.
      * I due parametri sono sempre aggiornati insieme per evitare
-     * stati inconsistenti (es. rating aggiornato ma count vecchio).
+     * stati inconsistenti.
      *
      * @param rating      nuovo valore medio calcolato dai trigger SQL
      * @param ratingCount nuovo conteggio delle recensioni
