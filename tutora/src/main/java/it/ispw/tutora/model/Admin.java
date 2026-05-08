@@ -44,7 +44,7 @@ public class Admin extends User {
     // ----------------------------------------------------------------
 
     public static class Builder extends User.Builder<Builder> {
-
+        @Override
         public Admin build() {
             return new Admin(this);
         }

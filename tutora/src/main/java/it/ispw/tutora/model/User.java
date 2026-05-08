@@ -123,6 +123,9 @@ public abstract class User {
             this.createdAt = createdAt;
             return (T) this;
         }
+        public abstract User build();
+
+
     }
 
     // ----------------------------------------------------------------
@@ -152,6 +155,7 @@ public abstract class User {
     public String getEmail() { return email; }
     public String getName() { return name; }
     public String getSurname() { return surname; }
+    public String getPasswordHash() {return passwordHash;}
     public Role  getRole() { return role; }
     public String getDescription() { return description; }
     public boolean isActive() { return isActive; }

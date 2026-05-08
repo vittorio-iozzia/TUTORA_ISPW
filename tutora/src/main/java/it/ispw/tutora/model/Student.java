@@ -71,7 +71,7 @@ public class Student extends User {
             this.budget = budget;
             return this;
         }
-
+        @Override
         public Student build() {
             return new Student(this);
         }

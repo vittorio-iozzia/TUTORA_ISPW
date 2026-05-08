@@ -78,6 +78,6 @@ public interface UserDao {
      * @throws UserNotFoundException se lo username non corrisponde
      *         ad alcuna riga in user
      */
-    void updateProfile(Connection conn, User user)
+    void updateProfile(Connection conn, String username, String description, boolean isActive)
             throws DatabaseException, UserNotFoundException;
 }
