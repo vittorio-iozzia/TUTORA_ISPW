@@ -29,6 +29,8 @@ import java.util.List;
  */
 public class CategoryDaoDb implements CategoryDao {
 
+    private static final String COL_DESCRIPTION = "description";
+
     @Language("SQL")
     private static final String SQL_FIND_ALL =
             "SELECT name, description " +
@@ -130,7 +132,7 @@ public class CategoryDaoDb implements CategoryDao {
                             category.getName(),
                             rs.getString("name"),
                             rs.getString("label"),
-                            rs.getString("description"),
+                            rs.getString(COL_DESCRIPTION),
                             rs.getBoolean("is_required"),
                             rs.getInt("min_char"),
                             rs.getInt("max_char")
@@ -152,7 +154,7 @@ public class CategoryDaoDb implements CategoryDao {
                             category.getName(),
                             rs.getString("name"),
                             rs.getString("label"),
-                            rs.getString("description"),
+                            rs.getString(COL_DESCRIPTION),
                             rs.getBoolean("is_required")
                     ));
                 }
@@ -163,7 +165,7 @@ public class CategoryDaoDb implements CategoryDao {
     private Category mapCategory(ResultSet rs) throws SQLException {
         return new Category(
                 rs.getString("name"),
-                rs.getString("description")
+                rs.getString(COL_DESCRIPTION)
         );
     }
 }
