@@ -7,7 +7,6 @@ import it.ispw.tutora.model.Notification;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Implementazione in memoria di NotificationDao.
@@ -52,12 +51,13 @@ public class NotificationDaoDemo implements NotificationDao {
     // ----------------------------------------------------------------
 
     @Override
-    public List<Notification> findByRecipient(Connection conn,
-                                              String recipientUsername)
+    public List<Notification> findByRecipient(Connection conn, String recipientUsername)
             throws DatabaseException {
+
+        // Trasformo la lista in stream, applico il filtro in base al RecipientUsername, raccolgo gli elementi in una List immutabile
         return cache.stream()
                 .filter(n -> n.getRecipientUsername().equals(recipientUsername))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     // ----------------------------------------------------------------
