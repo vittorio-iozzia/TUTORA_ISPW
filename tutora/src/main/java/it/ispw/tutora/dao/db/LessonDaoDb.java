@@ -54,101 +54,64 @@ import java.util.List;
  */
 public class LessonDaoDb implements LessonDao {
 
-    // ----------------------------------------------------------------
-    // Costanti SQL
-    // ----------------------------------------------------------------
-
-    /**
-     * UPDATE di start_time, end_time e is_remote per una lezione esistente.
-     * Filtra anche per tutor_username oltre che per id come ulteriore
-     * garanzia di sicurezza: un tutor non può modificare lezioni altrui.
-     */
     @Language("SQL")
     private static final String SQL_UPDATE =
             "UPDATE lesson " +
-                    "SET start_time = ?, end_time = ?, is_remote = ? " +
-                    "WHERE id = ? AND tutor_username = ?";
+            "SET start_time = ?, end_time = ?, is_remote = ? " +
+            "WHERE id = ? AND tutor_username = ?";
 
-    /**
-     * INSERT di una nuova lezione.
-     * status e created_at usano i DEFAULT definiti nel DB
-     * (rispettivamente 'Available' e CURRENT_TIMESTAMP).
-     */
     @Language("SQL")
     private static final String SQL_INSERT =
             "INSERT INTO lesson (tutor_username, subcategory_name, start_time, end_time, " +
-                    "                    is_remote, listed_price) " +
-                    "VALUES (?, ?, ?, ?, ?, ?)";
+            "is_remote, listed_price) " +
+            "VALUES (?, ?, ?, ?, ?, ?)";
 
-    /**
-     * SELECT di una lezione per id con colonne esplicite.
-     * Non usa SELECT * per stabilità rispetto a future modifiche dello schema.
-     */
     @Language("SQL")
     private static final String SQL_SELECT =
             "SELECT id, tutor_username, subcategory_name, start_time, end_time, " +
-                    "       is_remote, listed_price, status, created_at " +
-                    "FROM lesson " +
-                    "WHERE id = ?";
+            "is_remote, listed_price, status, created_at " +
+            "FROM lesson " +
+            "WHERE id = ?";
 
-    /**
-     * SELECT di tutte le lezioni di un tutor ordinate per data crescente.
-     * Usata per visualizzare il calendario del tutor.
-     */
     @Language("SQL")
     private static final String SQL_FIND_BY_TUTOR =
             "SELECT id, tutor_username, subcategory_name, start_time, end_time, " +
-                    "       is_remote, listed_price, status, created_at " +
-                    "FROM lesson " +
-                    "WHERE tutor_username = ? " +
-                    "ORDER BY start_time ASC";
+            "is_remote, listed_price, status, created_at " +
+            "FROM lesson " +
+            "WHERE tutor_username = ? " +
+            "ORDER BY start_time ASC";
 
-    /**
-     * SELECT di tutte le lezioni di un tutor filtrate per status.
-     * Usata ad esempio per vedere solo le lezioni AVAILABLE.
-     */
     @Language("SQL")
     private static final String SQL_FIND_BY_TUTOR_AND_STATUS =
             "SELECT id, tutor_username, subcategory_name, start_time, end_time, " +
-                    "       is_remote, listed_price, status, created_at " +
-                    "FROM lesson " +
-                    "WHERE tutor_username = ? AND status = ? " +
-                    "ORDER BY start_time ASC";
+            "is_remote, listed_price, status, created_at " +
+            "FROM lesson " +
+            "WHERE tutor_username = ? AND status = ? " +
+            "ORDER BY start_time ASC";
 
     /** UPDATE del solo campo status. */
     @Language("SQL")
     private static final String SQL_UPDATE_STATUS =
             "UPDATE lesson " +
-                    "SET status = ? " +
-                    "WHERE id = ?";
+            "SET status = ? " +
+            "WHERE id = ?";
 
-    /**
-     * Guardia anti-overlap per UPDATE: conta le lezioni del tutor
-     * che si sovrappongono al nuovo intervallo, escludendo la lezione
-     * stessa (AND id != ?) per evitare che si auto-sovrapponga.
-     * Ignora le lezioni CANCELLED perché non occupano più slot.
-     */
     @Language("SQL")
     private static final String SQL_CHECK_OVERLAP_UPDATE =
             "SELECT COUNT(*) FROM lesson " +
-                    "WHERE tutor_username = ? " +
-                    "  AND status != 'Cancelled' " +
-                    "  AND start_time < ? " +
-                    "  AND end_time   > ? " +
-                    "  AND id != ?";
+            "WHERE tutor_username = ? " +
+            "AND status != 'Cancelled' " +
+            "AND start_time < ? " +
+            "AND end_time   > ? " +
+            "AND id != ?";
 
-    /**
-     * Guardia anti-overlap per INSERT: conta le lezioni del tutor
-     * che si sovrappongono al nuovo intervallo.
-     * Ignora le lezioni CANCELLED perché non occupano più slot.
-     */
     @Language("SQL")
     private static final String SQL_CHECK_OVERLAP_INSERT =
             "SELECT COUNT(*) FROM lesson " +
-                    "WHERE tutor_username = ? " +
-                    "  AND status != 'Cancelled' " +
-                    "  AND start_time < ? " +
-                    "  AND end_time   > ?";
+            "WHERE tutor_username = ? " +
+            "AND status != 'Cancelled' " +
+            "AND start_time < ? " +
+            "AND end_time   > ?";
 
     // ----------------------------------------------------------------
     // updateLesson
@@ -160,11 +123,6 @@ public class LessonDaoDb implements LessonDao {
      * Prima di aggiornare esegue la guardia anti-overlap escludendo
      * la lezione stessa dal controllo (AND id != ?) per evitare
      * che si auto-sovrapponga con il proprio vecchio intervallo.
-     *
-     * @throws DuplicateLessonException se il nuovo intervallo si sovrappone
-     *         a un'altra lezione attiva dello stesso tutor
-     * @throws LessonNotFoundException  se l'id non corrisponde ad alcuna lezione
-     * @throws DatabaseException        per errori JDBC
      */
     @Override
     public void updateLesson(Connection conn, Lesson lesson)
@@ -182,8 +140,10 @@ public class LessonDaoDb implements LessonDao {
             ps.setString(5, lesson.getExpertise().getTutor().getUsername());
             // executeUpdate() restituisce 0 se nessuna riga corrisponde a id + tutor_username
             if (ps.executeUpdate() == 0) throw new LessonNotFoundException(lesson.getId());
+        } catch (LessonNotFoundException e) {
+            throw e;
         } catch (SQLException e) {
-            throw new DatabaseException("System Error. Try later.");
+            throw new DatabaseException("Error updating lesson id=" + lesson.getId(), e);
         }
     }
 
@@ -196,11 +156,6 @@ public class LessonDaoDb implements LessonDao {
      *
      * Prima dell'INSERT esegue la guardia anti-overlap per verificare
      * che il tutor non abbia già lezioni attive nello stesso intervallo.
-     *
-     * @return id AUTO_INCREMENT assegnato dal DB
-     * @throws DuplicateLessonException se l'intervallo si sovrappone
-     *         a un'altra lezione attiva dello stesso tutor
-     * @throws DatabaseException        per errori JDBC
      */
     @Override
     public int insertLesson(Connection conn, Lesson newLesson)
@@ -223,11 +178,12 @@ public class LessonDaoDb implements LessonDao {
 
             try (ResultSet key = ps.getGeneratedKeys()) {
                 if (key.next()) return key.getInt(1);
-                throw new DatabaseException("No generated ID error.");
+                throw new DatabaseException("No generated ID for the new lesson.");
             }
 
         } catch (SQLException e) {
-            throw new DatabaseException("System Error. Try later.");
+            throw new DatabaseException("Error inserting lesson for tutor: " +
+                    newLesson.getExpertise().getTutor().getUsername(), e);
         }
     }
 
@@ -241,9 +197,6 @@ public class LessonDaoDb implements LessonDao {
      * tutor_username e subcategory_name letti dalla tabella lesson.
      * Per un TutorExpertise completo il Controller deve eseguire
      * una query aggiuntiva tramite il DAO appropriato.
-     *
-     * @throws LessonNotFoundException se l'id non corrisponde ad alcuna lezione
-     * @throws DatabaseException       per errori JDBC
      */
     @Override
     public Lesson selectLesson(Connection conn, int id)
@@ -255,8 +208,10 @@ public class LessonDaoDb implements LessonDao {
                 if (!rs.next()) throw new LessonNotFoundException(id);
                 return mapLesson(rs);
             }
+        } catch (LessonNotFoundException e) {
+            throw e;
         } catch (SQLException e) {
-            throw new DatabaseException("System Error. Try later.");
+            throw new DatabaseException("Error retrieving lesson id=" + id, e);
         }
     }
 
@@ -288,8 +243,7 @@ public class LessonDaoDb implements LessonDao {
      * @throws DatabaseException per errori JDBC
      */
     @Override
-    public List<Lesson> findByTutorAndStatus(Connection conn, String tutorUsername,
-                                             LessonStatus status)
+    public List<Lesson> findByTutorAndStatus(Connection conn, String tutorUsername, LessonStatus status)
             throws DatabaseException {
 
         return queryList(conn, SQL_FIND_BY_TUTOR_AND_STATUS, tutorUsername, status);
@@ -306,7 +260,7 @@ public class LessonDaoDb implements LessonDao {
      * Il DAO si limita a persistere il nuovo stato già validato.
      *
      * @throws LessonNotFoundException se l'id non corrisponde ad alcuna lezione
-     * @throws DatabaseException       per errori JDBC
+     * @throws DatabaseException per errori JDBC
      */
     @Override
     public void updateStatus(Connection conn, int id, LessonStatus newStatus)
@@ -317,8 +271,10 @@ public class LessonDaoDb implements LessonDao {
             ps.setString(1, toDbStatus(newStatus));
             ps.setInt(2, id);
             if (ps.executeUpdate() == 0) throw new LessonNotFoundException(id);
+        } catch (LessonNotFoundException e) {
+            throw e;
         } catch (SQLException e) {
-            throw new DatabaseException("System Error. Try later.");
+            throw new DatabaseException("Error updating status for lesson id=" + id, e);
         }
     }
 
@@ -335,7 +291,7 @@ public class LessonDaoDb implements LessonDao {
      * Quindi i parametri sono: end del nuovo slot e start del nuovo slot.
      *
      * @throws DuplicateLessonException se viene rilevata una sovrapposizione
-     * @throws DatabaseException        per errori JDBC
+     * @throws DatabaseException per errori JDBC
      */
     private void checkOverlapForUpdate(Connection conn, Lesson lesson)
             throws DatabaseException, DuplicateLessonException {
@@ -353,7 +309,7 @@ public class LessonDaoDb implements LessonDao {
         } catch (DuplicateLessonException e) {
             throw e;
         } catch (SQLException e) {
-            throw new DatabaseException("System Error. Try later.");
+            throw new DatabaseException("Error checking overlap for lesson id=" + lesson.getId(), e);
         }
     }
 
@@ -380,7 +336,8 @@ public class LessonDaoDb implements LessonDao {
         } catch (DuplicateLessonException e) {
             throw e;
         } catch (SQLException e) {
-            throw new DatabaseException("System Error. Try later.");
+            throw new DatabaseException("Error checking overlap for tutor: " +
+                    newLesson.getExpertise().getTutor().getUsername(), e);
         }
     }
 
@@ -393,8 +350,7 @@ public class LessonDaoDb implements LessonDao {
      * Se status è null esegue la query senza filtro su status (findByTutor),
      * altrimenti aggiunge il filtro (findByTutorAndStatus).
      */
-    private List<Lesson> queryList(Connection conn, String sql,
-                                   String tutorUsername, LessonStatus status)
+    private List<Lesson> queryList(Connection conn, String sql, String tutorUsername, LessonStatus status)
             throws DatabaseException {
 
         List<Lesson> results = new ArrayList<>();
@@ -405,7 +361,7 @@ public class LessonDaoDb implements LessonDao {
                 while (rs.next()) results.add(mapLesson(rs));
             }
         } catch (SQLException e) {
-            throw new DatabaseException("System Error. Try later.");
+            throw new DatabaseException("Error retrieving lessons for tutor: " + tutorUsername, e);
         }
         return results;
     }
@@ -423,14 +379,14 @@ public class LessonDaoDb implements LessonDao {
      * @param rs ResultSet posizionato sulla riga corrente
      */
     private Lesson mapLesson(ResultSet rs) throws SQLException {
-        int id                  = rs.getInt("id");
-        String tutorUsername    = rs.getString("tutor_username");
-        String subcategoryName  = rs.getString("subcategory_name");
+        int id = rs.getInt("id");
+        String tutorUsername = rs.getString("tutor_username");
+        String subcategoryName = rs.getString("subcategory_name");
         LocalDateTime startTime = rs.getObject("start_time", LocalDateTime.class);
-        LocalDateTime endTime   = rs.getObject("end_time", LocalDateTime.class);
-        boolean isRemote        = rs.getBoolean("is_remote");
-        BigDecimal listedPrice  = rs.getBigDecimal("listed_price");
-        LessonStatus status     = fromDbStatus(rs.getString("status"));
+        LocalDateTime endTime = rs.getObject("end_time", LocalDateTime.class);
+        boolean isRemote = rs.getBoolean("is_remote");
+        BigDecimal listedPrice = rs.getBigDecimal("listed_price");
+        LessonStatus status = fromDbStatus(rs.getString("status"));
         LocalDateTime createdAt = rs.getObject("created_at", LocalDateTime.class);
 
         // TutorExpertise parziale: solo i campi recuperabili da lesson

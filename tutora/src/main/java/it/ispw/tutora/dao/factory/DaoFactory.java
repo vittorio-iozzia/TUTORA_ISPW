@@ -49,7 +49,7 @@ import java.util.Properties;
 public abstract class DaoFactory {
 
     private static final String PROPERTIES_FILE = "/app.properties";
-    private static final String KEY_DAO_TYPE    = "DAO_TYPE";
+    private static final String KEY_DAO_TYPE = "DAO_TYPE";
 
     // ----------------------------------------------------------------
     // Singleton – Bill Pugh Holder

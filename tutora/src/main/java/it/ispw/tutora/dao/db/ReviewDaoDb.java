@@ -43,63 +43,40 @@ import java.util.List;
  */
 public class ReviewDaoDb implements ReviewDao {
 
-    // ----------------------------------------------------------------
-    // Costanti SQL
-    // ----------------------------------------------------------------
-
-    /**
-     * INSERT di una nuova recensione.
-     * created_at usa il DEFAULT CURRENT_TIMESTAMP definito nel DB.
-     */
     @Language("SQL")
     private static final String SQL_INSERT =
             "INSERT INTO review (booking_id, student_username, tutor_username, rating, comment) " +
-                    "VALUES (?, ?, ?, ?, ?)";
+            "VALUES (?, ?, ?, ?, ?)";
 
-    /** UPDATE di rating e comment per una recensione esistente. */
     @Language("SQL")
     private static final String SQL_UPDATE =
             "UPDATE review " +
-                    "SET rating = ?, comment = ? " +
-                    "WHERE id = ?";
+            "SET rating = ?, comment = ? " +
+            "WHERE id = ?";
 
-    /** DELETE fisico di una recensione per id. */
     @Language("SQL")
     private static final String SQL_DELETE =
             "DELETE FROM review " +
-                    "WHERE id = ?";
+            "WHERE id = ?";
 
-    /**
-     * SELECT di una recensione per id con colonne esplicite.
-     * Non usa SELECT * per stabilità rispetto a future modifiche dello schema.
-     */
     @Language("SQL")
     private static final String SQL_SELECT =
             "SELECT id, booking_id, student_username, tutor_username, rating, comment, created_at " +
-                    "FROM review " +
-                    "WHERE id = ?";
+            "FROM review " +
+            "WHERE id = ?";
 
-    /**
-     * SELECT di tutte le recensioni di un tutor ordinate per data decrescente.
-     * Restituisce le recensioni più recenti per prime.
-     */
     @Language("SQL")
     private static final String SQL_FIND_BY_TUTOR =
             "SELECT id, booking_id, student_username, tutor_username, rating, comment, created_at " +
-                    "FROM review " +
-                    "WHERE tutor_username = ? " +
-                    "ORDER BY created_at DESC";
+            "FROM review " +
+            "WHERE tutor_username = ? " +
+            "ORDER BY created_at DESC";
 
-    /**
-     * Controllo duplicati: verifica che non esista già una recensione
-     * per la stessa booking. COUNT(*) restituisce sempre una riga
-     * (0 se non trovato, >0 se esiste già).
-     */
     @Language("SQL")
     private static final String SQL_CHECK_DUPLICATE =
             "SELECT COUNT(*) " +
-                    "FROM review " +
-                    "WHERE booking_id = ?";
+            "FROM review " +
+            "WHERE booking_id = ?";
 
     // ----------------------------------------------------------------
     // insertReview
@@ -111,11 +88,6 @@ public class ReviewDaoDb implements ReviewDao {
      * già una recensione per la stessa booking.
      * Il trigger trg_review_after_insert aggiorna automaticamente
      * rating e rating_count del tutor.
-     *
-     * @return id AUTO_INCREMENT assegnato dal DB
-     * @throws DuplicateReviewException se esiste già una recensione
-     *         per la stessa booking
-     * @throws DatabaseException        per errori JDBC
      */
     @Override
     public int insertReview(Connection conn, Review rev)
@@ -142,7 +114,8 @@ public class ReviewDaoDb implements ReviewDao {
             }
 
         } catch (SQLException e) {
-            throw new DatabaseException("System Error. Try later.");
+            throw new DatabaseException("Error inserting review for booking id=" +
+                    rev.getBooking().getId(), e);
         }
     }
 
@@ -154,10 +127,6 @@ public class ReviewDaoDb implements ReviewDao {
      * Aggiorna rating e comment di una recensione esistente.
      * Il trigger trg_review_after_update ricalcola automaticamente
      * il rating del tutor.
-     *
-     * @throws ReviewNotFoundException se l'id non corrisponde
-     *         ad alcuna riga in review
-     * @throws DatabaseException       per errori JDBC
      */
     @Override
     public void updateReview(Connection conn, Review rev)
@@ -172,7 +141,7 @@ public class ReviewDaoDb implements ReviewDao {
         } catch (ReviewNotFoundException e) {
             throw e;
         } catch (SQLException e) {
-            throw new DatabaseException("System Error. Try later.");
+            throw new DatabaseException("Error updating review id=" + rev.getId(), e);
         }
     }
 
@@ -184,10 +153,6 @@ public class ReviewDaoDb implements ReviewDao {
      * Elimina fisicamente una recensione.
      * Il trigger trg_review_after_delete ricalcola automaticamente
      * rating e rating_count del tutor — non serve aggiornarlo manualmente.
-     *
-     * @throws ReviewNotFoundException se l'id non corrisponde
-     *         ad alcuna riga in review
-     * @throws DatabaseException       per errori JDBC
      */
     @Override
     public void deleteReview(Connection conn, int id)
@@ -200,7 +165,7 @@ public class ReviewDaoDb implements ReviewDao {
         } catch (ReviewNotFoundException e) {
             throw e;
         } catch (SQLException e) {
-            throw new DatabaseException("System Error. Try later.");
+            throw new DatabaseException("Error deleting review id=" + id, e);
         }
     }
 
@@ -212,8 +177,6 @@ public class ReviewDaoDb implements ReviewDao {
      * Carica tutte le recensioni di un tutor ordinate per data decrescente.
      * Restituisce una lista vuota se il tutor non ha recensioni:
      * l'assenza di recensioni non è un errore ma un caso legittimo.
-     *
-     * @throws DatabaseException per errori JDBC
      */
     @Override
     public List<Review> findByTutor(Connection conn, String tutorUsername)
@@ -229,7 +192,7 @@ public class ReviewDaoDb implements ReviewDao {
                 }
             }
         } catch (SQLException e) {
-            throw new DatabaseException("System Error. Try later.");
+            throw new DatabaseException("Error retrieving reviews for tutor: " + tutorUsername, e);
         }
         return list;
     }
@@ -240,10 +203,6 @@ public class ReviewDaoDb implements ReviewDao {
 
     /**
      * Carica una recensione per id.
-     *
-     * @throws ReviewNotFoundException se l'id non corrisponde
-     *         ad alcuna riga in review
-     * @throws DatabaseException       per errori JDBC
      */
     @Override
     public Review selectReview(Connection conn, int id)
@@ -258,7 +217,7 @@ public class ReviewDaoDb implements ReviewDao {
         } catch (ReviewNotFoundException e) {
             throw e;
         } catch (SQLException e) {
-            throw new DatabaseException("System Error. Try later.");
+            throw new DatabaseException("Error retrieving review id=" + id, e);
         }
     }
 
@@ -270,10 +229,6 @@ public class ReviewDaoDb implements ReviewDao {
      * Verifica che non esista già una recensione per la stessa booking.
      * COUNT(*) restituisce sempre una riga: 0 se non esiste, >0 se esiste.
      * Usato da insertReview() prima dell'INSERT.
-     *
-     * @throws DuplicateReviewException se esiste già una recensione
-     *         per la stessa booking
-     * @throws DatabaseException        per errori JDBC
      */
     private void checkOverlap(Connection conn, Review review)
             throws DuplicateReviewException, DatabaseException {
@@ -289,33 +244,31 @@ public class ReviewDaoDb implements ReviewDao {
         } catch (DuplicateReviewException e) {
             throw e;
         } catch (SQLException e) {
-            throw new DatabaseException("System Error. Try later.");
+            throw new DatabaseException("Error checking duplicate review for booking id=" +
+                    review.getBooking().getId(), e);
         }
     }
 
     // ----------------------------------------------------------------
-    // Helper privato — mapping ResultSet → Review
+    // Helper
     // ----------------------------------------------------------------
 
     /**
      * Costruisce una Review dal ResultSet corrente.
-     * ⚠ Oggetti parziali:
+     * Oggetti parziali:
      * Booking, Student e Tutor vengono costruiti con il solo id/username
      * recuperato dalla tabella review. I campi aggiuntivi (es. budget
      * dello student, rating del tutor, prezzo della booking) non vengono
      * caricati. Per oggetti completi il Controller deve eseguire query
      * aggiuntive tramite i DAO appropriati.
-     *
-     * @param rs ResultSet posizionato sulla riga corrente
-     * @return istanza di Review con Booking, Student e Tutor parziali
      */
     private Review mapReview(ResultSet rs) throws SQLException {
-        int id              = rs.getInt("id");
-        int bookingId       = rs.getInt("booking_id");
+        int id = rs.getInt("id");
+        int bookingId = rs.getInt("booking_id");
         String studentUsername = rs.getString("student_username");
-        String tutorUsername   = rs.getString("tutor_username");
-        int rating          = rs.getInt("rating");
-        String comment      = rs.getString("comment");
+        String tutorUsername = rs.getString("tutor_username");
+        int rating = rs.getInt("rating");
+        String comment = rs.getString("comment");
         LocalDateTime createdAt = rs.getObject("created_at", LocalDateTime.class);
 
         // Oggetti parziali — contengono solo i campi presenti in review

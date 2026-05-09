@@ -42,21 +42,12 @@ public interface ReviewDao {
      * Persiste una nuova recensione.
      * Prima dell'INSERT verifica che non esista già una recensione
      * per la stessa booking (vincolo UNIQUE uq_review_booking).
-     *
-     * @return id AUTO_INCREMENT assegnato dal DB
-     * @throws DuplicateReviewException se esiste già una recensione
-     *         per la stessa booking
-     * @throws DatabaseException        per errori JDBC
      */
     int insertReview(Connection conn, Review rev)
             throws DatabaseException, DuplicateReviewException;
 
     /**
      * Aggiorna rating e comment di una recensione esistente.
-     *
-     * @throws ReviewNotFoundException se l'id non corrisponde
-     *         ad alcuna riga in review
-     * @throws DatabaseException       per errori JDBC
      */
     void updateReview(Connection conn, Review rev)
             throws DatabaseException, ReviewNotFoundException;
@@ -65,10 +56,6 @@ public interface ReviewDao {
      * Elimina fisicamente una recensione.
      * Il trigger trg_review_after_delete aggiorna automaticamente
      * rating e rating_count del tutor.
-     *
-     * @throws ReviewNotFoundException se l'id non corrisponde
-     *         ad alcuna riga in review
-     * @throws DatabaseException       per errori JDBC
      */
     void deleteReview(Connection conn, int id)
             throws DatabaseException, ReviewNotFoundException;
@@ -77,18 +64,12 @@ public interface ReviewDao {
      * Carica tutte le recensioni di un tutor ordinate per data
      * decrescente (più recenti prima).
      * Restituisce una lista vuota se il tutor non ha recensioni.
-     *
-     * @throws DatabaseException per errori JDBC
      */
     List<Review> findByTutor(Connection conn, String tutorUsername)
             throws DatabaseException;
 
     /**
      * Carica una recensione per id.
-     *
-     * @throws ReviewNotFoundException se l'id non corrisponde
-     *         ad alcuna riga in review
-     * @throws DatabaseException       per errori JDBC
      */
     Review selectReview(Connection conn, int id)
             throws DatabaseException, ReviewNotFoundException;

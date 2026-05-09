@@ -50,48 +50,28 @@ import java.time.LocalDateTime;
  */
 public abstract class UserDaoDb implements UserDao {
 
-    // ----------------------------------------------------------------
-    // Costanti SQL
-    // ----------------------------------------------------------------
-
-    /**
-     * INSERT nella tabella base user.
-     * La riga nella tabella figlia viene inserita dalla sottoclasse.
-     */
     @Language("SQL")
     private static final String SQL_REGISTRATION =
             "INSERT INTO user (username, email, name, surname, password_hash, role, description) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?)";
+            "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-    /**
-     * SELECT per login e caricamento profilo base.
-     * Filtra per PK (username): restituisce al più una riga,
-     * quindi ORDER BY è omesso (sarebbe inutile su una singola riga).
-     * SELECT * è accettabile qui perché la tabella user non contiene
-     * colonne pesanti (nessun BLOB): tutte le colonne servono a mapUser().
-     */
     @Language("SQL")
     private static final String SQL_CHECK =
             "SELECT * " +
-                    "FROM user " +
-                    "WHERE username = ?";
+            "FROM user " +
+            "WHERE username = ?";
 
-    /** UPDATE del solo campo password_hash. */
     @Language("SQL")
     private static final String SQL_UPDATEPASS =
             "UPDATE user " +
-                    "SET password_hash = ? " +
-                    "WHERE username = ?";
+            "SET password_hash = ? " +
+            "WHERE username = ?";
 
-    /**
-     * UPDATE dei campi mutabili del profilo.
-     * Non tocca passwordHash — usare updatePassword() per quello.
-     */
     @Language("SQL")
     private static final String SQL_UPDATE =
             "UPDATE user " +
-                    "SET description = ?, is_active = ? " +
-                    "WHERE username = ?";
+            "SET description = ?, is_active = ? " +
+            "WHERE username = ?";
 
     // ----------------------------------------------------------------
     // insert
@@ -107,9 +87,6 @@ public abstract class UserDaoDb implements UserDao {
      *
      * Le due INSERT devono essere nella stessa transazione,
      * gestita dal Controller applicativo (non dal DAO).
-     *
-     * @throws DuplicateUserException se username o email violano il vincolo UNIQUE
-     * @throws DatabaseException      per qualsiasi altro errore JDBC
      */
     @Override
     public void insert(Connection conn, User user)
@@ -126,10 +103,10 @@ public abstract class UserDaoDb implements UserDao {
             ps.executeUpdate();
 
         } catch (SQLIntegrityConstraintViolationException e) {
-            // Violazione del vincolo UNIQUE su username o email
-            throw new DuplicateUserException("User already present.");
+            throw new DuplicateUserException(
+                    "User already exists with username or email: " + user.getUsername());
         } catch (SQLException e) {
-            throw new DatabaseException("System Error. Try later.");
+            throw new DatabaseException("Error inserting user: " + user.getUsername(), e);
         }
     }
 
@@ -148,9 +125,6 @@ public abstract class UserDaoDb implements UserDao {
      * Usato principalmente durante il login: matchesPassword() opera
      * solo su passwordHash che sta nella tabella user, quindi
      * questo metodo è sufficiente per autenticare l'utente.
-     *
-     * @throws UserNotFoundException se lo username non esiste
-     * @throws DatabaseException     per errori JDBC
      */
     @Override
     public User findByUsername(Connection conn, String username)
@@ -159,11 +133,13 @@ public abstract class UserDaoDb implements UserDao {
         try (PreparedStatement ps = conn.prepareStatement(SQL_CHECK)) {
             ps.setString(1, username);
             try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) throw new UserNotFoundException("Unknown user.");
+                if (!rs.next()) throw new UserNotFoundException(username);
                 return mapUser(rs);
             }
+        } catch (UserNotFoundException e) {
+            throw e;
         } catch (SQLException e) {
-            throw new DatabaseException("System Error. Try later.");
+            throw new DatabaseException("Error retrieving user: " + username, e);
         }
     }
 
@@ -175,10 +151,6 @@ public abstract class UserDaoDb implements UserDao {
      * Aggiorna il passwordHash nella tabella user.
      * Il chiamante è responsabile di calcolare l'hash BCrypt
      * prima di invocare questo metodo.
-     *
-     * @param newPasswordHash hash BCrypt della nuova password
-     * @throws UserNotFoundException se lo username non esiste
-     * @throws DatabaseException     per errori JDBC
      */
     @Override
     public void updatePassword(Connection conn, String username, String newPasswordHash)
@@ -187,11 +159,14 @@ public abstract class UserDaoDb implements UserDao {
         try (PreparedStatement ps = conn.prepareStatement(SQL_UPDATEPASS)) {
             ps.setString(1, newPasswordHash);
             ps.setString(2, username);
+
             // executeUpdate() restituisce 0 se nessuna riga è stata aggiornata:
             // significa che lo username non esiste nella tabella user
-            if (ps.executeUpdate() == 0) throw new UserNotFoundException("Unknown user.");
+            if (ps.executeUpdate() == 0) throw new UserNotFoundException(username);
+        } catch (UserNotFoundException e) {
+            throw e;
         } catch (SQLException e) {
-            throw new DatabaseException("System Error. Try later.");
+            throw new DatabaseException("Error updating password for user: " + username, e);
         }
     }
 
@@ -205,26 +180,25 @@ public abstract class UserDaoDb implements UserDao {
      * disabilitato senza cancellazione fisica, preservando lo storico
      * di booking e recensioni.
      *
-     * @throws UserNotFoundException se lo username non esiste
-     * @throws DatabaseException     per errori JDBC
      */
     @Override
-    public void updateProfile(Connection conn, String username,
-                              String description, boolean isActive)
+    public void updateProfile(Connection conn, String username, String description, boolean isActive)
             throws DatabaseException, UserNotFoundException {
 
         try (PreparedStatement ps = conn.prepareStatement(SQL_UPDATE)) {
             ps.setString(1, description);
             ps.setBoolean(2, isActive);
             ps.setString(3, username);
-            if (ps.executeUpdate() == 0) throw new UserNotFoundException("Unknown user.");
+            if (ps.executeUpdate() == 0) throw new UserNotFoundException(username);
+        } catch (UserNotFoundException e) {
+            throw e;
         } catch (SQLException e) {
-            throw new DatabaseException("System Error. Try later.");
+            throw new DatabaseException("Error updating profile for user: " + username, e);
         }
     }
 
     // ----------------------------------------------------------------
-    // Helper privato — mapping ResultSet → User
+    // Helper privato
     // ----------------------------------------------------------------
 
     /**
@@ -238,19 +212,16 @@ public abstract class UserDaoDb implements UserDao {
      * I campi specifici del ruolo (budget, rating, ratingCount) non
      * vengono letti qui perché questa query tocca solo la tabella user.
      * Per oggetti completi usare i metodi delle sottoclassi DAO.
-     *
-     * @param rs ResultSet posizionato sulla riga corrente
-     * @return istanza concreta di User (Student, Tutor o Admin)
      */
     private User mapUser(ResultSet rs) throws SQLException {
-        String username     = rs.getString("username");
-        String email        = rs.getString("email");
-        String name         = rs.getString("name");
-        String surname      = rs.getString("surname");
+        String username = rs.getString("username");
+        String email = rs.getString("email");
+        String name = rs.getString("name");
+        String surname = rs.getString("surname");
         String passwordHash = rs.getString("password_hash");
-        String role         = rs.getString("role");
-        String description  = rs.getString("description");
-        boolean isActive    = rs.getBoolean("is_active");
+        String role = rs.getString("role");
+        String description = rs.getString("description");
+        boolean isActive = rs.getBoolean("is_active");
         LocalDateTime createdAt = rs.getObject("created_at", LocalDateTime.class);
 
         // Sceglie il Builder corretto in base al ruolo letto dal DB

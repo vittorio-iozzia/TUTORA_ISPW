@@ -71,10 +71,6 @@ public class DbDaoFactory extends DaoFactory {
         return new DocumentDaoDb();
     }
 
-    // ----------------------------------------------------------------
-    // Metodi factory — placeholder
-    // ----------------------------------------------------------------
-
     @Override
     public TutorDao createTutorDao() {
         return new TutorDaoDb();
@@ -87,8 +83,17 @@ public class DbDaoFactory extends DaoFactory {
 
     @Override
     public LessonDao createLessonDao() {
-        throw new UnsupportedOperationException("LessonDaoDb not yet implemented.");
+        return new LessonDaoDb();
     }
+
+    @Override
+    public ReviewDao createReviewDao() {
+        return new ReviewDaoDb();
+    }
+
+    // ----------------------------------------------------------------
+    // Metodi factory — placeholder
+    // ----------------------------------------------------------------
 
     @Override
     public BookingDao createBookingDao() {
@@ -98,10 +103,5 @@ public class DbDaoFactory extends DaoFactory {
     @Override
     public TutorExpertiseDao createTutorExpertiseDao() {
         throw new UnsupportedOperationException("TutorExpertiseDaoDb not yet implemented.");
-    }
-
-    @Override
-    public ReviewDao createReviewDao() {
-        throw new UnsupportedOperationException("ReviewDaoDb not yet implemented.");
     }
 }
