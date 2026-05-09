@@ -15,10 +15,11 @@ import java.time.LocalDateTime;
  * collegata via FK a questa tabella base (user).
  * Le sottoclassi concrete sono Student, Tutor e Admin.
  *
- * passwordHash non ha getter pubblico: l'hash viene usato solo
- * internamente dal metodo matchesPassword() per la verifica
- * delle credenziali durante il login. Non circola mai fuori
- * dalla classe. Il cambio password passa sempre dal DAO.
+ * passwordHash è esposto tramite getPasswordHash() esclusivamente
+ * per il livello DAO (INSERT nella tabella user). La verifica delle
+ * credenziali avviene tramite matchesPassword(), che confronta
+ * internamente la password in chiaro con l'hash via BCrypt.
+ * Il cambio password passa sempre dal DAO (updatePassword).
  *
  * -----------------------------------------------------------------------
  * Pattern Builder (GoF – Creazionale)

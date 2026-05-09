@@ -91,13 +91,11 @@ public class UserDaoDemo implements UserDao {
     // ----------------------------------------------------------------
 
     @Override
-    public void updateProfile(Connection conn, User user)
+    public void updateProfile(Connection conn, String username, String description, boolean isActive)
             throws DatabaseException, UserNotFoundException {
-        if (!cache.containsKey(user.getUsername())) {
-            throw new UserNotFoundException(user.getUsername());
-        }
-        User existing = cache.get(user.getUsername());
-        existing.setDescription(user.getDescription());
-        existing.setActive(user.isActive());
+        if (!cache.containsKey(username)) throw new UserNotFoundException(username);
+        User existing = cache.get(username);
+        existing.setDescription(description);
+        existing.setActive(isActive);
     }
 }
