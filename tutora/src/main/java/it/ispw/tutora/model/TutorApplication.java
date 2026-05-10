@@ -68,13 +68,11 @@ public class TutorApplication {
      * La View si registra qui per ricevere
      * aggiornamenti push quando lo status cambia.
      */
-    public void addPropertyChangeListener(String propertyName,
-                                          PropertyChangeListener listener) {
+    public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
         pcs.addPropertyChangeListener(propertyName, listener);
     }
 
-    public void removePropertyChangeListener(String propertyName,
-                                             PropertyChangeListener listener) {
+    public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
         pcs.removePropertyChangeListener(propertyName, listener);
     }
 
@@ -93,7 +91,7 @@ public class TutorApplication {
     public void updateStatus(ApplicationStatus newStatus) {
         if (!isTransitionValid(this.status, newStatus)) {
             throw new IllegalStateException(
-                    "Transizione non valida: " + this.status + " → " + newStatus
+                    "Invalid transaction: " + this.status + " → " + newStatus
             );
         }
         ApplicationStatus oldStatus = this.status;
@@ -143,11 +141,9 @@ public class TutorApplication {
     public List<ApplicationItem> getItems() {
         return Collections.unmodifiableList(items);
     }
-
     public void setAdminNotes(String adminNotes) {
         this.adminNotes = adminNotes;
     }
-
     public void setEvaluatedAt(LocalDateTime evaluatedAt) {
         this.evaluatedAt = evaluatedAt;
     }
@@ -156,8 +152,7 @@ public class TutorApplication {
     // Utility privata
     // ----------------------------------------------------------------
 
-    private boolean isTransitionValid(ApplicationStatus from,
-                                      ApplicationStatus to) {
+    private boolean isTransitionValid(ApplicationStatus from, ApplicationStatus to) {
         return switch (from) {
             case DRAFT -> to == ApplicationStatus.SUBMITTED;
             case SUBMITTED -> to == ApplicationStatus.ACCEPTED

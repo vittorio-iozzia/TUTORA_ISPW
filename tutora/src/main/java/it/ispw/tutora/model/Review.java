@@ -117,7 +117,7 @@ public class Review {
     private void checkRating(int ratingToCheck) {
         if (ratingToCheck < 1 || ratingToCheck > 5) {
             throw new IllegalArgumentException(
-                "Il voto deve essere compreso tra 1 e 5."
+                    "Rating must be between 1 and 5."
             );
         }
     }

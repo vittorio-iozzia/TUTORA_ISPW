@@ -73,7 +73,9 @@ public class ApplicationItemDaoDemo implements ApplicationItemDao {
             }
         }
         // Non trovato - lancia eccezione
-        throw new ApplicationItemNotFoundException(item.getId());
+        throw new ApplicationItemNotFoundException(
+                "ApplicationItem not found for applicationId: " + item.getApplicationId()
+                + ", requirementName: '" + item.getRequirementName() + "'");
     }
 
     // ----------------------------------------------------------------

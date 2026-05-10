@@ -1,6 +1,14 @@
 package it.ispw.tutora.dao.factory;
 
 import it.ispw.tutora.dao.*;
+import it.ispw.tutora.dao.json.ApplicationItemDaoJson;
+import it.ispw.tutora.dao.json.CategoryDaoJson;
+import it.ispw.tutora.dao.json.DocumentDaoJson;
+import it.ispw.tutora.dao.json.NotificationDaoJson;
+import it.ispw.tutora.dao.json.ReviewDaoJson;
+import it.ispw.tutora.dao.json.TutorApplicationDaoJson;
+import it.ispw.tutora.dao.json.TutorDaoJson;
+import it.ispw.tutora.dao.json.UserDaoJson;
 
 /**
  * Concrete Factory che produce implementazioni DAO basate su file JSON.
@@ -19,9 +27,9 @@ import it.ispw.tutora.dao.*;
  * -----------------------------------------------------------------------
  * Stato attuale
  * -----------------------------------------------------------------------
- * Nessun *DaoJson è ancora implementato. Tutti i metodi lanciano
- * UnsupportedOperationException come placeholder.
- * TODO: implementare le classi *DaoJson nel package dao.json.
+ * DAO implementati: Category, TutorApplication, Notification,
+ * ApplicationItem, Document, Review, User, Tutor.
+ * DAO ancora placeholder: Student, Lesson, Booking, TutorExpertise.
  */
 public class JsonDaoFactory extends DaoFactory {
 
@@ -34,7 +42,7 @@ public class JsonDaoFactory extends DaoFactory {
 
     @Override
     public UserDao createUserDao() {
-        throw new UnsupportedOperationException("UserDaoJson not yet implemented.");
+        return new UserDaoJson();
     }
 
     @Override
@@ -44,32 +52,32 @@ public class JsonDaoFactory extends DaoFactory {
 
     @Override
     public TutorDao createTutorDao() {
-        throw new UnsupportedOperationException("TutorDaoJson not yet implemented.");
+        return new TutorDaoJson();
     }
 
     @Override
     public CategoryDao createCategoryDao() {
-        throw new UnsupportedOperationException("CategoryDaoJson not yet implemented.");
+        return new CategoryDaoJson();
     }
 
     @Override
     public NotificationDao createNotificationDao() {
-        throw new UnsupportedOperationException("NotificationDaoJson not yet implemented.");
+        return new NotificationDaoJson();
     }
 
     @Override
     public TutorApplicationDao createTutorApplicationDao() {
-        throw new UnsupportedOperationException("TutorApplicationDaoJson not yet implemented.");
+        return new TutorApplicationDaoJson();
     }
 
     @Override
     public ApplicationItemDao createApplicationItemDao() {
-        throw new UnsupportedOperationException("ApplicationItemDaoJson not yet implemented.");
+        return new ApplicationItemDaoJson();
     }
 
     @Override
     public DocumentDao createDocumentDao() {
-        throw new UnsupportedOperationException("DocumentDaoJson not yet implemented.");
+        return new DocumentDaoJson();
     }
 
     @Override
@@ -89,6 +97,6 @@ public class JsonDaoFactory extends DaoFactory {
 
     @Override
     public ReviewDao createReviewDao() {
-        throw new UnsupportedOperationException("ReviewDaoJson not yet implemented.");
+        return new ReviewDaoJson();
     }
 }
