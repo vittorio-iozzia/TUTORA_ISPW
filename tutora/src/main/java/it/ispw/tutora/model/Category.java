@@ -18,8 +18,8 @@ public class Category {
     private final List<Requirement> requirements;
 
     public Category(String name, String description) {
-        this.name         = name;
-        this.description  = description;
+        this.name = name;
+        this.description = description;
         this.requirements = new ArrayList<>();
     }
 
@@ -39,7 +39,7 @@ public class Category {
         return !requirements.isEmpty();
     }
 
-    public String getName()        { return name; }
+    public String getName() { return name; }
     public String getDescription() { return description; }
 
     @Override

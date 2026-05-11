@@ -1,0 +1,90 @@
+[
+  {
+    "name": "Music",
+    "description": "Musical instrument lessons and music theory",
+    "textRequirements": [
+      {
+        "name": "bio",
+        "label": "Biography",
+        "description": "Describe your musical background and experience",
+        "required": true,
+        "minChar": 50,
+        "maxChar": 800
+      },
+      {
+        "name": "subcategory",
+        "label": "Subcategory",
+        "description": "Which instrument do you want to teach?",
+        "required": true,
+        "minChar": 2,
+        "maxChar": 100
+      },
+      {
+        "name": "teaching_exp",
+        "label": "Teaching experience",
+        "description": "Describe your experience as a music teacher",
+        "required": false,
+        "minChar": 0,
+        "maxChar": 600
+      }
+    ],
+    "documentRequirements": [
+      {
+        "name": "music_cert",
+        "label": "Diploma / Certificate",
+        "description": "Music school diploma or conservatory certificate",
+        "required": true
+      },
+      {
+        "name": "id_document",
+        "label": "Identity document",
+        "description": "Valid national ID or passport",
+        "required": true
+      }
+    ]
+  },
+  {
+    "name": "Photography",
+    "description": "Photography technique and post-production",
+    "textRequirements": [
+      {
+        "name": "bio",
+        "label": "Biography",
+        "description": "Describe your photography experience",
+        "required": true,
+        "minChar": 50,
+        "maxChar": 800
+      }
+    ],
+    "documentRequirements": [
+      {
+        "name": "portfolio",
+        "label": "Portfolio",
+        "description": "Upload a sample of your photographic work",
+        "required": true
+      }
+    ]
+  },
+  {
+    "name": "Sport",
+    "description": "Athletic training and sports coaching",
+    "textRequirements": [
+      {
+        "name": "bio",
+        "label": "Biography",
+        "description": "Describe your sports background",
+        "required": true,
+        "minChar": 50,
+        "maxChar": 800
+      }
+    ],
+    "documentRequirements": [
+      {
+        "name": "certification",
+        "label": "Sports certification",
+        "description": "Upload your coaching or sports certification",
+        "required": true
+      }
+    ]
+  }
+]

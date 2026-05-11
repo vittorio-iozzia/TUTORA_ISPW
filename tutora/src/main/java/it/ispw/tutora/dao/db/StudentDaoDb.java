@@ -43,16 +43,12 @@ import java.time.LocalDateTime;
  */
 public class StudentDaoDb extends UserDaoDb implements StudentDao {
 
-    // ----------------------------------------------------------------
-    // Costanti SQL
-    // ----------------------------------------------------------------
-
     /** UPDATE del solo campo budget nella tabella student. */
     @Language("SQL")
     private static final String SQL_UPDATEBUDGET =
             "UPDATE student " +
-                    "SET budget = ? " +
-                    "WHERE username = ?";
+            "SET budget = ? " +
+            "WHERE username = ?";
 
     /**
      * SELECT con JOIN user + student per ricostruire uno Student completo.
@@ -63,9 +59,9 @@ public class StudentDaoDb extends UserDaoDb implements StudentDao {
     @Language("SQL")
     private static final String SQL_SELECT =
             "SELECT u.*, s.budget " +
-                    "FROM student s JOIN user u " +
-                    "ON u.username = s.username " +
-                    "WHERE u.username = ?";
+            "FROM student s JOIN user u " +
+            "ON u.username = s.username " +
+            "WHERE u.username = ?";
 
     // ----------------------------------------------------------------
     // updateStudentBudget
@@ -78,10 +74,6 @@ public class StudentDaoDb extends UserDaoDb implements StudentDao {
      * (chk_student_budget) lo garantisce a livello di storage.
      * La logica di dominio (deductBudget / addBudget) su Student
      * garantisce la correttezza prima di arrivare al DAO.
-     *
-     * @param budget nuovo valore del budget
-     * @throws UserNotFoundException se lo username non esiste in student
-     * @throws DatabaseException     per errori JDBC
      */
     @Override
     public void updateStudentBudget(Connection conn, String username, BigDecimal budget)
@@ -90,6 +82,7 @@ public class StudentDaoDb extends UserDaoDb implements StudentDao {
         try (PreparedStatement ps = conn.prepareStatement(SQL_UPDATEBUDGET)) {
             ps.setBigDecimal(1, budget);
             ps.setString(2, username);
+
             // executeUpdate() restituisce 0 se nessuna riga è stata aggiornata:
             // significa che lo username non esiste nella tabella student
             if (ps.executeUpdate() == 0) throw new UserNotFoundException("Unknown user.");
@@ -111,9 +104,6 @@ public class StudentDaoDb extends UserDaoDb implements StudentDao {
      * Da preferire a findByUsername() quando serve un oggetto Student
      * con tutti i suoi dati (es. visualizzazione profilo, controllo
      * budget prima di autorizzare un pagamento).
-     *
-     * @throws UserNotFoundException se lo username non esiste
-     * @throws DatabaseException     per errori JDBC
      */
     @Override
     public Student selectStudent(Connection conn, String username)
@@ -138,19 +128,16 @@ public class StudentDaoDb extends UserDaoDb implements StudentDao {
      * Costruisce uno Student completo dal ResultSet corrente.
      * Il ResultSet deve contenere sia le colonne di user che il
      * campo budget di student (prodotto dal JOIN in SQL_SELECT).
-     *
-     * @param rs ResultSet posizionato sulla riga corrente
-     * @return istanza di Student con tutti i campi valorizzati
      */
     private Student mapStudent(ResultSet rs) throws SQLException {
-        String username     = rs.getString("username");
-        BigDecimal budget   = rs.getBigDecimal("budget");
-        String email        = rs.getString("email");
-        String name         = rs.getString("name");
-        String surname      = rs.getString("surname");
-        String description  = rs.getString("description");
+        String username = rs.getString("username");
+        BigDecimal budget = rs.getBigDecimal("budget");
+        String email = rs.getString("email");
+        String name = rs.getString("name");
+        String surname = rs.getString("surname");
+        String description = rs.getString("description");
         String passwordHash = rs.getString("password_hash");
-        boolean isActive    = rs.getBoolean("is_active");
+        boolean isActive = rs.getBoolean("is_active");
         LocalDateTime createdAt = rs.getObject("created_at", LocalDateTime.class);
 
         return new Student.Builder()

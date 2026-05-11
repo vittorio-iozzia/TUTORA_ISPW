@@ -2,6 +2,9 @@ package it.ispw.tutora.dao.factory;
 
 import it.ispw.tutora.dao.*;
 import it.ispw.tutora.dao.db.*;
+import it.ispw.tutora.exception.DatabaseException;
+
+import java.sql.Connection;
 
 /**
  * Concrete Factory che produce implementazioni DAO MySQL via JDBC.
@@ -36,6 +39,15 @@ public class DbDaoFactory extends DaoFactory {
 
     // Costruttore package-private: istanziata solo da DaoFactory.loadFactory()
     DbDaoFactory() {}
+
+    // ----------------------------------------------------------------
+    // Connessione
+    // ----------------------------------------------------------------
+
+    @Override
+    public Connection getConnection() throws DatabaseException {
+        return ConnectionFactory.getInstance().getConnection();
+    }
 
     // ----------------------------------------------------------------
     // Metodi factory — implementati

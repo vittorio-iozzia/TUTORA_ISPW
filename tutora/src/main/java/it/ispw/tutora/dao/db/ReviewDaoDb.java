@@ -136,6 +136,7 @@ public class ReviewDaoDb implements ReviewDao {
             ps.setInt(1, rev.getRating());
             ps.setString(2, rev.getComment());
             ps.setInt(3, rev.getId());
+            
             // executeUpdate() restituisce 0 se nessuna riga corrisponde all'id
             if (ps.executeUpdate() == 0) throw new ReviewNotFoundException(rev.getId());
         } catch (ReviewNotFoundException e) {
@@ -238,7 +239,7 @@ public class ReviewDaoDb implements ReviewDao {
             try (ResultSet rs = ps.executeQuery()) {
                 // getInt(1): legge la prima colonna della riga, che è COUNT(*)
                 if (rs.next() && rs.getInt(1) > 0) {
-                    throw new DuplicateReviewException(review.getId());
+                    throw new DuplicateReviewException(review.getBooking().getId());
                 }
             }
         } catch (DuplicateReviewException e) {

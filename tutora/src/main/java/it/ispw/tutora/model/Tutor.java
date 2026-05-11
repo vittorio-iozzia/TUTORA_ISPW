@@ -57,7 +57,7 @@ public class Tutor extends User {
     public static class Builder extends User.Builder<Builder> {
 
         private BigDecimal rating;
-        private int        ratingCount;
+        private int ratingCount;
 
         public Builder rating(BigDecimal rating) {
             this.rating = rating;
@@ -89,9 +89,6 @@ public class Tutor extends User {
      * Aggiorna rating e ratingCount dopo una rilettura dal DB.
      * I due parametri sono sempre aggiornati insieme per evitare
      * stati inconsistenti.
-     *
-     * @param rating      nuovo valore medio calcolato dai trigger SQL
-     * @param ratingCount nuovo conteggio delle recensioni
      */
     public void setRating(BigDecimal rating, int ratingCount) {
         this.rating = rating;

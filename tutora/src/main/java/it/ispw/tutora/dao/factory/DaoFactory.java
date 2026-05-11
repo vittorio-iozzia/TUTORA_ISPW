@@ -1,8 +1,10 @@
 package it.ispw.tutora.dao.factory;
 
 import it.ispw.tutora.dao.*;
+import it.ispw.tutora.exception.DatabaseException;
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.io.InputStream;
 import java.util.Properties;
 
@@ -37,14 +39,6 @@ import java.util.Properties;
  *   DAO_TYPE=JSON  → JsonDaoFactory (file JSON su disco)
  *
  * Se la chiave è assente o il file non esiste, si usa DB come default.
- *
- * -----------------------------------------------------------------------
- * Utilizzo tipico nel Controller
- * -----------------------------------------------------------------------
- * <pre>
- *   DaoFactory factory = DaoFactory.getInstance();
- *   UserDao userDao = factory.createUserDao();
- * </pre>
  */
 public abstract class DaoFactory {
 
@@ -94,6 +88,24 @@ public abstract class DaoFactory {
         } catch (IOException e) {
             return "";
         }
+    }
+
+    // ----------------------------------------------------------------
+    // Connessione
+    // ----------------------------------------------------------------
+
+    /**
+     * Restituisce una connessione DB se DAO_TYPE=DB, null altrimenti.
+     * Permette ai Controller di usare sempre lo stesso pattern
+     * try-with-resources senza sapere quale tipo di persistenza è attivo.
+     *
+     * Utilizzo nei Controller:
+     *   try (Connection conn = DaoFactory.getInstance().getConnection()) {
+     *       userDao.findByUsername(conn, username);
+     *   }
+     */
+    public Connection getConnection() throws DatabaseException {
+        return null; // default: Demo e JSON non hanno connessione
     }
 
     // ----------------------------------------------------------------
