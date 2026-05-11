@@ -95,6 +95,11 @@ public class StudentDaoDb extends UserDaoDb implements StudentDao {
             throw new DatabaseException("System Error. Try later.");
         }
     }
+    /**
+     * Persiste un nuovo Student: INSERT in user (via super) + INSERT in student.
+     * Le due INSERT devono essere nella stessa transazione,
+     * gestita dal Controller applicativo (non dal DAO).
+     */
     @Override
     public void insert(Connection conn, User user)
             throws DatabaseException, DuplicateUserException {
