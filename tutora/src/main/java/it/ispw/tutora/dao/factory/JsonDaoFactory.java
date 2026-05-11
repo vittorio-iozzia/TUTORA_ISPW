@@ -1,14 +1,7 @@
 package it.ispw.tutora.dao.factory;
 
 import it.ispw.tutora.dao.*;
-import it.ispw.tutora.dao.json.ApplicationItemDaoJson;
-import it.ispw.tutora.dao.json.CategoryDaoJson;
-import it.ispw.tutora.dao.json.DocumentDaoJson;
-import it.ispw.tutora.dao.json.NotificationDaoJson;
-import it.ispw.tutora.dao.json.ReviewDaoJson;
-import it.ispw.tutora.dao.json.TutorApplicationDaoJson;
-import it.ispw.tutora.dao.json.TutorDaoJson;
-import it.ispw.tutora.dao.json.UserDaoJson;
+import it.ispw.tutora.dao.json.*;
 
 /**
  * Concrete Factory che produce implementazioni DAO basate su file JSON.
@@ -47,7 +40,7 @@ public class JsonDaoFactory extends DaoFactory {
 
     @Override
     public StudentDao createStudentDao() {
-        throw new UnsupportedOperationException("StudentDaoJson not yet implemented.");
+        return new StudentDaoJson();
     }
 
     @Override
@@ -82,17 +75,17 @@ public class JsonDaoFactory extends DaoFactory {
 
     @Override
     public LessonDao createLessonDao() {
-        throw new UnsupportedOperationException("LessonDaoJson not yet implemented.");
+        return new LessonDaoJson();
     }
 
     @Override
     public BookingDao createBookingDao() {
-        throw new UnsupportedOperationException("BookingDaoJson not yet implemented.");
+        return new BookingDaoJson();
     }
 
     @Override
     public TutorExpertiseDao createTutorExpertiseDao() {
-        throw new UnsupportedOperationException("TutorExpertiseDaoJson not yet implemented.");
+        return new TutorExpertiseDaoJson();
     }
 
     @Override

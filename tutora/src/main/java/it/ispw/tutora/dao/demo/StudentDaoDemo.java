@@ -2,6 +2,7 @@ package it.ispw.tutora.dao.demo;
 
 import it.ispw.tutora.dao.StudentDao;
 import it.ispw.tutora.exception.DatabaseException;
+import it.ispw.tutora.exception.DuplicateUserException;
 import it.ispw.tutora.exception.UserNotFoundException;
 import it.ispw.tutora.model.Student;
 import it.ispw.tutora.model.User;
@@ -9,19 +10,64 @@ import it.ispw.tutora.model.User;
 import java.math.BigDecimal;
 import java.sql.Connection;
 
-
+/**
+ * Implementazione in-memory di StudentDao per l'ambiente demo.
+ *
+ * Estende UserDaoDemo per ereditare la cache condivisa degli utenti.
+ * La Connection viene accettata nelle firme per rispettare l'interfaccia
+ * ma non viene usata: in demo non esiste una transazione reale.
+ */
 public class StudentDaoDemo extends UserDaoDemo implements StudentDao {
 
+    /**
+     * Aggiorna il budget dello student in cache.
+     *
+     * Poiché Student non espone setBudget() (rimosso per impedire valori
+     * inconsistenti), il nuovo valore viene raggiunto calcolando il delta
+     * rispetto al budget attuale e applicando addBudget() o deductBudget().
+     *
+     * @throws UserNotFoundException se lo username non è in cache o
+     *         l'utente trovato non è uno Student
+     */
     @Override
     public void updateStudentBudget(Connection conn, String username, BigDecimal budget)
             throws DatabaseException, UserNotFoundException {
-        Student student = selectStudent(conn, username);
-        student.addBudget(budget);
+        User user = findByUsername(conn, username);
+        if (!(user instanceof Student student))
+            throw new UserNotFoundException(username);
+        // Calcola il delta per raggiungere il valore target senza setBudget().
+        BigDecimal diff = budget.subtract(student.getBudget());
+        if (diff.compareTo(BigDecimal.ZERO) > 0) student.addBudget(diff);
+        else if (diff.compareTo(BigDecimal.ZERO) < 0) student.deductBudget(diff.negate());
     }
+
+    /**
+     * Carica lo Student dalla cache verificando che l'utente trovato
+     * sia effettivamente uno Student.
+     *
+     * @throws UserNotFoundException se lo username non è in cache o
+     *         l'utente trovato non è uno Student (es. è un Tutor)
+     */
     @Override
     public Student selectStudent(Connection conn, String username)
             throws DatabaseException, UserNotFoundException {
         User user = findByUsername(conn, username);
-        return (Student) user;
+        if (!(user instanceof Student student))
+            throw new UserNotFoundException(username);
+        return student;
+    }
+
+    /**
+     * Inserisce uno Student in cache dopo aver verificato il tipo.
+     * Delega la logica di duplicato a UserDaoDemo.insert().
+     *
+     * @throws IllegalArgumentException se user non è un'istanza di Student
+     */
+    @Override
+    public void insert(Connection conn, User user)
+            throws DatabaseException, DuplicateUserException {
+        if (!(user instanceof Student))
+            throw new IllegalArgumentException("Expected Student instance.");
+        super.insert(conn, user);
     }
 }

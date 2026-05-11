@@ -109,11 +109,11 @@ public class DbDaoFactory extends DaoFactory {
 
     @Override
     public BookingDao createBookingDao() {
-        throw new UnsupportedOperationException("BookingDaoDb not yet implemented.");
+        return new BookingDaoDb();
     }
 
     @Override
     public TutorExpertiseDao createTutorExpertiseDao() {
-        throw new UnsupportedOperationException("TutorExpertiseDaoDb not yet implemented.");
+        return new TutorExpertiseDaoDb();
     }
 }

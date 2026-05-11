@@ -49,6 +49,11 @@ public class DemoDaoFactory extends DaoFactory {
     private final ApplicationItemDaoDemo   applicationItemDao = new ApplicationItemDaoDemo();
     private final DocumentDaoDemo documentDao = new DocumentDaoDemo();
     private final NotificationDaoDemo notificationDao = new NotificationDaoDemo();
+    private final LessonDao lessonDao = new LessonDaoDemo();
+    private final StudentDao studentDao = new StudentDaoDemo();
+    private final BookingDao bookingDao = new BookingDaoDemo();
+    private final TutorExpertiseDao tutorExpertiseDao = new TutorExpertiseDaoDemo();
+    private final ReviewDao reviewDao = new ReviewDaoDemo();
 
     // Costruttore package-private: istanziata solo da DaoFactory.loadFactory()
     DemoDaoFactory() {
@@ -236,8 +241,7 @@ public class DemoDaoFactory extends DaoFactory {
 
     @Override
     public StudentDao createStudentDao() {
-        throw new UnsupportedOperationException(
-                "StudentDaoDemo not yet implemented.");
+        return studentDao;
     }
 
     @Override
@@ -245,25 +249,21 @@ public class DemoDaoFactory extends DaoFactory {
 
     @Override
     public LessonDao createLessonDao() {
-        throw new UnsupportedOperationException(
-                "LessonDaoDemo not yet implemented.");
+        return lessonDao;
     }
 
     @Override
     public BookingDao createBookingDao() {
-        throw new UnsupportedOperationException(
-                "BookingDaoDemo not yet implemented.");
+        return bookingDao;
     }
 
     @Override
     public TutorExpertiseDao createTutorExpertiseDao() {
-        throw new UnsupportedOperationException(
-                "TutorExpertiseDaoDemo not yet implemented.");
+        return tutorExpertiseDao;
     }
 
     @Override
     public ReviewDao createReviewDao() {
-        throw new UnsupportedOperationException(
-                "ReviewDaoDemo not yet implemented.");
+        return reviewDao;
     }
 }
