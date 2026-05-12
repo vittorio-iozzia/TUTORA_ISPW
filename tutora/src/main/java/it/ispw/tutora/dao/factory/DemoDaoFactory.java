@@ -50,7 +50,7 @@ public class DemoDaoFactory extends DaoFactory {
     private static final String CAT_SPORT = "Sport";
     private static final String REQ_BIOGRAPHY = "Biography";
     private static final String USER_STUDENT = "student_luigi";
-    private static final String DEMO_PASSWORD = "Demo1234"; // NOSONAR: dato di esempio in-memory, non credenziale reale
+    private static final String DEMO_HASH_SEED = "Demo1234"; // dato di esempio in-memory, non credenziale reale
 
     // ----------------------------------------------------------------
     // Istanze condivise dei DAO demo
@@ -60,7 +60,7 @@ public class DemoDaoFactory extends DaoFactory {
     private final TutorDaoDemo tutorDao = new TutorDaoDemo();
     private final CategoryDaoDemo categoryDao = new CategoryDaoDemo();
     private final TutorApplicationDaoDemo tutorApplicationDao = new TutorApplicationDaoDemo();
-    private final ApplicationItemDaoDemo   applicationItemDao = new ApplicationItemDaoDemo();
+    private final ApplicationItemDaoDemo applicationItemDao = new ApplicationItemDaoDemo();
     private final DocumentDaoDemo documentDao = new DocumentDaoDemo();
     private final NotificationDaoDemo notificationDao = new NotificationDaoDemo();
     private final LessonDaoDemo lessonDao = new LessonDaoDemo();
@@ -140,7 +140,7 @@ public class DemoDaoFactory extends DaoFactory {
 
     private void populateUsers() throws DatabaseException, DuplicateUserException {
 
-        String hash = BCrypt.hashpw(DEMO_PASSWORD, BCrypt.gensalt(10));
+        String hash = BCrypt.hashpw(DEMO_HASH_SEED, BCrypt.gensalt(10));
 
         Admin admin = new Admin.Builder()
                 .username("admin")

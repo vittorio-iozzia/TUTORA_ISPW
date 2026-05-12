@@ -61,6 +61,7 @@ public class CertificateValidationBoundary implements CertificateValidator {
      * Gestisce il timeout di 3 minuti come da activity diagram.
      */
     @Override
+    @SuppressWarnings("java:S2095") // ExecutorService.close() introdotto in Java 19; su Java 17 shutdownNow() nel finally è sufficiente
     public boolean validateDocuments(List<ApplicationItemBean> items)
             throws ValidationTimeoutException, ValidationServiceException {
 
