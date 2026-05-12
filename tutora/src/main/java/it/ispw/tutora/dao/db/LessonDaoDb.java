@@ -397,7 +397,7 @@ public class LessonDaoDb implements LessonDao {
                 .build();
         SubCategory partialSubCategory = new SubCategory(subcategoryName, null, null);
         TutorExpertise partialExpertise = new TutorExpertise(
-                partialTutor, partialSubCategory, listedPrice, null, createdAt);
+                partialTutor, partialSubCategory, listedPrice, null, null);
 
         return new Lesson.Builder()
                 .id(id)

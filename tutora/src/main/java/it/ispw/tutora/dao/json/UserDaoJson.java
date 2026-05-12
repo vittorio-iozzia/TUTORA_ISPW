@@ -59,7 +59,7 @@ import java.util.List;
  * Nota sull'ereditarietà
  * -----------------------------------------------------------------------
  * readAll(), writeAll() e UserRecord sono protected per consentire a
- * TutorDaoJson di estendere questa classe senza duplicare la logica
+ * TutorDaoJson e StudentDaoJson di estendere questa classe senza duplicare la logica
  * di accesso al file, seguendo lo stesso pattern di TutorDaoDb
  * che estende UserDaoDb.
  */
@@ -237,7 +237,7 @@ public class UserDaoJson implements UserDao {
 
     // ----------------------------------------------------------------
     // POJO interno per la deserializzazione Jackson
-    // protected: accessibile da TutorDaoJson
+    // protected: accessibile da TutorDaoJson e StudentDaoJson
     // ----------------------------------------------------------------
 
     protected static class UserRecord {

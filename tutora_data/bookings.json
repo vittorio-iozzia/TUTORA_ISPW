@@ -1,0 +1,11 @@
+[
+  {
+    "id": 1,
+    "lessonId": 2,
+    "studentUsername": "student_luigi",
+    "bookedAt": "2026-05-11T10:00:00",
+    "pricePaid": "30.00",
+    "paymentStatus": "Paid",
+    "paymentRef": "PAY-001"
+  }
+]

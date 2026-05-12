@@ -2,8 +2,10 @@ package it.ispw.tutora.dao.db;
 
 import it.ispw.tutora.dao.StudentDao;
 import it.ispw.tutora.exception.DatabaseException;
+import it.ispw.tutora.exception.DuplicateUserException;
 import it.ispw.tutora.exception.UserNotFoundException;
 import it.ispw.tutora.model.Student;
+import it.ispw.tutora.model.User;
 import org.intellij.lang.annotations.Language;
 
 import java.math.BigDecimal;
@@ -49,6 +51,9 @@ public class StudentDaoDb extends UserDaoDb implements StudentDao {
             "UPDATE student " +
             "SET budget = ? " +
             "WHERE username = ?";
+    @Language("SQL")
+    private static final String SQL_INSERT_STUDENT=
+            "INSERT INTO student (username) VALUES (?)";
 
     /**
      * SELECT con JOIN user + student per ricostruire uno Student completo.
@@ -86,6 +91,22 @@ public class StudentDaoDb extends UserDaoDb implements StudentDao {
             // executeUpdate() restituisce 0 se nessuna riga è stata aggiornata:
             // significa che lo username non esiste nella tabella student
             if (ps.executeUpdate() == 0) throw new UserNotFoundException("Unknown user.");
+        } catch (SQLException e) {
+            throw new DatabaseException("System Error. Try later.");
+        }
+    }
+    /**
+     * Persiste un nuovo Student: INSERT in user (via super) + INSERT in student.
+     * Le due INSERT devono essere nella stessa transazione,
+     * gestita dal Controller applicativo (non dal DAO).
+     */
+    @Override
+    public void insert(Connection conn, User user)
+            throws DatabaseException, DuplicateUserException {
+        super.insert(conn, user);
+        try (PreparedStatement ps = conn.prepareStatement(SQL_INSERT_STUDENT)) {
+            ps.setString(1, user.getUsername());
+            ps.executeUpdate();
         } catch (SQLException e) {
             throw new DatabaseException("System Error. Try later.");
         }
