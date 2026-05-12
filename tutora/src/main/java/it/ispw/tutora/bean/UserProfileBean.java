@@ -33,8 +33,6 @@ public class UserProfileBean {
     private BigDecimal rating;       // TUTOR
     private int ratingCount;         // TUTOR
 
-    public UserProfileBean() {}
-
     // ----------------------------------------------------------------
     // Getter e setter
     // ----------------------------------------------------------------

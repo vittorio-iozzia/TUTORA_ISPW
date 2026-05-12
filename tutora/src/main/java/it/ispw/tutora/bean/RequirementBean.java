@@ -26,8 +26,6 @@ public class RequirementBean {
     private int minChar;
     private int maxChar;
 
-    public RequirementBean() {}
-
     // ----------------------------------------------------------------
     // Getter e setter
     // ----------------------------------------------------------------

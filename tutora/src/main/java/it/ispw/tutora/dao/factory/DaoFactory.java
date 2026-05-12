@@ -49,12 +49,30 @@ public abstract class DaoFactory {
     // Singleton – Bill Pugh Holder
     // ----------------------------------------------------------------
 
-    /**
-     * Carica la Concrete Factory corretta leggendo app.properties.
-     * Eseguito una sola volta dalla JVM al primo getInstance().
-     */
     private static class Holder {
+
         private static final DaoFactory INSTANCE = loadFactory();
+
+        private static DaoFactory loadFactory() {
+            String type = readDaoType();
+            return switch (type.toUpperCase()) {
+                case "DEMO" -> new DemoDaoFactory();
+                case "JSON" -> new JsonDaoFactory();
+                default     -> new DbDaoFactory();
+            };
+        }
+
+        private static String readDaoType() {
+            try (InputStream in = DaoFactory.class
+                    .getResourceAsStream(PROPERTIES_FILE)) {
+                if (in == null) return "";
+                Properties props = new Properties();
+                props.load(in);
+                return props.getProperty(KEY_DAO_TYPE, "");
+            } catch (IOException e) {
+                return "";
+            }
+        }
     }
 
     /**
@@ -63,31 +81,6 @@ public abstract class DaoFactory {
      */
     public static DaoFactory getInstance() {
         return Holder.INSTANCE;
-    }
-
-    /**
-     * Legge app.properties e istanzia la Concrete Factory corretta.
-     * Chiamato una sola volta da Holder.
-     */
-    private static DaoFactory loadFactory() {
-        String type = readDaoType();
-        return switch (type.toUpperCase()) {
-            case "DEMO" -> new DemoDaoFactory();
-            case "JSON" -> new JsonDaoFactory();
-            default     -> new DbDaoFactory();
-        };
-    }
-
-    private static String readDaoType() {
-        try (InputStream in = DaoFactory.class
-                .getResourceAsStream(PROPERTIES_FILE)) {
-            if (in == null) return "";
-            Properties props = new Properties();
-            props.load(in);
-            return props.getProperty(KEY_DAO_TYPE, "");
-        } catch (IOException e) {
-            return "";
-        }
     }
 
     // ----------------------------------------------------------------

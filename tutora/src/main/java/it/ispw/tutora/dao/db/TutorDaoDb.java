@@ -8,7 +8,6 @@ import it.ispw.tutora.model.Tutor;
 import it.ispw.tutora.model.User;
 import org.intellij.lang.annotations.Language;
 
-import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDateTime;
 

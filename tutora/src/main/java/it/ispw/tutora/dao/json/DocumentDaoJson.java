@@ -1,5 +1,6 @@
 package it.ispw.tutora.dao.json;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.ispw.tutora.dao.DocumentDao;
 import it.ispw.tutora.exception.DatabaseException;
@@ -60,18 +61,18 @@ public class DocumentDaoJson implements DocumentDao {
                 + 1;                                  // Aggiunge uno per otterene il prossimo id
 
 
-        DocRecord record = new DocRecord();
-        record.id = id;
-        record.originalFilename = document.getOriginalFilename();
-        record.storedFilename = document.getStoredFilename();
-        record.mimeType = document.getMimeType();
-        record.sizeBytes = document.getSizeBytes();
-        record.contentBase64 = document.getContent() != null
+        DocRecord newRecord = new DocRecord();
+        newRecord.id = id;
+        newRecord.originalFilename = document.getOriginalFilename();
+        newRecord.storedFilename = document.getStoredFilename();
+        newRecord.mimeType = document.getMimeType();
+        newRecord.sizeBytes = document.getSizeBytes();
+        newRecord.contentBase64 = document.getContent() != null
                 ? Base64.getEncoder().encodeToString(document.getContent())
                 : null;
-        record.uploadedAt = LocalDateTime.now().toString();
+        newRecord.uploadedAt = LocalDateTime.now().toString();
 
-        records.add(record);
+        records.add(newRecord);
         writeAll(records);
         return id;
     }
@@ -143,13 +144,14 @@ public class DocumentDaoJson implements DocumentDao {
     // POJO interno per la deserializzazione Jackson
     // ----------------------------------------------------------------
 
+    @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
     private static class DocRecord {
-        public int id;
-        public String originalFilename;
-        public String storedFilename;
-        public String mimeType;
-        public long sizeBytes;
-        public String contentBase64;
-        public String uploadedAt;
+        int id;
+        String originalFilename;
+        String storedFilename;
+        String mimeType;
+        long sizeBytes;
+        String contentBase64;
+        String uploadedAt;
     }
 }

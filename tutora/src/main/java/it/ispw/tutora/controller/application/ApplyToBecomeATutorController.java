@@ -139,47 +139,39 @@ public class ApplyToBecomeATutorController {
         NotificationDao notifDao = factory.createNotificationDao();
 
         try (Connection conn = factory.getConnection()) {
-
-            if (conn != null) conn.setAutoCommit(false);  // Devono avvenire tutte le insert (tutor_application, application_item e notification)
-
-            try {
-                // 2. crea il Model dell'application
-                TutorApplication application = new TutorApplication(
-                        0,
-                        bean.getCategoryName(),
-                        studentUsername,
-                        LocalDateTime.now(),
-                        ApplicationStatus.SUBMITTED
-                );
-
-                // 3. persiste l'application, passata alla dao
-                int applicationId = appDao.insert(conn, application);
-
-                // 4. persiste gli item che vengono passati alla dao
-                for (ApplicationItemBean itemBean : bean.getItems()) {
-                    ApplicationItem item = buildItem(
-                            conn, itemBean, applicationId, documentDao);
-                    itemDao.insert(conn, item);
-                }
-
-                // 5. notifica all'admin
-                sendNotificationToAdmin(conn, notifDao,
-                        studentUsername, applicationId,
-                        bean.getCategoryName());
-
-                if (conn != null) conn.commit();
-                return applicationId;
-
-            } catch (DuplicateApplicationException | DatabaseException e) {
-                if (conn != null) conn.rollback();
-                throw e;
-            } catch (Exception e) {
-                if (conn != null) conn.rollback();
-                throw new DatabaseException("Unexpected error submitting application.", e);
-            }
-
+            if (conn != null) conn.setAutoCommit(false);
+            return executeSubmit(conn, bean, studentUsername, appDao, itemDao, documentDao, notifDao);
         } catch (SQLException e) {
             throw new DatabaseException("Error submitting application.", e);
+        }
+    }
+
+    private int executeSubmit(Connection conn,
+                              TutorApplicationBean bean,
+                              String studentUsername,
+                              TutorApplicationDao appDao,
+                              ApplicationItemDao itemDao,
+                              DocumentDao documentDao,
+                              NotificationDao notifDao)
+            throws DuplicateApplicationException, DatabaseException {
+        try {
+            TutorApplication application = new TutorApplication(
+                    0, bean.getCategoryName(), studentUsername,
+                    LocalDateTime.now(), ApplicationStatus.SUBMITTED);
+            int applicationId = appDao.insert(conn, application);
+            for (ApplicationItemBean itemBean : bean.getItems()) {
+                itemDao.insert(conn, buildItem(conn, itemBean, applicationId, documentDao));
+            }
+            sendNotificationToAdmin(conn, notifDao, studentUsername,
+                    applicationId, bean.getCategoryName());
+            if (conn != null) conn.commit();
+            return applicationId;
+        } catch (DuplicateApplicationException | DatabaseException e) {
+            safeRollback(conn);
+            throw e;
+        } catch (Exception e) {
+            safeRollback(conn);
+            throw new DatabaseException("Unexpected error submitting application.", e);
         }
     }
 
@@ -205,49 +197,44 @@ public class ApplyToBecomeATutorController {
         NotificationDao notifDao = factory.createNotificationDao();
 
         try (Connection conn = factory.getConnection()) {
-
             if (conn != null) conn.setAutoCommit(false);
-
-            try {
-                // 1. carica l'application
-                TutorApplication application = appDao.findById(
-                        conn, bean.getApplicationId());
-
-                // 2. aggiorna lo status — Model valida la transizione
-                ApplicationStatus newStatus = bean.getStatus();
-
-                try {
-                    application.updateStatus(newStatus);
-                } catch (IllegalStateException e) {
-                    throw new InvalidApplicationStateException(e.getMessage());
-                }
-                application.setAdminNotes(bean.getAdminNotes());
-                application.setEvaluatedAt(LocalDateTime.now());
-
-                // 3. persiste l'aggiornamento
-                appDao.updateStatus(conn, application);
-
-                // 4. notifica lo studente
-                sendNotificationToStudent(conn, notifDao,
-                        adminUsername,
-                        application.getStudentUsername(),
-                        application.getId(),
-                        newStatus);
-
-                if (conn != null) conn.commit();
-
-            } catch (ApplicationNotFoundException
-                     | InvalidApplicationStateException
-                     | DatabaseException e) {
-                if (conn != null) conn.rollback();
-                throw e;
-            } catch (Exception e) {
-                if (conn != null) conn.rollback();
-                throw new DatabaseException("Unexpected error evaluating application.", e);
-            }
-
+            executeEvaluate(conn, bean, adminUsername, appDao, notifDao);
         } catch (SQLException e) {
             throw new DatabaseException("Error evaluating application.", e);
+        }
+    }
+
+    private void executeEvaluate(Connection conn,
+                                 ApplicationReviewBean bean,
+                                 String adminUsername,
+                                 TutorApplicationDao appDao,
+                                 NotificationDao notifDao)
+            throws ApplicationNotFoundException, InvalidApplicationStateException, DatabaseException {
+        try {
+            TutorApplication application = appDao.findById(conn, bean.getApplicationId());
+            ApplicationStatus newStatus = bean.getStatus();
+            applyStatusUpdate(application, newStatus);
+            application.setAdminNotes(bean.getAdminNotes());
+            application.setEvaluatedAt(LocalDateTime.now());
+            appDao.updateStatus(conn, application);
+            sendNotificationToStudent(conn, notifDao, adminUsername,
+                    application.getStudentUsername(), application.getId(), newStatus);
+            if (conn != null) conn.commit();
+        } catch (ApplicationNotFoundException | InvalidApplicationStateException | DatabaseException e) {
+            safeRollback(conn);
+            throw e;
+        } catch (Exception e) {
+            safeRollback(conn);
+            throw new DatabaseException("Unexpected error evaluating application.", e);
+        }
+    }
+
+    private void applyStatusUpdate(TutorApplication application, ApplicationStatus newStatus)
+            throws InvalidApplicationStateException {
+        try {
+            application.updateStatus(newStatus);
+        } catch (IllegalStateException e) {
+            throw new InvalidApplicationStateException(e.getMessage());
         }
     }
 
@@ -307,6 +294,11 @@ public class ApplyToBecomeATutorController {
     // ----------------------------------------------------------------
     // Helper privati
     // ----------------------------------------------------------------
+
+    private void safeRollback(Connection conn) {
+        if (conn == null) return;
+        try { conn.rollback(); } catch (SQLException ignored) {}
+    }
 
     /**
      * Restituisce lo username dell'utente associato al token.

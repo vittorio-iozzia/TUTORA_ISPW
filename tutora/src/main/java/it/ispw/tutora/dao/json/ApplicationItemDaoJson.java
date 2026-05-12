@@ -1,5 +1,6 @@
 package it.ispw.tutora.dao.json;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.ispw.tutora.dao.ApplicationItemDao;
 import it.ispw.tutora.enums.ItemType;
@@ -71,19 +72,19 @@ public class ApplicationItemDaoJson implements ApplicationItemDao {
                 + 1;                                  // Aggiunge uno per otterene il prossimo id
 
 
-        ItemRecord record = new ItemRecord();
-        record.id = id;
-        record.applicationId = item.getApplicationId();
-        record.requirementName = item.getRequirementName();
-        record.itemType = item.getItemType().name();
+        ItemRecord newRecord = new ItemRecord();
+        newRecord.id = id;
+        newRecord.applicationId = item.getApplicationId();
+        newRecord.requirementName = item.getRequirementName();
+        newRecord.itemType = item.getItemType().name();
 
         if (item instanceof TextItem textItem) {
-            record.textContent = textItem.getTextContent();
+            newRecord.textContent = textItem.getTextContent();
         } else {
-            record.documentId = ((DocumentItem) item).getDocument().getId();
+            newRecord.documentId = ((DocumentItem) item).getDocument().getId();
         }
 
-        records.add(record);
+        records.add(newRecord);
         writeAll(records);
         return id;
     }
@@ -179,12 +180,13 @@ public class ApplicationItemDaoJson implements ApplicationItemDao {
     // POJO interno per la deserializzazione Jackson
     // ----------------------------------------------------------------
 
+    @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
     private static class ItemRecord {
-        public int id;
-        public int applicationId;
-        public String requirementName;
-        public String itemType;
-        public String textContent;
-        public Integer documentId;
+        int id;
+        int applicationId;
+        String requirementName;
+        String itemType;
+        String textContent;
+        Integer documentId;
     }
 }

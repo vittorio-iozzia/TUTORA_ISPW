@@ -4,6 +4,7 @@ import it.ispw.tutora.bean.ApplicationItemBean;
 
 import java.util.List;
 import java.util.Random;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -46,15 +47,14 @@ public class CertificateValidationClient {
 
         int delay = MIN_DELAY_MS + random.nextInt(MAX_DELAY_MS - MIN_DELAY_MS);
 
-        LOGGER.info("Calling validation API for "
-                + documents.size() + " document(s)... (simulated delay: "
-                + delay + "ms)");
+        LOGGER.log(Level.INFO, "Calling validation API for {0} document(s)... (simulated delay: {1}ms)",
+                new Object[]{documents.size(), delay});
 
         Thread.sleep(delay);
 
         boolean valid = random.nextDouble() < VALID_PROBABILITY;
 
-        LOGGER.info("API response: " + (valid ? "VALID" : "INVALID"));
+        LOGGER.log(Level.INFO, "API response: {0}", valid ? "VALID" : "INVALID");
 
         return valid;
     }

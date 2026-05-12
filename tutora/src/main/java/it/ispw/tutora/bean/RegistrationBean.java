@@ -20,8 +20,6 @@ public class RegistrationBean {
     private String password;
     private String confirmPassword;
 
-    public RegistrationBean() {}
-
     // ----------------------------------------------------------------
     // Validazione sintattica (no logica di business)
     // ----------------------------------------------------------------

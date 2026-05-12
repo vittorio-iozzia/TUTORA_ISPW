@@ -120,8 +120,6 @@ public class TutorDaoDemo implements TutorDao {
     @Override
     public Tutor selectTutor(Connection conn, String username)
             throws DatabaseException, UserNotFoundException {
-        Tutor tutor = cache.get(username);
-        if (tutor == null) throw new UserNotFoundException(username);
-        return tutor;
+        return (Tutor) findByUsername(conn, username);
     }
 }

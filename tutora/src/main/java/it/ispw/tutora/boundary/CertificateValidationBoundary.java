@@ -73,13 +73,13 @@ public class CertificateValidationBoundary implements CertificateValidator {
             return true;
         }
 
-        ExecutorService executor = Executors.newSingleThreadExecutor();     // Crea thread che esegue callApi
-        // traduce la chiamata Java nell'interfaccia dell'Adaptee
-        Future<Boolean> future = executor.submit(
-                () -> apiClient.callApi(documents));
-
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future<Boolean> future = null;
         try {
-            return future.get(TIMEOUT_MINUTES, TimeUnit.MINUTES);           // Se il thread non termina entor la scadenza del tmr, viene sollevata un'eccezione
+            // traduce la chiamata Java nell'interfaccia dell'Adaptee
+            future = executor.submit(() -> apiClient.callApi(documents));
+
+            return future.get(TIMEOUT_MINUTES, TimeUnit.MINUTES);           // Se il thread non termina entro la scadenza del timer, viene sollevata un'eccezione
 
         } catch (TimeoutException e) {
             future.cancel(true);

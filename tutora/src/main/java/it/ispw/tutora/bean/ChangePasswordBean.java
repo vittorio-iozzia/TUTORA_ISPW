@@ -15,8 +15,6 @@ public class ChangePasswordBean {
     private String newPassword;
     private String confirmNewPassword;
 
-    public ChangePasswordBean() {}
-
     // ----------------------------------------------------------------
     // Validazione sintattica
     // ----------------------------------------------------------------

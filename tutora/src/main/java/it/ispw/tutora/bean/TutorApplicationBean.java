@@ -26,8 +26,6 @@ public class TutorApplicationBean {
     private LocalDateTime evaluatedAt;
     private List<ApplicationItemBean> items = new ArrayList<>();
 
-    public TutorApplicationBean() {}
-
     // ----------------------------------------------------------------
     // Getter e setter
     // ----------------------------------------------------------------

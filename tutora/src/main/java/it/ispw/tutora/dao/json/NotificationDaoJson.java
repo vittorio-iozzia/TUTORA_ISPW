@@ -1,5 +1,6 @@
 package it.ispw.tutora.dao.json;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.ispw.tutora.dao.NotificationDao;
 import it.ispw.tutora.enums.NotificationType;
@@ -179,14 +180,15 @@ public class NotificationDaoJson implements NotificationDao {
     // POJO interno per la deserializzazione Jackson
     // ----------------------------------------------------------------
 
+    @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
     private static class NotifRecord {
-        public int     id;
-        public String  recipientUsername;
-        public String  senderUsername;
-        public String  message;
-        public String  type;
-        public Integer targetId;
-        public String  timestamp;
-        public boolean read;
+        int     id;
+        String  recipientUsername;
+        String  senderUsername;
+        String  message;
+        String  type;
+        Integer targetId;
+        String  timestamp;
+        boolean read;
     }
 }

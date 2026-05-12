@@ -1,5 +1,6 @@
 package it.ispw.tutora.dao.json;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.ispw.tutora.dao.ReviewDao;
 import it.ispw.tutora.exception.DatabaseException;
@@ -79,16 +80,16 @@ public class ReviewDaoJson implements ReviewDao {
                 + 1;                                  // Aggiunge uno per otterene il prossimo id
 
 
-        ReviewRecord record = new ReviewRecord();
-        record.id = id;
-        record.bookingId = rev.getBooking().getId();
-        record.studentUsername = rev.getStudent().getUsername();
-        record.tutorUsername = rev.getTutor().getUsername();
-        record.rating = rev.getRating();
-        record.comment = rev.getComment();
-        record.createdAt = LocalDateTime.now().toString();
+        ReviewRecord newRecord = new ReviewRecord();
+        newRecord.id = id;
+        newRecord.bookingId = rev.getBooking().getId();
+        newRecord.studentUsername = rev.getStudent().getUsername();
+        newRecord.tutorUsername = rev.getTutor().getUsername();
+        newRecord.rating = rev.getRating();
+        newRecord.comment = rev.getComment();
+        newRecord.createdAt = LocalDateTime.now().toString();
 
-        records.add(record);
+        records.add(newRecord);
         writeAll(records);
         return id;
     }
@@ -199,13 +200,14 @@ public class ReviewDaoJson implements ReviewDao {
     // POJO interno per la deserializzazione Jackson
     // ----------------------------------------------------------------
 
+    @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
     private static class ReviewRecord {
-        public int id;
-        public int bookingId;
-        public String studentUsername;
-        public String tutorUsername;
-        public int rating;
-        public String comment;
-        public String createdAt;
+        int id;
+        int bookingId;
+        String studentUsername;
+        String tutorUsername;
+        int rating;
+        String comment;
+        String createdAt;
     }
 }

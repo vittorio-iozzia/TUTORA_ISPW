@@ -42,13 +42,17 @@ public class DemoDaoFactory extends DaoFactory {
     // Istanze condivise dei DAO demo
     // ----------------------------------------------------------------
 
-    private final UserDaoDemo userDao = new UserDaoDemo();
+    private final StudentDaoDemo studentDao = new StudentDaoDemo();
     private final TutorDaoDemo tutorDao = new TutorDaoDemo();
     private final CategoryDaoDemo categoryDao = new CategoryDaoDemo();
     private final TutorApplicationDaoDemo tutorApplicationDao = new TutorApplicationDaoDemo();
     private final ApplicationItemDaoDemo   applicationItemDao = new ApplicationItemDaoDemo();
     private final DocumentDaoDemo documentDao = new DocumentDaoDemo();
     private final NotificationDaoDemo notificationDao = new NotificationDaoDemo();
+    private final LessonDaoDemo lessonDao = new LessonDaoDemo();
+    private final BookingDaoDemo bookingDao = new BookingDaoDemo();
+    private final TutorExpertiseDaoDemo tutorExpertiseDao = new TutorExpertiseDaoDemo();
+    private final ReviewDaoDemo reviewDao = new ReviewDaoDemo();
 
     // Costruttore package-private: istanziata solo da DaoFactory.loadFactory()
     DemoDaoFactory() {
@@ -134,7 +138,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .active(true)
                 .createdAt(LocalDateTime.now())
                 .build();
-        userDao.insert(null, admin);
+        studentDao.insert(null, admin);
 
         Student student = new Student.Builder()
                 .username("student_luigi")
@@ -147,7 +151,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .createdAt(LocalDateTime.now())
                 .budget(new BigDecimal("200.00"))
                 .build();
-        userDao.insert(null, student);
+        studentDao.insert(null, student);
 
         Tutor tutor = new Tutor.Builder()
                 .username("tutor_vitto")
@@ -161,7 +165,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .rating(BigDecimal.ZERO)
                 .ratingCount(0)
                 .build();
-        userDao.insert(null, tutor);
+        studentDao.insert(null, tutor);
         tutorDao.insert(null, tutor);
     }
 
@@ -209,11 +213,17 @@ public class DemoDaoFactory extends DaoFactory {
     }
 
     // ----------------------------------------------------------------
-    // Metodi factory — implementati
+    // Metodi factory
     // ----------------------------------------------------------------
 
     @Override
-    public UserDao createUserDao() { return userDao; }
+    public UserDao createUserDao() { return studentDao; }
+
+    @Override
+    public StudentDao createStudentDao() { return studentDao; }
+
+    @Override
+    public TutorDao createTutorDao() { return tutorDao; }
 
     @Override
     public CategoryDao createCategoryDao() { return categoryDao; }
@@ -230,40 +240,15 @@ public class DemoDaoFactory extends DaoFactory {
     @Override
     public NotificationDao createNotificationDao() { return notificationDao; }
 
-    // ----------------------------------------------------------------
-    // Metodi factory — placeholder
-    // ----------------------------------------------------------------
+    @Override
+    public LessonDao createLessonDao() { return lessonDao; }
 
     @Override
-    public StudentDao createStudentDao() {
-        throw new UnsupportedOperationException(
-                "StudentDaoDemo not yet implemented.");
-    }
+    public BookingDao createBookingDao() { return bookingDao; }
 
     @Override
-    public TutorDao createTutorDao() { return tutorDao; }
+    public TutorExpertiseDao createTutorExpertiseDao() { return tutorExpertiseDao; }
 
     @Override
-    public LessonDao createLessonDao() {
-        throw new UnsupportedOperationException(
-                "LessonDaoDemo not yet implemented.");
-    }
-
-    @Override
-    public BookingDao createBookingDao() {
-        throw new UnsupportedOperationException(
-                "BookingDaoDemo not yet implemented.");
-    }
-
-    @Override
-    public TutorExpertiseDao createTutorExpertiseDao() {
-        throw new UnsupportedOperationException(
-                "TutorExpertiseDaoDemo not yet implemented.");
-    }
-
-    @Override
-    public ReviewDao createReviewDao() {
-        throw new UnsupportedOperationException(
-                "ReviewDaoDemo not yet implemented.");
-    }
+    public ReviewDao createReviewDao() { return reviewDao; }
 }

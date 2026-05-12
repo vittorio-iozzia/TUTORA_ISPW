@@ -5,6 +5,7 @@ import it.ispw.tutora.dao.UserDao;
 import it.ispw.tutora.dao.factory.DaoFactory;
 import it.ispw.tutora.exception.AuthenticationException;
 import it.ispw.tutora.exception.DatabaseException;
+import it.ispw.tutora.exception.UserNotFoundException;
 import it.ispw.tutora.model.User;
 import it.ispw.tutora.model.session.SessionManager;
 
@@ -46,13 +47,8 @@ public class LoginController {
 
         try (Connection conn = factory.getConnection()) {
 
-            // 1. carica l'utente
-            User user;
-            try {
-                user = userDao.findByUsername(conn, login.getUsername());
-            } catch (it.ispw.tutora.exception.UserNotFoundException e) {
-                throw new AuthenticationException("Invalid username or password.");
-            }
+            // 1. carica l'utente — UserNotFoundException diventa AuthenticationException
+            User user = resolveUser(userDao, conn, login.getUsername());
 
             // 2. verifica che l'account sia attivo
             if (!user.isActive()) {
@@ -73,8 +69,17 @@ public class LoginController {
             login.clearPassword();
 
             return token;
-        } catch(SQLException e){
+        } catch (SQLException e) {
             throw new DatabaseException("Login error.", e);
+        }
+    }
+
+    private User resolveUser(UserDao dao, Connection conn, String username)
+            throws AuthenticationException, DatabaseException {
+        try {
+            return dao.findByUsername(conn, username);
+        } catch (UserNotFoundException e) {
+            throw new AuthenticationException("Invalid username or password.");
         }
     }
 }

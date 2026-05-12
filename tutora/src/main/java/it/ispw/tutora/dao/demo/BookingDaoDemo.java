@@ -64,9 +64,8 @@ public class BookingDaoDemo implements BookingDao {
             throws DatabaseException {
         return cache.values().stream()
                 .filter(booking -> booking.getStudent().getUsername().equals(username))
-                .sorted(Comparator.comparing(Booking::getBookedAt))
-                .toList()
-                .reversed();
+                .sorted(Comparator.comparing(Booking::getBookedAt).reversed())
+                .toList();
     }
 
     /**
