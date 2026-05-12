@@ -34,10 +34,6 @@ public interface TutorApplicationDao {
     /**
      * Persiste una nuova application in stato DRAFT.
      * Imposta active_key = studentUsername come da contratto SQL.
-     *
-     * @return id AUTO_INCREMENT assegnato dal DB
-     * @throws DuplicateApplicationException se esiste già un'application
-     *         attiva per lo stesso studente + categoria
      */
     int insert(Connection conn, TutorApplication application)
             throws DatabaseException, DuplicateApplicationException;

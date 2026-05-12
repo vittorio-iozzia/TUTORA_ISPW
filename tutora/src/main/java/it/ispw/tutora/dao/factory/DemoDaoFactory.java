@@ -44,6 +44,13 @@ public class DemoDaoFactory extends DaoFactory {
 
     private final UserDaoDemo userDao = new UserDaoDemo();
     private final TutorDaoDemo tutorDao = new TutorDaoDemo();
+    private final StudentDaoDemo studentDao = new StudentDaoDemo();
+
+    private final LessonDaoDemo lessonDao = new LessonDaoDemo();
+    private final BookingDaoDemo bookingDao = new BookingDaoDemo();
+    private final TutorExpertiseDaoDemo tutorExpertiseDao = new TutorExpertiseDaoDemo();
+    private final ReviewDaoDemo reviewDao = new ReviewDaoDemo();
+
     private final CategoryDaoDemo categoryDao = new CategoryDaoDemo();
     private final TutorApplicationDaoDemo tutorApplicationDao = new TutorApplicationDaoDemo();
     private final ApplicationItemDaoDemo   applicationItemDao = new ApplicationItemDaoDemo();
@@ -209,7 +216,7 @@ public class DemoDaoFactory extends DaoFactory {
     }
 
     // ----------------------------------------------------------------
-    // Metodi factory — implementati
+    // Metodi factory
     // ----------------------------------------------------------------
 
     @Override
@@ -230,40 +237,21 @@ public class DemoDaoFactory extends DaoFactory {
     @Override
     public NotificationDao createNotificationDao() { return notificationDao; }
 
-    // ----------------------------------------------------------------
-    // Metodi factory — placeholder
-    // ----------------------------------------------------------------
-
     @Override
-    public StudentDao createStudentDao() {
-        throw new UnsupportedOperationException(
-                "StudentDaoDemo not yet implemented.");
-    }
+    public StudentDao createStudentDao() { return studentDao; }
 
     @Override
     public TutorDao createTutorDao() { return tutorDao; }
 
     @Override
-    public LessonDao createLessonDao() {
-        throw new UnsupportedOperationException(
-                "LessonDaoDemo not yet implemented.");
-    }
+    public LessonDao createLessonDao() { return lessonDao; }
 
     @Override
-    public BookingDao createBookingDao() {
-        throw new UnsupportedOperationException(
-                "BookingDaoDemo not yet implemented.");
-    }
+    public BookingDao createBookingDao() { return bookingDao; }
 
     @Override
-    public TutorExpertiseDao createTutorExpertiseDao() {
-        throw new UnsupportedOperationException(
-                "TutorExpertiseDaoDemo not yet implemented.");
-    }
+    public TutorExpertiseDao createTutorExpertiseDao() { return tutorExpertiseDao; }
 
     @Override
-    public ReviewDao createReviewDao() {
-        throw new UnsupportedOperationException(
-                "ReviewDaoDemo not yet implemented.");
-    }
+    public ReviewDao createReviewDao() { return reviewDao; }
 }

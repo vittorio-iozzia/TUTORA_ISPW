@@ -6,6 +6,7 @@ import it.ispw.tutora.model.Notification;
 
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -57,6 +58,7 @@ public class NotificationDaoDemo implements NotificationDao {
         // Trasformo la lista in stream, applico il filtro in base al RecipientUsername, raccolgo gli elementi in una List immutabile
         return cache.stream()
                 .filter(n -> n.getRecipientUsername().equals(recipientUsername))
+                .sorted(Comparator.comparing(Notification::getTimestamp).reversed())
                 .toList();
     }
 

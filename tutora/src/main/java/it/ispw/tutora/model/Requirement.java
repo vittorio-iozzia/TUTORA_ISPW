@@ -7,11 +7,12 @@ import it.ispw.tutora.enums.ItemType;
  * per l'application "Apply to Become a Tutor" (UC-2).
  *
  * Le sottoclassi concrete sono:
- *   - TextRequirement      (risposta testuale libera)
- *   - DocumentRequirement  (upload di un file)
+ *   - {@link TextRequirement}      (risposta testuale libera)
+ *   - {@link DocumentRequirement}  (upload di un file)
  *
- * Questo è il "Product" dell'Abstract Factory pattern:
- * RequirementFactory produce oggetti di tipo Requirement.
+ * Il sottotipo corretto viene istanziato direttamente dal DAO
+ * (CategoryDaoDb, CategoryDaoJson, CategoryDaoDemo) in base ai
+ * dati letti dalla sorgente — non è necessaria una factory separata.
  */
 public abstract class Requirement {
 
@@ -58,5 +59,9 @@ public abstract class Requirement {
     public String toString() {
         return getClass().getSimpleName()
                 + "{name='" + name + "', required=" + required + "}";
+    }
+
+    public String getDesct() {
+        return null;
     }
 }

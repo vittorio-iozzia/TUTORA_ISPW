@@ -20,7 +20,13 @@ public class ApplicationItemBean {
     private String requirementName;
     private ItemType itemType;
     private String textContent;
+
+    // Campi per item di tipo DOCUMENT — popolati dal boundary prima di passare al Controller
     private String documentPath;
+    private String originalFilename;
+    private String mimeType;
+    private long sizeBytes;
+    private byte[] content;
 
     public ApplicationItemBean() {}
 
@@ -42,4 +48,16 @@ public class ApplicationItemBean {
 
     public String getDocumentPath() { return documentPath; }
     public void setDocumentPath(String documentPath) { this.documentPath = documentPath; }
+
+    public String getOriginalFilename() { return originalFilename; }
+    public void setOriginalFilename(String originalFilename) { this.originalFilename = originalFilename; }
+
+    public String getMimeType() { return mimeType; }
+    public void setMimeType(String mimeType) { this.mimeType = mimeType; }
+
+    public long getSizeBytes() { return sizeBytes; }
+    public void setSizeBytes(long sizeBytes) { this.sizeBytes = sizeBytes; }
+
+    public byte[] getContent() { return content; }
+    public void setContent(byte[] content) { this.content = content; }
 }

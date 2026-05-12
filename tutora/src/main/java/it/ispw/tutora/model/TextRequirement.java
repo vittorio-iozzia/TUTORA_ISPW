@@ -6,7 +6,7 @@ import it.ispw.tutora.enums.ItemType;
  * Requisito che richiede una risposta testuale da parte dello studente.
  * Corrisponde a una riga della tabella text_requirement.
  *
- * Concrete Product dell'Abstract Factory (RequirementFactory).
+ * Sottotipo concreto di {@link Requirement} per risposte testuali.
  */
 public class TextRequirement extends Requirement {
 
@@ -27,9 +27,6 @@ public class TextRequirement extends Requirement {
 
     /**
      * Valida il testo inserito dallo studente rispetto ai vincoli del requisito.
-     *
-     * @param text il testo da validare
-     * @return true se il testo rispetta i limiti di caratteri
      */
     public boolean isValidText(String text) {
         if (text == null) return isOptional();  // La validità del testo dipende da se il requisito è obbligatorio o meno

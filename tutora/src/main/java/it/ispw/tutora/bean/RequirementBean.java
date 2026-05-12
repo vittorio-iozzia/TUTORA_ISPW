@@ -23,8 +23,8 @@ public class RequirementBean {
     private String description;
     private boolean required;
     private ItemType itemType;
-    private int minLength;
-    private int maxLength;
+    private int minChar;
+    private int maxChar;
 
     public RequirementBean() {}
 
@@ -50,9 +50,9 @@ public class RequirementBean {
     public ItemType getItemType() { return itemType; }
     public void setItemType(ItemType itemType) { this.itemType = itemType; }
 
-    public int getMinLength() { return minLength; }
-    public void setMinLength(int minLength) { this.minLength = minLength; }
+    public int getMinChar() { return minChar; }
+    public void setMinChar(int minChar) { this.minChar = minChar; }
 
-    public int getMaxLength() { return maxLength; }
-    public void setMaxLength(int maxLength) { this.maxLength = maxLength; }
+    public int getMaxLength() { return maxChar; }
+    public void setMaxChar(int maxChar) { this.maxChar = maxChar; }
 }

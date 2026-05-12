@@ -9,6 +9,7 @@ import it.ispw.tutora.model.TutorApplication;
 
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -100,7 +101,8 @@ public class TutorApplicationDaoDemo implements TutorApplicationDao {
         for (TutorApplication a : cache) {
             if (a.getStudentUsername().equals(studentUsername)) result.add(a);
         }
-        return new ArrayList<>(result);
+        result.sort(Comparator.comparing(TutorApplication::getCreationDate).reversed());
+        return result;
     }
 
     // ----------------------------------------------------------------
@@ -114,6 +116,7 @@ public class TutorApplicationDaoDemo implements TutorApplicationDao {
         for (TutorApplication a : cache) {
             if (a.getStatus() == status) result.add(a);
         }
-        return new ArrayList<>(result);
+        result.sort(Comparator.comparing(TutorApplication::getCreationDate).reversed());
+        return result;
     }
 }
