@@ -28,8 +28,6 @@ public class ApplicationItemBean {
     private long sizeBytes;
     private byte[] content;
 
-    public ApplicationItemBean() {}
-
     // ----------------------------------------------------------------
     // Getter e setter
     // ----------------------------------------------------------------

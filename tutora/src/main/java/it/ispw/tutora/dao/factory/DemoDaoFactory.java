@@ -4,6 +4,8 @@ import it.ispw.tutora.dao.*;
 import it.ispw.tutora.dao.demo.*;
 import it.ispw.tutora.enums.ApplicationStatus;
 import it.ispw.tutora.enums.NotificationType;
+import it.ispw.tutora.exception.DatabaseException;
+import it.ispw.tutora.exception.DuplicateUserException;
 import it.ispw.tutora.model.*;
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -39,6 +41,17 @@ import java.time.LocalDateTime;
 public class DemoDaoFactory extends DaoFactory {
 
     // ----------------------------------------------------------------
+    // Costanti per i dati di esempio — evitano literal duplicati
+    // ----------------------------------------------------------------
+
+    private static final String CAT_MUSIC       = "Music";
+    private static final String CAT_PHOTOGRAPHY = "Photography";
+    private static final String CAT_SPORT       = "Sport";
+    private static final String REQ_BIOGRAPHY   = "Biography";
+    private static final String USER_STUDENT    = "student_luigi";
+    private static final String DEMO_PASSWORD   = "Demo1234"; // NOSONAR: dato di esempio in-memory, non credenziale reale
+
+    // ----------------------------------------------------------------
     // Istanze condivise dei DAO demo
     // ----------------------------------------------------------------
 
@@ -61,7 +74,7 @@ public class DemoDaoFactory extends DaoFactory {
             populateUsers();
             populateApplications();
             populateNotifications();
-        } catch (Exception e) {
+        } catch (DatabaseException | DuplicateUserException e) {
             throw new IllegalStateException("Failed to populate demo data", e);
         }
     }
@@ -73,60 +86,60 @@ public class DemoDaoFactory extends DaoFactory {
     private void populateCategories() {
 
         // Music
-        Category music = new Category("Music",
+        Category music = new Category(CAT_MUSIC,
                 "Musical instrument lessons and music theory");
         music.addRequirement(new TextRequirement(
-                "Music", "bio", "Biography",
+                CAT_MUSIC, "bio", REQ_BIOGRAPHY,
                 "Describe your musical background and experience",
                 true, 50, 800));
         music.addRequirement(new TextRequirement(
-                "Music", "subcategory", "Subcategory",
+                CAT_MUSIC, "subcategory", "Subcategory",
                 "Which instrument do you want to teach?",
                 true, 2, 100));
         music.addRequirement(new TextRequirement(
-                "Music", "teaching_exp", "Teaching experience",
+                CAT_MUSIC, "teaching_exp", "Teaching experience",
                 "Describe your experience as a music teacher",
                 false, 0, 600));
         music.addRequirement(new DocumentRequirement(
-                "Music", "music_cert", "Diploma / Certificate",
+                CAT_MUSIC, "music_cert", "Diploma / Certificate",
                 "Music school diploma or conservatory certificate",
                 true));
         music.addRequirement(new DocumentRequirement(
-                "Music", "id_document", "Identity document",
+                CAT_MUSIC, "id_document", "Identity document",
                 "Valid national ID or passport",
                 true));
         categoryDao.add(music);
 
         // Photography
-        Category photography = new Category("Photography",
+        Category photography = new Category(CAT_PHOTOGRAPHY,
                 "Photography technique and post-production");
         photography.addRequirement(new TextRequirement(
-                "Photography", "bio", "Biography",
+                CAT_PHOTOGRAPHY, "bio", REQ_BIOGRAPHY,
                 "Describe your photography experience",
                 true, 50, 800));
         photography.addRequirement(new DocumentRequirement(
-                "Photography", "portfolio", "Portfolio",
+                CAT_PHOTOGRAPHY, "portfolio", "Portfolio",
                 "Upload a sample of your photographic work",
                 true));
         categoryDao.add(photography);
 
         // Sport
-        Category sport = new Category("Sport",
+        Category sport = new Category(CAT_SPORT,
                 "Athletic training and sports coaching");
         sport.addRequirement(new TextRequirement(
-                "Sport", "bio", "Biography",
+                CAT_SPORT, "bio", REQ_BIOGRAPHY,
                 "Describe your sports background",
                 true, 50, 800));
         sport.addRequirement(new DocumentRequirement(
-                "Sport", "certification", "Sports certification",
+                CAT_SPORT, "certification", "Sports certification",
                 "Upload your coaching or sports certification",
                 true));
         categoryDao.add(sport);
     }
 
-    private void populateUsers() throws Exception {
+    private void populateUsers() throws DatabaseException, DuplicateUserException {
 
-        String hash = BCrypt.hashpw("Demo1234", BCrypt.gensalt(10));
+        String hash = BCrypt.hashpw(DEMO_PASSWORD, BCrypt.gensalt(10));
 
         Admin admin = new Admin.Builder()
                 .username("admin")
@@ -141,7 +154,7 @@ public class DemoDaoFactory extends DaoFactory {
         studentDao.insert(null, admin);
 
         Student student = new Student.Builder()
-                .username("student_luigi")
+                .username(USER_STUDENT)
                 .email("luigi.verdi@tutora.it")
                 .name("Luigi")
                 .surname("Verdi")
@@ -169,14 +182,14 @@ public class DemoDaoFactory extends DaoFactory {
         tutorDao.insert(null, tutor);
     }
 
-    private void populateApplications() throws Exception {
+    private void populateApplications() throws DatabaseException {
 
         LocalDateTime submittedAt = LocalDateTime.now().minusDays(2);
 
         TutorApplication application = new TutorApplication(
                 1,
-                "Music",
-                "student_luigi",
+                CAT_MUSIC,
+                USER_STUDENT,
                 submittedAt,
                 ApplicationStatus.SUBMITTED
         );
@@ -198,10 +211,10 @@ public class DemoDaoFactory extends DaoFactory {
         applicationItemDao.insert(null, teachingExpItem);
     }
 
-    private void populateNotifications() throws Exception {
+    private void populateNotifications() throws DatabaseException {
 
         Notification notification = new Notification.Builder()
-                .recipientUsername("student_luigi")
+                .recipientUsername(USER_STUDENT)
                 .senderUsername(null)
                 .message("Your application for Music has been received and is under review.")
                 .type(NotificationType.APPLICATION_UPDATE)

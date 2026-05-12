@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 /**
  * Controller applicativo per UC-2: Apply to Become a Tutor.
@@ -42,6 +43,9 @@ import java.util.UUID;
  *
  */
 public class ApplyToBecomeATutorController {
+
+    private static final Logger LOGGER = Logger.getLogger(
+            ApplyToBecomeATutorController.class.getName());
 
     private final CertificateValidator validator = new CertificateValidationBoundary();
 
@@ -297,7 +301,11 @@ public class ApplyToBecomeATutorController {
 
     private void safeRollback(Connection conn) {
         if (conn == null) return;
-        try { conn.rollback(); } catch (SQLException ignored) {}
+        try {
+            conn.rollback();
+        } catch (SQLException e) {
+            LOGGER.warning("Rollback failed: " + e.getMessage());
+        }
     }
 
     /**

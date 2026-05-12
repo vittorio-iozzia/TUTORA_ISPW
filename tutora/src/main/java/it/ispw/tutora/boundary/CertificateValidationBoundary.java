@@ -74,15 +74,13 @@ public class CertificateValidationBoundary implements CertificateValidator {
         }
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        Future<Boolean> future = null;
         try {
             // traduce la chiamata Java nell'interfaccia dell'Adaptee
-            future = executor.submit(() -> apiClient.callApi(documents));
-
-            return future.get(TIMEOUT_MINUTES, TimeUnit.MINUTES);           // Se il thread non termina entro la scadenza del timer, viene sollevata un'eccezione
+            Future<Boolean> future = executor.submit(() -> apiClient.callApi(documents));
+            return future.get(TIMEOUT_MINUTES, TimeUnit.MINUTES);
 
         } catch (TimeoutException e) {
-            future.cancel(true);
+            // shutdownNow() nel finally interrompe già il task in esecuzione
             throw new ValidationTimeoutException(
                     "Certificate validation timed out after "
                             + TIMEOUT_MINUTES + " minutes.");
