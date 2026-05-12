@@ -5,6 +5,7 @@ import it.ispw.tutora.dao.demo.*;
 import it.ispw.tutora.enums.ApplicationStatus;
 import it.ispw.tutora.enums.NotificationType;
 import it.ispw.tutora.exception.DatabaseException;
+import it.ispw.tutora.exception.DuplicateApplicationException;
 import it.ispw.tutora.exception.DuplicateUserException;
 import it.ispw.tutora.model.*;
 import org.mindrot.jbcrypt.BCrypt;
@@ -44,12 +45,12 @@ public class DemoDaoFactory extends DaoFactory {
     // Costanti per i dati di esempio — evitano literal duplicati
     // ----------------------------------------------------------------
 
-    private static final String CAT_MUSIC       = "Music";
+    private static final String CAT_MUSIC = "Music";
     private static final String CAT_PHOTOGRAPHY = "Photography";
-    private static final String CAT_SPORT       = "Sport";
-    private static final String REQ_BIOGRAPHY   = "Biography";
-    private static final String USER_STUDENT    = "student_luigi";
-    private static final String DEMO_PASSWORD   = "Demo1234"; // NOSONAR: dato di esempio in-memory, non credenziale reale
+    private static final String CAT_SPORT = "Sport";
+    private static final String REQ_BIOGRAPHY = "Biography";
+    private static final String USER_STUDENT = "student_luigi";
+    private static final String DEMO_PASSWORD = "Demo1234"; // NOSONAR: dato di esempio in-memory, non credenziale reale
 
     // ----------------------------------------------------------------
     // Istanze condivise dei DAO demo
@@ -74,7 +75,7 @@ public class DemoDaoFactory extends DaoFactory {
             populateUsers();
             populateApplications();
             populateNotifications();
-        } catch (DatabaseException | DuplicateUserException e) {
+        } catch (DatabaseException | DuplicateUserException | DuplicateApplicationException e) {
             throw new IllegalStateException("Failed to populate demo data", e);
         }
     }
@@ -182,7 +183,7 @@ public class DemoDaoFactory extends DaoFactory {
         tutorDao.insert(null, tutor);
     }
 
-    private void populateApplications() throws DatabaseException {
+    private void populateApplications() throws DatabaseException, DuplicateApplicationException {
 
         LocalDateTime submittedAt = LocalDateTime.now().minusDays(2);
 
