@@ -20,8 +20,6 @@ public class ApplicationReviewBean {
     private ApplicationStatus status;
     private String adminNotes;
 
-    public ApplicationReviewBean() {}
-
     // ----------------------------------------------------------------
     // Getter e setter
     // ----------------------------------------------------------------

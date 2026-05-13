@@ -1,5 +1,6 @@
 package it.ispw.tutora.dao.json;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.ispw.tutora.dao.TutorApplicationDao;
 import it.ispw.tutora.enums.ApplicationStatus;
@@ -72,17 +73,17 @@ public class TutorApplicationDaoJson implements TutorApplicationDao {
                 .orElse(0)                    // Se la lista è vuota restituisce zero
                 + 1;                                // Aggiunge uno per otterene il prossimo id
 
-        AppRecord record = new AppRecord();
-        record.id = id;
-        record.categoryName = application.getCategoryName();
-        record.studentUsername = application.getStudentUsername();
-        record.creationDate = application.getCreationDate().toString();
-        record.status = application.getStatus().name();
-        record.adminNotes = application.getAdminNotes();
-        record.evaluatedAt = application.getEvaluatedAt() != null
+        AppRecord newRecord = new AppRecord();
+        newRecord.id = id;
+        newRecord.categoryName = application.getCategoryName();
+        newRecord.studentUsername = application.getStudentUsername();
+        newRecord.creationDate = application.getCreationDate().toString();
+        newRecord.status = application.getStatus().name();
+        newRecord.adminNotes = application.getAdminNotes();
+        newRecord.evaluatedAt = application.getEvaluatedAt() != null
                 ? application.getEvaluatedAt().toString() : null;
 
-        records.add(record);
+        records.add(newRecord);
         writeAll(records);
         return id;
     }
@@ -191,13 +192,14 @@ public class TutorApplicationDaoJson implements TutorApplicationDao {
     // POJO interno per la deserializzazione Jackson
     // ----------------------------------------------------------------
 
+    @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
     private static class AppRecord {
-        public int id;
-        public String categoryName;
-        public String studentUsername;
-        public String creationDate;
-        public String status;
-        public String adminNotes;
-        public String evaluatedAt;
+        int id;
+        String categoryName;
+        String studentUsername;
+        String creationDate;
+        String status;
+        String adminNotes;
+        String evaluatedAt;
     }
 }

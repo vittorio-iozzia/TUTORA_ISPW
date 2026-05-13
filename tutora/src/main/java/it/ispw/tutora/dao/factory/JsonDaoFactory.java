@@ -17,12 +17,6 @@ import it.ispw.tutora.dao.json.*;
  * Il ciclo di vita è gestito da DaoFactory (Singleton Bill Pugh):
  * questa classe non ha bisogno di essere Singleton autonoma.
  *
- * -----------------------------------------------------------------------
- * Stato attuale
- * -----------------------------------------------------------------------
- * DAO implementati: Category, TutorApplication, Notification,
- * ApplicationItem, Document, Review, User, Tutor.
- * DAO ancora placeholder: Student, Lesson, Booking, TutorExpertise.
  */
 public class JsonDaoFactory extends DaoFactory {
 
@@ -30,7 +24,7 @@ public class JsonDaoFactory extends DaoFactory {
     JsonDaoFactory() {}
 
     // ----------------------------------------------------------------
-    // Metodi factory — tutti placeholder
+    // Metodi factory
     // ----------------------------------------------------------------
 
     @Override
@@ -89,7 +83,5 @@ public class JsonDaoFactory extends DaoFactory {
     }
 
     @Override
-    public ReviewDao createReviewDao() {
-        return new ReviewDaoJson();
-    }
+    public ReviewDao createReviewDao() { return new ReviewDaoJson(); }
 }

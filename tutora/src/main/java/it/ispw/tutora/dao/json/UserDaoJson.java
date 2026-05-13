@@ -1,5 +1,6 @@
 package it.ispw.tutora.dao.json;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.ispw.tutora.dao.UserDao;
 import it.ispw.tutora.enums.Role;
@@ -240,20 +241,21 @@ public class UserDaoJson implements UserDao {
     // protected: accessibile da TutorDaoJson e StudentDaoJson
     // ----------------------------------------------------------------
 
+    @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
     protected static class UserRecord {
-        public String  username;
-        public String  email;
-        public String  name;
-        public String  surname;
-        public String  passwordHash;
-        public String  role;
-        public String  description;
-        public boolean active;
-        public String  createdAt;
+        String  username;
+        String  email;
+        String  name;
+        String  surname;
+        String  passwordHash;
+        String  role;
+        String  description;
+        boolean active;
+        String  createdAt;
 
         // Campi specifici del ruolo — null se non applicabili
-        public String  budget;       // STUDENT
-        public String  rating;       // TUTOR
-        public int ratingCount;  // TUTOR
+        String  budget;       // STUDENT
+        String  rating;       // TUTOR
+        int ratingCount;  // TUTOR
     }
 }

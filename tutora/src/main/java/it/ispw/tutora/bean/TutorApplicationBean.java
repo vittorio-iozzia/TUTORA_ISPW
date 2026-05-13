@@ -3,6 +3,8 @@ package it.ispw.tutora.bean;
 import it.ispw.tutora.enums.ApplicationStatus;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Bean di trasporto per una candidatura tutor (UC-2).
@@ -22,8 +24,7 @@ public class TutorApplicationBean {
     private String adminNotes;
     private LocalDateTime creationDate;
     private LocalDateTime evaluatedAt;
-
-    public TutorApplicationBean() {}
+    private List<ApplicationItemBean> items = new ArrayList<>();
 
     // ----------------------------------------------------------------
     // Getter e setter
@@ -49,4 +50,7 @@ public class TutorApplicationBean {
 
     public LocalDateTime getEvaluatedAt() { return evaluatedAt; }
     public void setEvaluatedAt(LocalDateTime evaluatedAt) { this.evaluatedAt = evaluatedAt; }
+
+    public List<ApplicationItemBean> getItems() { return items; }
+    public void setItems(List<ApplicationItemBean> items) { this.items = items; }
 }

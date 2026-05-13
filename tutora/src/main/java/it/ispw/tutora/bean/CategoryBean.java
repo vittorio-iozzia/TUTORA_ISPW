@@ -14,8 +14,6 @@ public class CategoryBean {
     private String name;
     private String description;
 
-    public CategoryBean() {}
-
     // ----------------------------------------------------------------
     // Getter e setter
     // ----------------------------------------------------------------

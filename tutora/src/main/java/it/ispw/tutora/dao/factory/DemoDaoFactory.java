@@ -4,6 +4,9 @@ import it.ispw.tutora.dao.*;
 import it.ispw.tutora.dao.demo.*;
 import it.ispw.tutora.enums.ApplicationStatus;
 import it.ispw.tutora.enums.NotificationType;
+import it.ispw.tutora.exception.DatabaseException;
+import it.ispw.tutora.exception.DuplicateApplicationException;
+import it.ispw.tutora.exception.DuplicateUserException;
 import it.ispw.tutora.model.*;
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -39,21 +42,31 @@ import java.time.LocalDateTime;
 public class DemoDaoFactory extends DaoFactory {
 
     // ----------------------------------------------------------------
+    // Costanti per i dati di esempio — evitano literal duplicati
+    // ----------------------------------------------------------------
+
+    private static final String CAT_MUSIC = "Music";
+    private static final String CAT_PHOTOGRAPHY = "Photography";
+    private static final String CAT_SPORT = "Sport";
+    private static final String REQ_BIOGRAPHY = "Biography";
+    private static final String USER_STUDENT = "student_luigi";
+    private static final String DEMO_HASH_SEED = "Demo1234"; // dato di esempio in-memory, non credenziale reale
+
+    // ----------------------------------------------------------------
     // Istanze condivise dei DAO demo
     // ----------------------------------------------------------------
 
-    private final UserDaoDemo userDao = new UserDaoDemo();
+    private final StudentDaoDemo studentDao = new StudentDaoDemo();
     private final TutorDaoDemo tutorDao = new TutorDaoDemo();
     private final CategoryDaoDemo categoryDao = new CategoryDaoDemo();
     private final TutorApplicationDaoDemo tutorApplicationDao = new TutorApplicationDaoDemo();
-    private final ApplicationItemDaoDemo   applicationItemDao = new ApplicationItemDaoDemo();
+    private final ApplicationItemDaoDemo applicationItemDao = new ApplicationItemDaoDemo();
     private final DocumentDaoDemo documentDao = new DocumentDaoDemo();
     private final NotificationDaoDemo notificationDao = new NotificationDaoDemo();
-    private final LessonDao lessonDao = new LessonDaoDemo();
-    private final StudentDao studentDao = new StudentDaoDemo();
-    private final BookingDao bookingDao = new BookingDaoDemo();
-    private final TutorExpertiseDao tutorExpertiseDao = new TutorExpertiseDaoDemo();
-    private final ReviewDao reviewDao = new ReviewDaoDemo();
+    private final LessonDaoDemo lessonDao = new LessonDaoDemo();
+    private final BookingDaoDemo bookingDao = new BookingDaoDemo();
+    private final TutorExpertiseDaoDemo tutorExpertiseDao = new TutorExpertiseDaoDemo();
+    private final ReviewDaoDemo reviewDao = new ReviewDaoDemo();
 
     // Costruttore package-private: istanziata solo da DaoFactory.loadFactory()
     DemoDaoFactory() {
@@ -62,7 +75,7 @@ public class DemoDaoFactory extends DaoFactory {
             populateUsers();
             populateApplications();
             populateNotifications();
-        } catch (Exception e) {
+        } catch (DatabaseException | DuplicateUserException | DuplicateApplicationException e) {
             throw new IllegalStateException("Failed to populate demo data", e);
         }
     }
@@ -74,60 +87,60 @@ public class DemoDaoFactory extends DaoFactory {
     private void populateCategories() {
 
         // Music
-        Category music = new Category("Music",
+        Category music = new Category(CAT_MUSIC,
                 "Musical instrument lessons and music theory");
         music.addRequirement(new TextRequirement(
-                "Music", "bio", "Biography",
+                CAT_MUSIC, "bio", REQ_BIOGRAPHY,
                 "Describe your musical background and experience",
                 true, 50, 800));
         music.addRequirement(new TextRequirement(
-                "Music", "subcategory", "Subcategory",
+                CAT_MUSIC, "subcategory", "Subcategory",
                 "Which instrument do you want to teach?",
                 true, 2, 100));
         music.addRequirement(new TextRequirement(
-                "Music", "teaching_exp", "Teaching experience",
+                CAT_MUSIC, "teaching_exp", "Teaching experience",
                 "Describe your experience as a music teacher",
                 false, 0, 600));
         music.addRequirement(new DocumentRequirement(
-                "Music", "music_cert", "Diploma / Certificate",
+                CAT_MUSIC, "music_cert", "Diploma / Certificate",
                 "Music school diploma or conservatory certificate",
                 true));
         music.addRequirement(new DocumentRequirement(
-                "Music", "id_document", "Identity document",
+                CAT_MUSIC, "id_document", "Identity document",
                 "Valid national ID or passport",
                 true));
         categoryDao.add(music);
 
         // Photography
-        Category photography = new Category("Photography",
+        Category photography = new Category(CAT_PHOTOGRAPHY,
                 "Photography technique and post-production");
         photography.addRequirement(new TextRequirement(
-                "Photography", "bio", "Biography",
+                CAT_PHOTOGRAPHY, "bio", REQ_BIOGRAPHY,
                 "Describe your photography experience",
                 true, 50, 800));
         photography.addRequirement(new DocumentRequirement(
-                "Photography", "portfolio", "Portfolio",
+                CAT_PHOTOGRAPHY, "portfolio", "Portfolio",
                 "Upload a sample of your photographic work",
                 true));
         categoryDao.add(photography);
 
         // Sport
-        Category sport = new Category("Sport",
+        Category sport = new Category(CAT_SPORT,
                 "Athletic training and sports coaching");
         sport.addRequirement(new TextRequirement(
-                "Sport", "bio", "Biography",
+                CAT_SPORT, "bio", REQ_BIOGRAPHY,
                 "Describe your sports background",
                 true, 50, 800));
         sport.addRequirement(new DocumentRequirement(
-                "Sport", "certification", "Sports certification",
+                CAT_SPORT, "certification", "Sports certification",
                 "Upload your coaching or sports certification",
                 true));
         categoryDao.add(sport);
     }
 
-    private void populateUsers() throws Exception {
+    private void populateUsers() throws DatabaseException, DuplicateUserException {
 
-        String hash = BCrypt.hashpw("Demo1234", BCrypt.gensalt(10));
+        String hash = BCrypt.hashpw(DEMO_HASH_SEED, BCrypt.gensalt(10));
 
         Admin admin = new Admin.Builder()
                 .username("admin")
@@ -139,10 +152,10 @@ public class DemoDaoFactory extends DaoFactory {
                 .active(true)
                 .createdAt(LocalDateTime.now())
                 .build();
-        userDao.insert(null, admin);
+        studentDao.insert(null, admin);
 
         Student student = new Student.Builder()
-                .username("student_luigi")
+                .username(USER_STUDENT)
                 .email("luigi.verdi@tutora.it")
                 .name("Luigi")
                 .surname("Verdi")
@@ -152,7 +165,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .createdAt(LocalDateTime.now())
                 .budget(new BigDecimal("200.00"))
                 .build();
-        userDao.insert(null, student);
+        studentDao.insert(null, student);
 
         Tutor tutor = new Tutor.Builder()
                 .username("tutor_vitto")
@@ -166,18 +179,18 @@ public class DemoDaoFactory extends DaoFactory {
                 .rating(BigDecimal.ZERO)
                 .ratingCount(0)
                 .build();
-        userDao.insert(null, tutor);
+        studentDao.insert(null, tutor);
         tutorDao.insert(null, tutor);
     }
 
-    private void populateApplications() throws Exception {
+    private void populateApplications() throws DatabaseException, DuplicateApplicationException {
 
         LocalDateTime submittedAt = LocalDateTime.now().minusDays(2);
 
         TutorApplication application = new TutorApplication(
                 1,
-                "Music",
-                "student_luigi",
+                CAT_MUSIC,
+                USER_STUDENT,
                 submittedAt,
                 ApplicationStatus.SUBMITTED
         );
@@ -199,10 +212,10 @@ public class DemoDaoFactory extends DaoFactory {
         applicationItemDao.insert(null, teachingExpItem);
     }
 
-    private void populateNotifications() throws Exception {
+    private void populateNotifications() throws DatabaseException {
 
         Notification notification = new Notification.Builder()
-                .recipientUsername("student_luigi")
+                .recipientUsername(USER_STUDENT)
                 .senderUsername(null)
                 .message("Your application for Music has been received and is under review.")
                 .type(NotificationType.APPLICATION_UPDATE)
@@ -214,11 +227,17 @@ public class DemoDaoFactory extends DaoFactory {
     }
 
     // ----------------------------------------------------------------
-    // Metodi factory — implementati
+    // Metodi factory
     // ----------------------------------------------------------------
 
     @Override
-    public UserDao createUserDao() { return userDao; }
+    public UserDao createUserDao() { return studentDao; }
+
+    @Override
+    public StudentDao createStudentDao() { return studentDao; }
+
+    @Override
+    public TutorDao createTutorDao() { return tutorDao; }
 
     @Override
     public CategoryDao createCategoryDao() { return categoryDao; }
@@ -235,35 +254,15 @@ public class DemoDaoFactory extends DaoFactory {
     @Override
     public NotificationDao createNotificationDao() { return notificationDao; }
 
-    // ----------------------------------------------------------------
-    // Metodi factory — placeholder
-    // ----------------------------------------------------------------
+    @Override
+    public LessonDao createLessonDao() { return lessonDao; }
 
     @Override
-    public StudentDao createStudentDao() {
-        return studentDao;
-    }
+    public BookingDao createBookingDao() { return bookingDao; }
 
     @Override
-    public TutorDao createTutorDao() { return tutorDao; }
+    public TutorExpertiseDao createTutorExpertiseDao() { return tutorExpertiseDao; }
 
     @Override
-    public LessonDao createLessonDao() {
-        return lessonDao;
-    }
-
-    @Override
-    public BookingDao createBookingDao() {
-        return bookingDao;
-    }
-
-    @Override
-    public TutorExpertiseDao createTutorExpertiseDao() {
-        return tutorExpertiseDao;
-    }
-
-    @Override
-    public ReviewDao createReviewDao() {
-        return reviewDao;
-    }
+    public ReviewDao createReviewDao() { return reviewDao; }
 }

@@ -1,5 +1,6 @@
 package it.ispw.tutora.dao.json;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.ispw.tutora.dao.CategoryDao;
 import it.ispw.tutora.exception.CategoryNotFoundException;
@@ -108,26 +109,29 @@ public class CategoryDaoJson implements CategoryDao {
     // Campi package-private: visibili solo a ObjectMapper via reflection.
     // ----------------------------------------------------------------
 
+    @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
     private static class CategoryRecord {
-        public String name;
-        public String description;
-        public List<TextReqRecord> textRequirements;
-        public List<DocReqRecord> documentRequirements;
+        String name;
+        String description;
+        List<TextReqRecord> textRequirements;
+        List<DocReqRecord> documentRequirements;
     }
 
+    @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
     private static class TextReqRecord {
-        public String name;
-        public String label;
-        public String description;
-        public boolean required;
-        public int minChar;
-        public int maxChar;
+        String name;
+        String label;
+        String description;
+        boolean required;
+        int minChar;
+        int maxChar;
     }
 
+    @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
     private static class DocReqRecord {
-        public String name;
-        public String label;
-        public String description;
-        public boolean required;
+        String name;
+        String label;
+        String description;
+        boolean required;
     }
 }

@@ -6,7 +6,7 @@ import it.ispw.tutora.enums.ItemType;
  * Requisito che richiede il caricamento di un documento (PDF, immagine, ecc.).
  * Corrisponde a una riga della tabella document_requirement.
  *
- * Concrete Product dell'Abstract Factory (RequirementFactory).
+ * Sottotipo concreto di {@link Requirement} per upload di documenti.
  */
 public class DocumentRequirement extends Requirement {
 
