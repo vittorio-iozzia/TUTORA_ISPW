@@ -1,6 +1,10 @@
 package it.ispw.tutora.bean;
 
+import it.ispw.tutora.enums.LessonStatus;
+import it.ispw.tutora.model.Lesson;
+
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Bean di trasporto per la ricerca di lezioni disponibili da parte dello student.
@@ -15,22 +19,69 @@ import java.time.LocalDateTime;
  */
 public class LessonStudentBean {
 
+    private int id;
     private String tutorUsername;
     private String subCategoryName;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
+    private List<Lesson> list;
+    private String errorMessage;
 
-    public LessonStudentBean() {}
 
-    public String getTutorUsername() { return tutorUsername; }
-    public void setTutorUsername(String tutorUsername) { this.tutorUsername = tutorUsername; }
+    public void setId(int id) {
+        this.id = id;
+    }
 
-    public String getSubCategoryName() { return subCategoryName; }
-    public void setSubCategoryName(String subCategoryName) { this.subCategoryName = subCategoryName; }
+    public int getId() {
+        return id;
+    }
 
-    public LocalDateTime getStartTime() { return startTime; }
-    public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
+    public String getTutorUsername() {
+        return tutorUsername;
+    }
 
-    public LocalDateTime getEndTime() { return endTime; }
-    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
+    public void setTutorUsername(String tutorUsername) {
+        this.tutorUsername = tutorUsername;
+    }
+
+    public String getSubCategoryName() {
+        return subCategoryName;
+    }
+
+    public void setSubCategoryName(String subCategoryName) {
+        this.subCategoryName = subCategoryName;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public LocalDateTime getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(LocalDateTime endTime) {
+        this.endTime = endTime;
+    }
+
+
+    public List<Lesson> getList() {
+        return list;
+    }
+
+    public void setList(List<Lesson> list) {
+        this.list = list;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
 }

@@ -93,9 +93,10 @@ public class TutorDaoDemo implements TutorDao {
     public void updatePassword(Connection conn, String username,
                                String newPasswordHash)
             throws DatabaseException, UserNotFoundException {
-        if (!cache.containsKey(username)) {
-            throw new UserNotFoundException(username);
-        }
+        if (!cache.containsKey(username)) throw new UserNotFoundException(username);
+        // La password hashata viene inserita nella Map corrispondente poiché passwordHash è final in User.
+        // Limitazione demo: updatePassword() su tutorDao non aggiorna UserDaoDemo.pendingPasswordHashes,
+        // quindi il login (che usa userDao) continuerà a usare l'hash originale.
         pendingPasswordHashes.put(username, newPasswordHash);
     }
 

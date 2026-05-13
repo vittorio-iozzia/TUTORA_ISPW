@@ -1,5 +1,6 @@
 package it.ispw.tutora.dao.json;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.ispw.tutora.dao.TutorExpertiseDao;
 import it.ispw.tutora.enums.Status;
@@ -183,7 +184,7 @@ public class TutorExpertiseDaoJson implements TutorExpertiseDao {
     // ----------------------------------------------------------------
     // POJO interno per la serializzazione Jackson
     // ----------------------------------------------------------------
-
+    @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
     private static class TutorExpertiseRecord {
         public String tutorUsername;
         public String subcategoryName;

@@ -1,5 +1,6 @@
 package it.ispw.tutora.dao.json;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.ispw.tutora.dao.BookingDao;
 import it.ispw.tutora.enums.PaymentStatus;
@@ -80,9 +81,9 @@ public class BookingDaoJson implements BookingDao {
                 .mapToInt(r -> r.id)
                 .max()
                 .orElse(0) + 1;
-        BookingRecord record = toRecord(booking);
-        record.id = nextId;
-        list.add(record);
+        BookingRecord bookingRecord = toRecord(booking);
+        bookingRecord.id = nextId;
+        list.add(bookingRecord);
         writeAll(list);
         return nextId;
     }
@@ -150,7 +151,7 @@ public class BookingDaoJson implements BookingDao {
     // ----------------------------------------------------------------
     // POJO interno per la serializzazione Jackson
     // ----------------------------------------------------------------
-
+    @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
     private static class BookingRecord {
         public int id;
         public int lessonId;

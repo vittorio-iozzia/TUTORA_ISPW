@@ -25,7 +25,6 @@ public class TutorExpertiseBean {
     // I tag vengono trasportati come nomi (stringhe); il Controller crea i Tag model.
     private List<String> expertiseTags;
 
-    public TutorExpertiseBean() {}
 
     public String getSubCategoryName() { return subCategoryName; }
     public void setSubCategoryName(String subCategoryName) { this.subCategoryName = subCategoryName; }

@@ -15,14 +15,31 @@ package it.ispw.tutora.bean;
  */
 public class BookingBean {
 
+    private int id;
     private int lessonId;
     private String paymentRef;
+    private String errorMessage;
 
-    public BookingBean() {}
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public int getLessonId() { return lessonId; }
     public void setLessonId(int lessonId) { this.lessonId = lessonId; }
 
     public String getPaymentRef() { return paymentRef; }
     public void setPaymentRef(String paymentRef) { this.paymentRef = paymentRef; }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
 }
