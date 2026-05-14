@@ -13,6 +13,8 @@ package it.ispw.tutora.bean;
  */
 public class RegistrationBean {
 
+    private static final int MIN_PASSWORD_LENGTH = 8;
+
     private String username;
     private String email;
     private String name;
@@ -33,6 +35,13 @@ public class RegistrationBean {
      */
     public boolean passwordsMatch() {
         return password != null && password.equals(confirmPassword);
+    }
+
+    /**
+     * Verifica che la password rispetti la lunghezza minima.
+     */
+    public boolean isPasswordValid() {
+        return password != null && password.length() >= MIN_PASSWORD_LENGTH;
     }
 
     /**

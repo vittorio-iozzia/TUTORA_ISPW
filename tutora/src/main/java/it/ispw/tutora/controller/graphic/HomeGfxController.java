@@ -5,9 +5,9 @@ import it.ispw.tutora.model.session.SessionManager;
 import it.ispw.tutora.view.SceneManager;
 import it.ispw.tutora.view.home.DashboardComponent;
 import it.ispw.tutora.view.home.DashboardFactory;
-import javafx.animation.ScaleTransition;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -17,7 +17,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.IOException;
@@ -46,7 +45,7 @@ public class HomeGfxController {
     @FXML private Label roleLabel;
     @FXML private Label avatarLabel;
     @FXML private Label headerTitle;
-    @FXML private Label headerAvatarLabel;
+    @FXML private Button headerProfileBtn;
     @FXML private VBox contentArea;
 
     private final List<Button> navButtons = new ArrayList<>();
@@ -71,7 +70,6 @@ public class HomeGfxController {
         roleLabel.setText(roleLabel_);
         roleBadgeLabel.setText(roleLabel_.toUpperCase());
         avatarLabel.setText(initial);
-        headerAvatarLabel.setText(initial);
 
         setupAvatarMenu(session);
         buildNav(session);
@@ -87,22 +85,13 @@ public class HomeGfxController {
     private void setupAvatarMenu(Session session) {
         avatarMenu = buildAvatarMenu(session);
 
-        // Scale animation on hover
-        ScaleTransition up   = new ScaleTransition(Duration.millis(150), sidebarAvatarPane);
-        up.setToX(1.12); up.setToY(1.12);
-        ScaleTransition down = new ScaleTransition(Duration.millis(150), sidebarAvatarPane);
-        down.setToX(1.0);  down.setToY(1.0);
-
-        sidebarAvatarPane.setOnMouseEntered(e -> { down.stop(); up.playFromStart(); });
-        sidebarAvatarPane.setOnMouseExited (e -> { up.stop();   down.playFromStart(); });
-        sidebarAvatarPane.setStyle("-fx-cursor: hand;");
-
-        sidebarAvatarPane.setOnMouseClicked(e -> {
+        // Dropdown aperto dal pulsante profilo in alto a destra
+        headerProfileBtn.setOnAction(e -> {
             if (avatarMenu.isShowing()) {
                 avatarMenu.hide();
             } else {
-                avatarMenu.show(sidebarAvatarPane,
-                        e.getScreenX() + 8, e.getScreenY());
+                avatarMenu.show(headerProfileBtn,
+                        javafx.geometry.Side.BOTTOM, 0, 4);
             }
         });
     }

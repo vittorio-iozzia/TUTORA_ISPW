@@ -52,9 +52,9 @@
                 styleClass="logout-btn"
                 maxWidth="Infinity"
                 contentDisplay="LEFT"
-                graphicTextGap="10">
+                graphicTextGap="12">
             <graphic>
-                <FontIcon iconLiteral="fas-sign-out-alt" iconSize="13" styleClass="logout-icon"/>
+                <FontIcon iconLiteral="fas-sign-out-alt" iconSize="16" styleClass="logout-icon"/>
             </graphic>
             <VBox.margin><Insets bottom="16" left="12" right="12" top="4"/></VBox.margin>
         </Button>
@@ -82,10 +82,12 @@
                 </graphic>
             </Button>
 
-            <!-- User avatar -->
-            <StackPane styleClass="header-avatar">
-                <Label fx:id="headerAvatarLabel" text="U" styleClass="header-avatar-letter"/>
-            </StackPane>
+            <!-- Profile dropdown trigger (sostituisce il cerchio avatar) -->
+            <Button fx:id="headerProfileBtn" styleClass="header-icon-btn">
+                <graphic>
+                    <FontIcon iconLiteral="fas-user-circle" iconSize="22" styleClass="header-profile-icon"/>
+                </graphic>
+            </Button>
 
         </HBox>
 

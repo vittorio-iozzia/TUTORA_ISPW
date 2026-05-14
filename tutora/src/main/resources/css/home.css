@@ -130,10 +130,10 @@
 .logout-btn {
     -fx-background-color: transparent;
     -fx-text-fill: #5C6661;
-    -fx-font-size: 13px;
+    -fx-font-size: 15px;
     -fx-cursor: hand;
     -fx-alignment: center-left;
-    -fx-padding: 8 14;
+    -fx-padding: 9 14;
     -fx-background-radius: 8;
     -fx-font-family: "Segoe UI";
 }
@@ -185,14 +185,9 @@
     -fx-icon-color: #214A9C;
 }
 
-.header-avatar {
-    -fx-background-color: #2A5C45;
-    -fx-background-radius: 18;
-    -fx-min-width: 36px;
-    -fx-min-height: 36px;
-    -fx-max-width: 36px;
-    -fx-max-height: 36px;
-    -fx-cursor: hand;
+/* Pulsante profilo in alto a destra (sostituisce il cerchio avatar) */
+.header-profile-icon {
+    -fx-icon-color: #2A5C45;
 }
 
 .header-profile-btn {
@@ -212,12 +207,6 @@
     -fx-font-family: "Segoe UI";
 }
 
-.header-avatar-letter {
-    -fx-text-fill: white;
-    -fx-font-size: 14px;
-    -fx-font-weight: bold;
-    -fx-font-family: "Segoe UI";
-}
 
 .content-scroll {
     -fx-background-color: transparent;

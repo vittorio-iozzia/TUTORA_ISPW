@@ -65,8 +65,16 @@ public class RegistrationController {
 
     public void register(RegistrationBean bean) {
         // Passo 1: validazione sintattica prima di qualsiasi elaborazione
-        if (!bean.passwordsMatch() || !bean.isComplete()) {
-            bean.setErrorMessage("All fields are required and passwords must match.");
+        if (!bean.isComplete()) {
+            bean.setErrorMessage("All fields are required.");
+            return;
+        }
+        if (!bean.isPasswordValid()) {
+            bean.setErrorMessage("Password must be at least 8 characters.");
+            return;
+        }
+        if (!bean.passwordsMatch()) {
+            bean.setErrorMessage("Passwords do not match.");
             return;
         }
         // Passo 2: hash calcolato solo dopo la validazione

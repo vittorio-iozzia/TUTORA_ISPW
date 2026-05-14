@@ -68,7 +68,7 @@ public class DemoDaoFactory extends DaoFactory {
     // ----------------------------------------------------------------
 
     private final UserDaoDemo userDao = new UserDaoDemo();
-    private final StudentDaoDemo studentDao = new StudentDaoDemo();
+    private final StudentDaoDemo studentDao = new StudentDaoDemo(userDao);
     private final TutorDaoDemo tutorDao = new TutorDaoDemo();
     private final CategoryDaoDemo categoryDao = new CategoryDaoDemo();
     private final TutorApplicationDaoDemo tutorApplicationDao = new TutorApplicationDaoDemo();
@@ -173,7 +173,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .build();
         userDao.insert(null, admin);
 
-        // Student: in userDao (per il login) + studentDao (per operazioni student-specific)
+        // Student: studentDao.insert() scrive in entrambe le cache (userDao + studentDao)
         Student student = new Student.Builder()
                 .username(USER_STUDENT)
                 .email("luigi.verdi@tutora.it")
@@ -185,7 +185,6 @@ public class DemoDaoFactory extends DaoFactory {
                 .createdAt(LocalDateTime.now())
                 .budget(new BigDecimal("200.00"))
                 .build();
-        userDao.insert(null, student);
         studentDao.insert(null, student);
 
         // Tutor: in userDao (per il login) + tutorDao (per operazioni tutor-specific)

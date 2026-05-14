@@ -96,12 +96,6 @@ public class LoginGfxController {
     @FXML private Button toggleAuthBtn;
 
     // ----------------------------------------------------------------
-    // Stato UI
-    // ----------------------------------------------------------------
-
-    private boolean isSignUp = false;
-
-    // ----------------------------------------------------------------
     // Dipendenza applicativa
     // ----------------------------------------------------------------
 
@@ -268,26 +262,7 @@ public class LoginGfxController {
 
     @FXML
     public void handleToggleAuth() {
-        isSignUp = !isSignUp;
-        if (isSignUp) {
-            cardTitle.setText("Create your account");
-            cardSubtitle.setText("Join our learning community");
-            loginButton.setText("Create Account");
-            toggleLabel.setText("Already have an account?");
-            toggleAuthBtn.setText("Sign in");
-        } else {
-            cardTitle.setText("Welcome back");
-            cardSubtitle.setText("Sign in to continue learning");
-            loginButton.setText("Sign In");
-            toggleLabel.setText("Don't have an account?");
-            toggleAuthBtn.setText("Sign up");
-        }
-        hideError();
-
-        FadeTransition ft = new FadeTransition(Duration.millis(180), loginCard);
-        ft.setFromValue(0.75);
-        ft.setToValue(1.0);
-        ft.play();
+        SceneManager.getInstance().showRegister();
     }
 
     // ----------------------------------------------------------------
