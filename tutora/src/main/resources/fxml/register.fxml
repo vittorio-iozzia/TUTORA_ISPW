@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<HBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="it.ispw.tutora.controller.graphic.RegistrationGfxController"
+      styleClass="login-root"
+      stylesheets="@../css/login.css">
+
+    <fx:define>
+        <ToggleGroup fx:id="roleGroup"/>
+    </fx:define>
+
+    <!-- ============================================================ -->
+    <!-- LEFT – Hero panel (identico al login)                        -->
+    <!-- ============================================================ -->
+    <StackPane fx:id="heroPane" HBox.hgrow="ALWAYS">
+
+        <ImageView fx:id="heroImage" preserveRatio="false" smooth="true"/>
+
+        <Region styleClass="hero-overlay" maxWidth="Infinity" maxHeight="Infinity"/>
+
+        <VBox styleClass="hero-content" alignment="TOP_LEFT" spacing="0"
+              maxWidth="Infinity" maxHeight="Infinity">
+
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <FontIcon iconLiteral="fas-book-open" iconSize="32" styleClass="hero-icon"/>
+                <Label text="TUTORA" styleClass="hero-brand-label"/>
+            </HBox>
+
+            <Label text="Join our&#10;community"
+                   styleClass="hero-headline" maxWidth="380" wrapText="true">
+                <VBox.margin><Insets top="32"/></VBox.margin>
+            </Label>
+
+            <Label text="Create an account to start your learning journey or share your knowledge as a tutor."
+                   styleClass="hero-subtitle" maxWidth="360" wrapText="true">
+                <VBox.margin><Insets top="16"/></VBox.margin>
+            </Label>
+
+            <VBox spacing="16">
+                <VBox.margin><Insets top="40"/></VBox.margin>
+                <HBox spacing="14" alignment="CENTER_LEFT">
+                    <StackPane styleClass="stat-icon-bg">
+                        <FontIcon iconLiteral="fas-graduation-cap" iconSize="16" styleClass="stat-icon"/>
+                    </StackPane>
+                    <Label text="500+ Expert Tutors" styleClass="stat-label"/>
+                </HBox>
+                <HBox spacing="14" alignment="CENTER_LEFT">
+                    <StackPane styleClass="stat-icon-bg">
+                        <FontIcon iconLiteral="fas-users" iconSize="16" styleClass="stat-icon"/>
+                    </StackPane>
+                    <Label text="10,000+ Happy Students" styleClass="stat-label"/>
+                </HBox>
+                <HBox spacing="14" alignment="CENTER_LEFT">
+                    <StackPane styleClass="stat-icon-bg">
+                        <FontIcon iconLiteral="fas-book-open" iconSize="16" styleClass="stat-icon"/>
+                    </StackPane>
+                    <Label text="50+ Subject Categories" styleClass="stat-label"/>
+                </HBox>
+            </VBox>
+
+        </VBox>
+    </StackPane>
+
+    <!-- ============================================================ -->
+    <!-- RIGHT – Registration form panel (scrollabile)               -->
+    <!-- ============================================================ -->
+    <ScrollPane fitToWidth="true" styleClass="register-scroll" HBox.hgrow="ALWAYS">
+
+        <VBox alignment="CENTER" styleClass="form-panel">
+
+            <!-- Card -->
+            <VBox fx:id="registerCard" styleClass="login-card" spacing="16">
+
+                <!-- Header -->
+                <VBox alignment="CENTER" spacing="4">
+                    <Label text="Create your account" styleClass="card-title"/>
+                    <Label text="Join our learning community today" styleClass="card-subtitle"/>
+                </VBox>
+
+                <!-- Role selector -->
+                <VBox spacing="8">
+                    <Label text="I am a" styleClass="input-label"/>
+                    <HBox styleClass="role-tabs">
+                        <ToggleButton fx:id="studentTab"
+                                      text="Student"
+                                      toggleGroup="$roleGroup"
+                                      selected="true"
+                                      styleClass="role-tab"
+                                      HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                        <ToggleButton fx:id="tutorTab"
+                                      text="Tutor"
+                                      toggleGroup="$roleGroup"
+                                      styleClass="role-tab"
+                                      HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                        <ToggleButton fx:id="adminTab"
+                                      text="Admin"
+                                      toggleGroup="$roleGroup"
+                                      styleClass="role-tab"
+                                      HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    </HBox>
+                </VBox>
+
+                <!-- ================================================ -->
+                <!-- Form fields                                       -->
+                <!-- ================================================ -->
+                <VBox spacing="14">
+
+                    <!-- First Name / Last Name (fianco a fianco) -->
+                    <HBox spacing="12">
+                        <VBox spacing="5" HBox.hgrow="ALWAYS">
+                            <Label text="First Name *" styleClass="input-label"/>
+                            <TextField fx:id="firstNameField"
+                                       promptText="John"
+                                       styleClass="form-input"/>
+                        </VBox>
+                        <VBox spacing="5" HBox.hgrow="ALWAYS">
+                            <Label text="Last Name *" styleClass="input-label"/>
+                            <TextField fx:id="lastNameField"
+                                       promptText="Doe"
+                                       styleClass="form-input"/>
+                        </VBox>
+                    </HBox>
+
+                    <!-- Username -->
+                    <VBox spacing="5">
+                        <Label text="Username *" styleClass="input-label"/>
+                        <TextField fx:id="usernameField"
+                                   promptText="Choose a username"
+                                   styleClass="form-input"/>
+                    </VBox>
+
+                    <!-- Email -->
+                    <VBox spacing="5">
+                        <Label text="Email Address *" styleClass="input-label"/>
+                        <TextField fx:id="emailField"
+                                   promptText="you@example.com"
+                                   styleClass="form-input"/>
+                    </VBox>
+
+                    <!-- Phone (opzionale) -->
+                    <VBox spacing="5">
+                        <Label text="Phone Number" styleClass="input-label"/>
+                        <TextField fx:id="phoneField"
+                                   promptText="+1 (555) 000-0000"
+                                   styleClass="form-input"/>
+                    </VBox>
+
+                    <!-- Date of Birth / Country (fianco a fianco) -->
+                    <HBox spacing="12">
+                        <VBox spacing="5" HBox.hgrow="ALWAYS">
+                            <Label text="Date of Birth" styleClass="input-label"/>
+                            <DatePicker fx:id="dobPicker"
+                                        styleClass="form-input,date-picker-input"
+                                        maxWidth="Infinity"/>
+                        </VBox>
+                        <VBox spacing="5" HBox.hgrow="ALWAYS">
+                            <Label text="Country" styleClass="input-label"/>
+                            <ComboBox fx:id="countryCombo"
+                                      styleClass="form-input,combo-input"
+                                      promptText="Select country"
+                                      maxWidth="Infinity"/>
+                        </VBox>
+                    </HBox>
+
+                    <!-- Password * (con toggle visibilità) -->
+                    <VBox spacing="5">
+                        <Label text="Password *" styleClass="input-label"/>
+                        <StackPane styleClass="pw-wrapper">
+                            <PasswordField fx:id="passwordField"
+                                           promptText="Min. 8 characters"
+                                           styleClass="form-input,pw-field"
+                                           StackPane.alignment="CENTER_LEFT"/>
+                            <TextField fx:id="passwordVisible"
+                                       promptText="Min. 8 characters"
+                                       styleClass="form-input,pw-field"
+                                       visible="false" managed="false"
+                                       StackPane.alignment="CENTER_LEFT"/>
+                            <Button fx:id="togglePasswordBtn"
+                                    onAction="#handleTogglePassword"
+                                    styleClass="eye-btn"
+                                    StackPane.alignment="CENTER_RIGHT">
+                                <StackPane.margin><Insets right="8"/></StackPane.margin>
+                                <graphic>
+                                    <FontIcon fx:id="pwEyeIcon"
+                                              iconLiteral="fas-eye"
+                                              iconSize="15"
+                                              styleClass="eye-icon"/>
+                                </graphic>
+                            </Button>
+                        </StackPane>
+                    </VBox>
+
+                    <!-- Confirm Password * (con toggle visibilità) -->
+                    <VBox spacing="5">
+                        <Label text="Confirm Password *" styleClass="input-label"/>
+                        <StackPane styleClass="pw-wrapper">
+                            <PasswordField fx:id="confirmPasswordField"
+                                           promptText="Confirm your password"
+                                           styleClass="form-input,pw-field"
+                                           StackPane.alignment="CENTER_LEFT"/>
+                            <TextField fx:id="confirmPasswordVisible"
+                                       promptText="Confirm your password"
+                                       styleClass="form-input,pw-field"
+                                       visible="false" managed="false"
+                                       StackPane.alignment="CENTER_LEFT"/>
+                            <Button fx:id="toggleConfirmPasswordBtn"
+                                    onAction="#handleToggleConfirmPassword"
+                                    styleClass="eye-btn"
+                                    StackPane.alignment="CENTER_RIGHT">
+                                <StackPane.margin><Insets right="8"/></StackPane.margin>
+                                <graphic>
+                                    <FontIcon fx:id="confirmEyeIcon"
+                                              iconLiteral="fas-eye"
+                                              iconSize="15"
+                                              styleClass="eye-icon"/>
+                                </graphic>
+                            </Button>
+                        </StackPane>
+                    </VBox>
+
+                    <!-- Terms & Privacy -->
+                    <HBox spacing="8" alignment="TOP_LEFT">
+                        <CheckBox fx:id="termsCheckBox" styleClass="terms-check"/>
+                        <TextFlow styleClass="terms-flow">
+                            <Text text="I agree to the " styleClass="terms-text"/>
+                            <Hyperlink text="Terms of Service"
+                                       onAction="#handleTermsLink"
+                                       styleClass="terms-link"/>
+                            <Text text=" and " styleClass="terms-text"/>
+                            <Hyperlink text="Privacy Policy"
+                                       onAction="#handlePrivacyLink"
+                                       styleClass="terms-link"/>
+                        </TextFlow>
+                    </HBox>
+
+                </VBox>
+
+                <!-- Messaggio errore (nascosto di default) -->
+                <Label fx:id="errorLabel"
+                       styleClass="error-label"
+                       visible="false" managed="false"
+                       maxWidth="Infinity" wrapText="true"/>
+
+                <!-- Pulsante Create Account -->
+                <Button fx:id="registerButton"
+                        text="Create Account"
+                        onAction="#handleRegister"
+                        defaultButton="true"
+                        styleClass="primary-btn"
+                        maxWidth="Infinity"
+                        disable="true"/>
+
+                <!-- Divider "or sign up with" -->
+                <HBox alignment="CENTER">
+                    <Separator HBox.hgrow="ALWAYS"/>
+                    <Label text="or sign up with" styleClass="divider-label"/>
+                    <Separator HBox.hgrow="ALWAYS"/>
+                </HBox>
+
+                <!-- Social buttons – 2 colonne -->
+                <HBox spacing="12">
+                    <Button fx:id="googleBtn"
+                            onAction="#handleGoogleSignUp"
+                            styleClass="social-btn,google-btn"
+                            HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    <Button fx:id="metaBtn"
+                            onAction="#handleMetaSignUp"
+                            styleClass="social-btn,meta-btn"
+                            HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                </HBox>
+
+                <!-- Toggle → già hai un account? Sign in -->
+                <HBox alignment="CENTER" spacing="4">
+                    <Label text="Already have an account?" styleClass="subtle-text"/>
+                    <Button text="Sign in"
+                            onAction="#handleGoToLogin"
+                            styleClass="link-btn"/>
+                </HBox>
+
+            </VBox>
+
+            <!-- Footer -->
+            <Label text="By continuing, you agree to our Terms of Service and Privacy Policy"
+                   styleClass="footer-text"
+                   maxWidth="400" wrapText="true" textAlignment="CENTER"/>
+
+        </VBox>
+    </ScrollPane>
+
+</HBox>

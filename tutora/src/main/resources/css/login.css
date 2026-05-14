@@ -293,3 +293,153 @@
     -fx-wrap-text: true;
     -fx-padding: 16px 0 0 0;
 }
+
+/* ----------------------------------------------------------------
+   Registration screen – scroll panel
+   ---------------------------------------------------------------- */
+
+.register-scroll {
+    -fx-background-color: #F9F9F8;
+    -fx-background: #F9F9F8;
+    /* rimuove il bordo del ScrollPane */
+    -fx-border-width: 0;
+    -fx-padding: 0;
+}
+
+/* nasconde le scrollbar di sistema */
+.register-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+/* ----------------------------------------------------------------
+   Password wrapper – StackPane con campo e pulsante occhio
+   ---------------------------------------------------------------- */
+
+.pw-wrapper {
+    /* senza background proprio, eredita dal genitore */
+}
+
+.pw-field {
+    /* padding destra extra per non sovrapporre il testo al pulsante occhio */
+    -fx-padding: 10px 38px 10px 14px;
+}
+
+/* ----------------------------------------------------------------
+   Eye button (toggle visibilità password)
+   ---------------------------------------------------------------- */
+
+.eye-btn {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+    -fx-cursor: hand;
+    -fx-padding: 4px 6px;
+    -fx-min-width: 28px;
+    -fx-min-height: 28px;
+}
+
+.eye-btn:hover {
+    -fx-background-color: rgba(0,0,0,0.05);
+    -fx-background-radius: 4px;
+}
+
+.eye-icon {
+    -fx-icon-color: #8C9691;
+}
+
+.eye-btn:hover .eye-icon {
+    -fx-icon-color: #2A5C45;
+}
+
+/* ----------------------------------------------------------------
+   DatePicker e ComboBox form styling
+   ---------------------------------------------------------------- */
+
+.date-picker-input {
+    -fx-background-color: white;
+    -fx-border-color: #E2E8E4;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 0;
+}
+
+.date-picker-input > .text-field {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 10px 8px 10px 14px;
+    -fx-font-size: 13px;
+    -fx-text-fill: #1C2621;
+    -fx-prompt-text-fill: #8C9691;
+}
+
+/* noinspection CssInvalidPseudoSelector */
+.date-picker-input:focused {
+    -fx-border-color: #2A5C45;
+    -fx-border-width: 1.5px;
+    -fx-effect: dropshadow(gaussian, rgba(42,92,69,0.18), 8, 0, 0, 0);
+}
+
+.combo-input {
+    -fx-background-color: white;
+    -fx-border-color: #E2E8E4;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-font-size: 13px;
+    -fx-text-fill: #1C2621;
+    -fx-padding: 0 8px 0 6px;
+    -fx-pref-height: 42px;
+}
+
+/* noinspection CssInvalidPseudoSelector */
+.combo-input:focused {
+    -fx-border-color: #2A5C45;
+    -fx-border-width: 1.5px;
+}
+
+/* ----------------------------------------------------------------
+   Terms & Privacy – TextFlow inline
+   ---------------------------------------------------------------- */
+
+.terms-flow {
+    -fx-line-spacing: 2px;
+}
+
+.terms-text {
+    -fx-fill: #5C6661;
+    -fx-font-size: 13px;
+}
+
+.terms-link {
+    -fx-text-fill: #2A5C45;
+    -fx-font-size: 13px;
+    -fx-underline: true;
+    -fx-border-width: 0;
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+
+.terms-link:hover {
+    -fx-text-fill: #214A37;
+}
+
+.terms-check {
+    -fx-cursor: hand;
+}
+
+/* noinspection CssInvalidPseudoSelector */
+.terms-check:selected {
+    -fx-mark-color: white;
+}
+
+.terms-check > .box {
+    -fx-background-color: white;
+    -fx-border-color: #E2E8E4;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+}
+
+/* noinspection CssInvalidPseudoSelector */
+.terms-check:selected > .box {
+    -fx-background-color: #2A5C45;
+    -fx-border-color: #2A5C45;
+}

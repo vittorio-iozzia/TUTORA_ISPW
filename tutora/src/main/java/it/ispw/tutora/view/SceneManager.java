@@ -61,6 +61,10 @@ public class SceneManager {
         loadScene("login.fxml", 1100, 700);
     }
 
+    public void showRegister() {
+        loadScene("register.fxml", 1100, 760);
+    }
+
     public void showApplyToBecomeATutor() {
         loadScene("apply_to_become_tutor.fxml", 780, 660);
     }
