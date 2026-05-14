@@ -2048,3 +2048,55 @@
     -fx-text-fill: #9CA3AF;
     -fx-text-alignment: center;
 }
+
+/* ================================================================
+   Book Tutor Dialog – Lesson selection cards
+   ================================================================ */
+.booking-lesson-card {
+    -fx-background-color: #F9FCFA;
+    -fx-background-radius: 10;
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 10;
+    -fx-border-width: 1.5;
+    -fx-padding: 14 16;
+    -fx-cursor: hand;
+    -fx-alignment: center-left;
+    -fx-text-fill: transparent;
+}
+
+.booking-lesson-card:hover {
+    -fx-background-color: #F0F7F3;
+    -fx-border-color: #AECEBE;
+}
+
+.booking-lesson-card:selected {
+    -fx-background-color: #EBF5EF;
+    -fx-border-color: #2A5C45;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, rgba(42,92,69,0.12), 8, 0, 0, 2);
+}
+
+/* ================================================================
+   Book Tutor Dialog – Price summary
+   ================================================================ */
+.booking-price-box {
+    -fx-background-color: #F0F7F3;
+    -fx-background-radius: 10;
+    -fx-border-color: #C8DDD3;
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-padding: 14 16;
+}
+
+.booking-price-label {
+    -fx-font-size: 14px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: #4B7A62;
+}
+
+.booking-price-value {
+    -fx-font-size: 22px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-text-fill: #2A5C45;
+}

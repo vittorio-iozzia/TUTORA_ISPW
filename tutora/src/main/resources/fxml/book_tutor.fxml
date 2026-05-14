@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="it.ispw.tutora.controller.graphic.BookTutorGfxController"
+      stylesheets="@../css/home.css"
+      spacing="0" minWidth="560" prefWidth="720" prefHeight="680">
+
+    <!-- ── Header ── -->
+    <HBox styleClass="app-dialog-header" alignment="CENTER_LEFT" spacing="16">
+        <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+        <StackPane styleClass="app-header-icon-wrap">
+            <FontIcon iconLiteral="fas-calendar-check" iconSize="20" styleClass="app-header-icon"/>
+        </StackPane>
+        <VBox spacing="4" HBox.hgrow="ALWAYS">
+            <Label fx:id="titleLabel" text="Book a Lesson" styleClass="app-header-title"/>
+            <Label fx:id="subtitleLabel" text="Select an available slot and your preferred duration."
+                   styleClass="app-header-subtitle" wrapText="true"/>
+        </VBox>
+    </HBox>
+
+    <!-- ── Booking For banner ── -->
+    <HBox styleClass="app-applying-banner" alignment="CENTER_LEFT" spacing="10">
+        <VBox.margin><Insets top="12" right="20" bottom="0" left="20"/></VBox.margin>
+        <padding><Insets top="10" right="14" bottom="10" left="14"/></padding>
+        <StackPane styleClass="app-applying-icon-wrap">
+            <FontIcon iconLiteral="fas-user-tie" iconSize="11" styleClass="app-applying-icon"/>
+        </StackPane>
+        <Label fx:id="bookingBannerLabel" text="Booking with: —" styleClass="app-applying-label"/>
+    </HBox>
+
+    <!-- ── Form (scrollable) ── -->
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="app-scroll">
+        <VBox fx:id="formContainer" spacing="16">
+            <padding><Insets top="20" right="20" bottom="12" left="20"/></padding>
+        </VBox>
+    </ScrollPane>
+
+    <!-- ── Success pane (initially hidden) ── -->
+    <VBox fx:id="successPane" visible="false" managed="false"
+          alignment="CENTER" spacing="18" VBox.vgrow="ALWAYS">
+        <padding><Insets top="48" right="48" bottom="48" left="48"/></padding>
+        <StackPane styleClass="app-success-icon-wrap" maxWidth="72" maxHeight="72">
+            <FontIcon iconLiteral="fas-check-circle" iconSize="34" styleClass="app-success-icon"/>
+        </StackPane>
+        <Label text="Booking request sent!" styleClass="app-success-title"/>
+        <Label text="The tutor will review your request and confirm the lesson. You will be notified when accepted."
+               styleClass="app-success-desc" wrapText="true" textAlignment="CENTER" maxWidth="380"/>
+        <VBox styleClass="app-success-steps" spacing="10" maxWidth="380">
+            <padding><Insets top="14" right="20" bottom="14" left="20"/></padding>
+            <Label text="📋  Tutor reviews your request"   styleClass="app-success-step"/>
+            <Label text="✅  Lesson confirmed"             styleClass="app-success-step"/>
+            <Label text="💳  Complete payment"             styleClass="app-success-step"/>
+            <Label text="🎓  Start learning!"              styleClass="app-success-step"/>
+        </VBox>
+        <Button fx:id="closeBtn" text="Got it!"
+                onAction="#handleClose"
+                styleClass="app-submit-btn"
+                maxWidth="320" prefWidth="320"/>
+    </VBox>
+
+    <!-- ── Footer ── -->
+    <VBox fx:id="footer" styleClass="app-dialog-footer" spacing="10">
+        <padding><Insets top="14" right="20" bottom="14" left="20"/></padding>
+        <Label fx:id="errorLabel" text="" styleClass="app-error-label"
+               visible="false" managed="false" wrapText="true"/>
+        <HBox styleClass="app-tos-box" alignment="TOP_LEFT" spacing="10">
+            <CheckBox fx:id="confirmCheckBox" styleClass="app-tos-check"/>
+            <Label text="I confirm that I want to request this lesson slot. Payment will be processed after the tutor accepts."
+                   styleClass="app-tos-label" wrapText="true" HBox.hgrow="ALWAYS"/>
+        </HBox>
+        <Button fx:id="bookBtn" text="Request Booking"
+                onAction="#handleBook"
+                styleClass="app-submit-btn"
+                maxWidth="Infinity" disable="true"/>
+    </VBox>
+
+</VBox>

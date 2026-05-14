@@ -369,6 +369,40 @@ public class DemoDaoFactory extends DaoFactory {
                 .paymentStatus(PaymentStatus.PAID)
                 .paymentRef("TXN-GUITAR-004")
                 .build());
+
+        // ── Available lessons (for booking dialog demo) ─────────────────
+        Lesson availSax = new Lesson.Builder()
+                .expertise(saxExpertise)
+                .startTime(now.plusDays(7).withHour(10).withMinute(0).withSecond(0).withNano(0))
+                .endTime(now.plusDays(7).withHour(12).withMinute(0).withSecond(0).withNano(0))
+                .remote(true)
+                .listedPrice(new BigDecimal("70.00"))
+                .lessonStatus(LessonStatus.AVAILABLE)
+                .createdAt(now)
+                .build();
+        lessonDao.insertLesson(null, availSax);
+
+        Lesson availGuitar = new Lesson.Builder()
+                .expertise(guitarExpertise)
+                .startTime(now.plusDays(10).withHour(14).withMinute(0).withSecond(0).withNano(0))
+                .endTime(now.plusDays(10).withHour(15).withMinute(30).withSecond(0).withNano(0))
+                .remote(false)
+                .listedPrice(new BigDecimal("45.00"))
+                .lessonStatus(LessonStatus.AVAILABLE)
+                .createdAt(now)
+                .build();
+        lessonDao.insertLesson(null, availGuitar);
+
+        Lesson availPiano = new Lesson.Builder()
+                .expertise(pianoExpertise)
+                .startTime(now.plusDays(14).withHour(9).withMinute(0).withSecond(0).withNano(0))
+                .endTime(now.plusDays(14).withHour(10).withMinute(0).withSecond(0).withNano(0))
+                .remote(true)
+                .listedPrice(new BigDecimal("40.00"))
+                .lessonStatus(LessonStatus.AVAILABLE)
+                .createdAt(now)
+                .build();
+        lessonDao.insertLesson(null, availPiano);
     }
 
     private void populateNotifications() throws DatabaseException {

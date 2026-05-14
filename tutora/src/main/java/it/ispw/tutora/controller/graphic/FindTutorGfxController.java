@@ -395,9 +395,38 @@ public class FindTutorGfxController {
 
         Button bookBtn = new Button("Book");
         bookBtn.getStyleClass().add("book-btn");
+        bookBtn.setOnAction(e -> openBookingDialog(tutor));
 
         footer.getChildren().addAll(spacer, bookBtn);
         return footer;
+    }
+
+    private void openBookingDialog(Tutor tutor) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/book_tutor.fxml"));
+            Parent root = loader.load();
+            BookTutorGfxController ctrl = loader.getController();
+            ctrl.initTutor(tutor);
+
+            javafx.scene.Parent parentRoot = applyBtn.getScene().getRoot();
+            javafx.scene.effect.GaussianBlur blur = new javafx.scene.effect.GaussianBlur(10);
+            javafx.scene.effect.ColorAdjust dim = new javafx.scene.effect.ColorAdjust();
+            dim.setBrightness(-0.35);
+            dim.setInput(blur);
+            parentRoot.setEffect(dim);
+
+            Stage stage = new Stage();
+            stage.initOwner(applyBtn.getScene().getWindow());
+            stage.initModality(Modality.WINDOW_MODAL);
+            stage.setTitle("Book a Lesson · TUTORA");
+            stage.setScene(new Scene(root));
+            stage.setMinWidth(560);
+            stage.setMinHeight(500);
+            stage.setOnHiding(ev -> parentRoot.setEffect(null));
+            stage.show();
+        } catch (java.io.IOException e) {
+            LOGGER.warning("Cannot open booking dialog: " + e.getMessage());
+        }
     }
 
     // ----------------------------------------------------------------

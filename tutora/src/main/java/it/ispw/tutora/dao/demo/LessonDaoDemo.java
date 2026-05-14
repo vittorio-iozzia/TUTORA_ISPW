@@ -84,9 +84,20 @@ public class LessonDaoDemo implements LessonDao {
                 throw new DuplicateLessonException(newLesson.getId());
             }
         }
-        // Assegna l'id e inserisce nella cache
+        // Ricostruisce la lezione con l'id auto-assegnato, come fa DocumentDaoDemo:
+        // id è final → non modificabile dopo la costruzione, va impostato nel Builder.
         int id = nextId++;
-        cache.put(id, newLesson);
+        Lesson stored = new Lesson.Builder()
+                .id(id)
+                .expertise(newLesson.getExpertise())
+                .startTime(newLesson.getStartTime())
+                .endTime(newLesson.getEndTime())
+                .remote(newLesson.isRemote())
+                .listedPrice(newLesson.getListedPrice())
+                .lessonStatus(newLesson.getLessonStatus())
+                .createdAt(newLesson.getCreatedAt())
+                .build();
+        cache.put(id, stored);
         return id;
     }
 

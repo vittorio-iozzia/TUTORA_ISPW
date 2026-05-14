@@ -42,8 +42,19 @@ public class ReviewDaoDemo implements ReviewDao {
             if (r.getBooking().getId() == rev.getBooking().getId())
                 throw new DuplicateReviewException(rev.getId());
         }
+        // Ricostruisce la recensione con l'id auto-assegnato, come fa DocumentDaoDemo:
+        // id è final → non modificabile dopo la costruzione, va impostato nel Builder.
         int id = nextId++;
-        cache.put(id, rev);
+        Review stored = new Review.Builder()
+                .id(id)
+                .booking(rev.getBooking())
+                .student(rev.getStudent())
+                .tutor(rev.getTutor())
+                .rating(rev.getRating())
+                .comment(rev.getComment())
+                .createdAt(rev.getCreatedAt())
+                .build();
+        cache.put(id, stored);
         return id;
     }
 

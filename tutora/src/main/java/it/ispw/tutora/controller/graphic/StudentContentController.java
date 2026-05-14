@@ -13,13 +13,18 @@ import javafx.animation.*;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
@@ -337,7 +342,7 @@ public class StudentContentController {
         bookBtn.getStyleClass().add("book-btn");
         HBox.setHgrow(bookBtn, Priority.ALWAYS);
         bookBtn.setMaxWidth(Double.MAX_VALUE);
-        bookBtn.setOnAction(e -> SceneManager.getInstance().showSearchTutor());
+        bookBtn.setOnAction(e -> openBookingDialog(tutor));
         buttons.getChildren().addAll(profileBtn, bookBtn);
 
         body.getChildren().addAll(name, desc, ratingRow, price, buttons);
@@ -407,6 +412,34 @@ public class StudentContentController {
 
     private String truncate(String text, int max) {
         return text.length() > max ? text.substring(0, max) + "…" : text;
+    }
+
+    private void openBookingDialog(Tutor tutor) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/book_tutor.fxml"));
+            Parent root = loader.load();
+            BookTutorGfxController ctrl = loader.getController();
+            ctrl.initTutor(tutor);
+
+            javafx.scene.Parent parentRoot = tutorGrid.getScene().getRoot();
+            javafx.scene.effect.GaussianBlur blur = new javafx.scene.effect.GaussianBlur(10);
+            javafx.scene.effect.ColorAdjust dim = new javafx.scene.effect.ColorAdjust();
+            dim.setBrightness(-0.35);
+            dim.setInput(blur);
+            parentRoot.setEffect(dim);
+
+            Stage stage = new Stage();
+            stage.initOwner(tutorGrid.getScene().getWindow());
+            stage.initModality(Modality.WINDOW_MODAL);
+            stage.setTitle("Book a Lesson · TUTORA");
+            stage.setScene(new Scene(root));
+            stage.setMinWidth(560);
+            stage.setMinHeight(500);
+            stage.setOnHiding(ev -> parentRoot.setEffect(null));
+            stage.show();
+        } catch (java.io.IOException e) {
+            LOGGER.warning("Cannot open booking dialog: " + e.getMessage());
+        }
     }
 
     // ----------------------------------------------------------------
