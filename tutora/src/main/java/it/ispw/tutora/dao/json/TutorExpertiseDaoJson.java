@@ -186,12 +186,12 @@ public class TutorExpertiseDaoJson implements TutorExpertiseDao {
     // ----------------------------------------------------------------
     @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
     private static class TutorExpertiseRecord {
-        public String tutorUsername;
-        public String subcategoryName;
-        public String hourlyPrice;
-        public String status;
-        public String createdAt;
-        public List<String> tags;
+        String tutorUsername;
+        String subcategoryName;
+        String hourlyPrice;
+        String status;
+        String createdAt;
+        List<String> tags;
     }
 
     // ----------------------------------------------------------------

@@ -244,15 +244,15 @@ public class LessonDaoJson implements LessonDao {
     // ----------------------------------------------------------------
     @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
     private static class LessonRecord {
-        public int id;
-        public String tutorUsername;
-        public String subcategoryName;
-        public String startTime;
-        public String endTime;
-        public boolean isRemote;
-        public String listedPrice;
-        public String status;
-        public String createdAt;
+        int id;
+        String tutorUsername;
+        String subcategoryName;
+        String startTime;
+        String endTime;
+        boolean isRemote;
+        String listedPrice;
+        String status;
+        String createdAt;
     }
 
     // ----------------------------------------------------------------

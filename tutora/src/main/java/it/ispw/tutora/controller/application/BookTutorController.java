@@ -30,6 +30,13 @@ public class BookTutorController {
 
     private static final Logger LOGGER = Logger.getLogger(BookTutorController.class.getName());
 
+    private static final String ERR_UNAUTHORIZED = "Unauthorized.";
+    private static final String ERR_INSUFFICIENT_BUDGET = "Insufficient budget.";
+    private static final String ERR_LESSON_NOT_FOUND = "Lesson not found.";
+    private static final String ERR_ACCOUNT_NOT_FOUND = "Account not found.";
+    private static final String ERR_SYSTEM = "System Error. Try later.";
+    private static final String ERR_INVALID_ARGUMENT = "Invalid argument.";
+
     private final StudentDao student;
     private final BookingDao booking;
     private final LessonDao lesson;
@@ -63,7 +70,7 @@ public class BookTutorController {
             bean.setList(lesson.findByTutorAndStatus(
                     conn, bean.getTutorUsername(), LessonStatus.AVAILABLE));
         } catch (DatabaseException | SQLException e) {
-            bean.setErrorMessage("System Error. Try later.");
+            bean.setErrorMessage(ERR_SYSTEM);
         }
     }
 
@@ -80,7 +87,7 @@ public class BookTutorController {
         SessionManager sm = SessionManager.getInstance();
         // Verifica sessione prima di aprire la connessione
         if (!sm.isSessionValid(token) || !sm.getSession(token).isStudent()) {
-            bean.setErrorMessage("Unauthorized.");
+            bean.setErrorMessage(ERR_UNAUTHORIZED);
             return;
         }
         String username = sm.getCurrentUser(token).getUsername();
@@ -90,7 +97,7 @@ public class BookTutorController {
             Student stu = student.selectStudent(conn, username);
             // Pre-verifica del budget: se insufficiente si interrompe prima di notificare il tutor
             if (!stu.hasSufficientBudget(less.getListedPrice())) {
-                bean.setErrorMessage("Insufficient budget.");
+                bean.setErrorMessage(ERR_INSUFFICIENT_BUDGET);
                 return;
             }
             Notification notify = new Notification.Builder()
@@ -105,11 +112,11 @@ public class BookTutorController {
                     .build();
             notification.insert(conn, notify);
         } catch (LessonNotFoundException e) {
-            bean.setErrorMessage("Lesson not found.");
+            bean.setErrorMessage(ERR_LESSON_NOT_FOUND);
         } catch (UserNotFoundException e) {
-            bean.setErrorMessage("Account not found.");
+            bean.setErrorMessage(ERR_ACCOUNT_NOT_FOUND);
         } catch (DatabaseException | SQLException e) {
-            bean.setErrorMessage("System Error. Try later.");
+            bean.setErrorMessage(ERR_SYSTEM);
         }
     }
 
@@ -128,7 +135,7 @@ public class BookTutorController {
         SessionManager sm = SessionManager.getInstance();
         // Verifica che il chiamante sia un tutor autenticato
         if (!sm.isSessionValid(token) || !sm.getSession(token).isTutor()) {
-            bean.setErrorMessage("Unauthorized.");
+            bean.setErrorMessage(ERR_UNAUTHORIZED);
             return;
         }
         String tutorUsername = sm.getCurrentUser(token).getUsername();
@@ -171,18 +178,18 @@ public class BookTutorController {
                 if (conn != null) conn.commit();
             } catch (LessonNotFoundException e) {
                 safeRollback(conn);
-                bean.setErrorMessage("Lesson not found.");
+                bean.setErrorMessage(ERR_LESSON_NOT_FOUND);
             } catch (IllegalArgumentException e) {
                 // FSM violation: la lezione non e' piu' in stato AVAILABLE
                 safeRollback(conn);
-                bean.setErrorMessage("Invalid argument.");
+                bean.setErrorMessage(ERR_INVALID_ARGUMENT);
             } catch (DatabaseException | SQLException e) {
                 // safeRollback evita che una SQLException dal rollback inghiotta l'eccezione originale
                 safeRollback(conn);
-                bean.setErrorMessage("System Error. Try later.");
+                bean.setErrorMessage(ERR_SYSTEM);
             }
         } catch (DatabaseException | SQLException e) {
-            bean.setErrorMessage("System Error. Try later.");
+            bean.setErrorMessage(ERR_SYSTEM);
         }
     }
 
@@ -205,7 +212,7 @@ public class BookTutorController {
         SessionManager sm = SessionManager.getInstance();
         // Verifica sessione prima di aprire la connessione
         if (!sm.isSessionValid(token) || !sm.getSession(token).isStudent()) {
-            bean.setErrorMessage("Unauthorized.");
+            bean.setErrorMessage(ERR_UNAUTHORIZED);
             return;
         }
         String username = sm.getCurrentUser(token).getUsername();
@@ -217,18 +224,18 @@ public class BookTutorController {
             Lesson less = lesson.selectLesson(conn, bean.getLessonId());
             Student stu = student.selectStudent(conn, username);
             if (!stu.hasSufficientBudget(less.getListedPrice())) {
-                bean.setErrorMessage("Insufficient budget.");
+                bean.setErrorMessage(ERR_INSUFFICIENT_BUDGET);
                 return;
             }
             price = less.getListedPrice();
         } catch (LessonNotFoundException e) {
-            bean.setErrorMessage("Lesson not found.");
+            bean.setErrorMessage(ERR_LESSON_NOT_FOUND);
             return;
         } catch (UserNotFoundException e) {
-            bean.setErrorMessage("Account not found.");
+            bean.setErrorMessage(ERR_ACCOUNT_NOT_FOUND);
             return;
         } catch (DatabaseException | SQLException e) {
-            bean.setErrorMessage("System Error. Try later.");
+            bean.setErrorMessage(ERR_SYSTEM);
             return;
         }
 
@@ -259,7 +266,7 @@ public class BookTutorController {
                 Lesson less = lesson.selectLesson(conn, bean.getLessonId());
                 // Ri-verifica budget: potrebbe essere cambiato tra la Fase 1 e ora
                 if (!stu.hasSufficientBudget(less.getListedPrice())) {
-                    bean.setErrorMessage("Insufficient budget.");
+                    bean.setErrorMessage(ERR_INSUFFICIENT_BUDGET);
                     return;
                 }
                 Booking booking1 = new Booking.Builder()
@@ -290,24 +297,24 @@ public class BookTutorController {
                 if (conn != null) conn.commit();
             } catch (LessonNotFoundException e) {
                 safeRollback(conn);
-                bean.setErrorMessage("Lesson not found.");
+                bean.setErrorMessage(ERR_LESSON_NOT_FOUND);
             } catch (UserNotFoundException e) {
                 safeRollback(conn);
-                bean.setErrorMessage("Account not found.");
+                bean.setErrorMessage(ERR_ACCOUNT_NOT_FOUND);
             } catch (BookingNotFoundException e) {
                 safeRollback(conn);
                 bean.setErrorMessage("Booking not found.");
             } catch (IllegalArgumentException e) {
                 // FSM violation: stato della booking o del budget non valido
                 safeRollback(conn);
-                bean.setErrorMessage("Invalid argument.");
+                bean.setErrorMessage(ERR_INVALID_ARGUMENT);
             } catch (DatabaseException | SQLException e) {
                 // safeRollback evita che una SQLException dal rollback inghiotta l'eccezione originale
                 safeRollback(conn);
-                bean.setErrorMessage("System Error. Try later.");
+                bean.setErrorMessage(ERR_SYSTEM);
             }
         } catch (DatabaseException | SQLException e) {
-            bean.setErrorMessage("System Error. Try later.");
+            bean.setErrorMessage(ERR_SYSTEM);
         }
     }
 
