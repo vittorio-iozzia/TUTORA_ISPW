@@ -24,7 +24,6 @@ public class TutorExpertiseReviewBean {
     private Status status;
     private String adminNotes;
 
-    public TutorExpertiseReviewBean() {}
 
     public String getTutorUsername() { return tutorUsername; }
     public void setTutorUsername(String tutorUsername) { this.tutorUsername = tutorUsername; }

@@ -91,19 +91,24 @@ public class TutorExpertiseDaoDb implements TutorExpertiseDao {
             ps.setString(2, expertise.getSubcategory().getName());
             ps.setBigDecimal(3, expertise.getHourlyPrice());
             ps.executeUpdate();
-            try (PreparedStatement preparedStatement = conn.prepareStatement(SQL_INSERT_TAG)) {
-                preparedStatement.setString(1, expertise.getTutor().getUsername());
-                preparedStatement.setString(2, expertise.getSubcategory().getName());
-                for (Tag tag : expertise.getExpertiseTags()) {
-                    preparedStatement.setString(3, tag.getName());
-                    preparedStatement.addBatch();
-                }
-                preparedStatement.executeBatch();
-            } catch (SQLIntegrityConstraintViolationException e) {
-                throw new DuplicateTutorExpertiseException("Tutor Expertise already present.");
-            }
+            insertTags(conn, expertise);
+        } catch (SQLIntegrityConstraintViolationException e) {
+            throw new DuplicateTutorExpertiseException("Tutor Expertise already present.");
         } catch (SQLException e) {
             throw new DatabaseException("System Error: ", e);
+        }
+    }
+
+    private void insertTags(Connection conn, TutorExpertise expertise)
+            throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(SQL_INSERT_TAG)) {
+            ps.setString(1, expertise.getTutor().getUsername());
+            ps.setString(2, expertise.getSubcategory().getName());
+            for (Tag tag : expertise.getExpertiseTags()) {
+                ps.setString(3, tag.getName());
+                ps.addBatch();
+            }
+            ps.executeBatch();
         }
     }
 

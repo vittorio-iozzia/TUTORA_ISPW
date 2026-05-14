@@ -25,7 +25,6 @@ public class LessonTutorBean {
     private boolean isRemote;
     private BigDecimal listedPrice;
 
-    public LessonTutorBean() {}
 
     public String getSubcategoryName() { return subcategoryName; }
     public void setSubcategoryName(String subcategoryName) { this.subcategoryName = subcategoryName; }

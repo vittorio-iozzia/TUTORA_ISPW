@@ -19,6 +19,9 @@ public class RegistrationBean {
     private String surname;
     private String password;
     private String confirmPassword;
+    private boolean success;
+    private String errorMessage;
+
 
     // ----------------------------------------------------------------
     // Validazione sintattica (no logica di business)
@@ -73,4 +76,16 @@ public class RegistrationBean {
 
     public String getConfirmPassword() { return confirmPassword; }
     public void setConfirmPassword(String confirmPassword) { this.confirmPassword = confirmPassword; }
+    public boolean isSuccess() {
+        return success;
+    }
+    public void setSuccess(boolean success) {
+        this.success = success;
+    }
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
 }

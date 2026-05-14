@@ -1,5 +1,6 @@
 package it.ispw.tutora.dao.json;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.ispw.tutora.dao.LessonDao;
 import it.ispw.tutora.enums.LessonStatus;
@@ -57,6 +58,7 @@ public class LessonDaoJson implements LessonDao {
 
     private static final String JSON_PATH = "../tutora_data/lessons.json";
     private final ObjectMapper mapper = new ObjectMapper();
+    private static final String STATUS_CANCELLED = "Cancelled";
 
     /**
      * Inserisce una nuova lezione nel file JSON dopo aver verificato
@@ -71,7 +73,7 @@ public class LessonDaoJson implements LessonDao {
         List<LessonRecord> records = readAll();
         for (LessonRecord r : records) {
             if (r.tutorUsername.equals(newLesson.getExpertise().getTutor().getUsername())
-                    && !r.status.equals("Cancelled")
+                    && !r.status.equals(STATUS_CANCELLED)
                     && LocalDateTime.parse(r.startTime).isBefore(newLesson.getEndTime())
                     && LocalDateTime.parse(r.endTime).isAfter(newLesson.getStartTime())) {
                 throw new DuplicateLessonException(newLesson.getId());
@@ -81,9 +83,9 @@ public class LessonDaoJson implements LessonDao {
                 .mapToInt(r -> r.id)
                 .max()
                 .orElse(0) + 1;
-        LessonRecord record = toRecord(newLesson);
-        record.id = nextId;
-        records.add(record);
+        LessonRecord lessonRecord= toRecord(newLesson);
+        lessonRecord.id = nextId;
+        records.add(lessonRecord);
         writeAll(records);
         return nextId;
     }
@@ -103,7 +105,7 @@ public class LessonDaoJson implements LessonDao {
         for (LessonRecord r : records) {
             if (r.id != lesson.getId()
                     && r.tutorUsername.equals(lesson.getExpertise().getTutor().getUsername())
-                    && !r.status.equals("Cancelled")
+                    && !r.status.equals(STATUS_CANCELLED)
                     && LocalDateTime.parse(r.startTime).isBefore(lesson.getEndTime())
                     && LocalDateTime.parse(r.endTime).isAfter(lesson.getStartTime())) {
                 throw new DuplicateLessonException(lesson.getId());
@@ -240,7 +242,7 @@ public class LessonDaoJson implements LessonDao {
     // ----------------------------------------------------------------
     // POJO interno per la serializzazione Jackson
     // ----------------------------------------------------------------
-
+    @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
     private static class LessonRecord {
         public int id;
         public String tutorUsername;
@@ -262,7 +264,7 @@ public class LessonDaoJson implements LessonDao {
             case AVAILABLE -> "Available";
             case BOOKED    -> "Booked";
             case COMPLETED -> "Completed";
-            case CANCELLED -> "Cancelled";
+            case CANCELLED -> STATUS_CANCELLED;
         };
     }
 
@@ -271,7 +273,7 @@ public class LessonDaoJson implements LessonDao {
             case "Available" -> LessonStatus.AVAILABLE;
             case "Booked"    -> LessonStatus.BOOKED;
             case "Completed" -> LessonStatus.COMPLETED;
-            case "Cancelled" -> LessonStatus.CANCELLED;
+            case STATUS_CANCELLED -> LessonStatus.CANCELLED;
             default -> throw new IllegalArgumentException("Unknown lesson status: " + s);
         };
     }

@@ -19,7 +19,7 @@ public class ReviewBean {
     private int rating;
     private String comment;
 
-    public ReviewBean() {}
+
 
     public int getBookingId() { return bookingId; }
     public void setBookingId(int bookingId) { this.bookingId = bookingId; }
