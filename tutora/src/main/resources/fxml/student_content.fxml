@@ -14,28 +14,32 @@
     <!-- ============================================================ -->
     <!-- Hero Banner                                                   -->
     <!-- ============================================================ -->
-    <HBox styleClass="dash-hero" alignment="CENTER_LEFT" spacing="36">
-        <padding><Insets top="28" right="32" bottom="28" left="32"/></padding>
+    <StackPane fx:id="heroPane" styleClass="dash-hero" minHeight="190">
 
-        <!-- Left: text -->
-        <VBox spacing="14" HBox.hgrow="ALWAYS">
-            <HBox spacing="8" alignment="CENTER_LEFT">
-                <Label text="🎓" style="-fx-font-size:18px;"/>
-                <Label text="STUDENT DASHBOARD" styleClass="dash-hero-chip"/>
-            </HBox>
-            <Label fx:id="welcomeTitle" text="Welcome back!" styleClass="dash-hero-title"/>
-            <Label text="Ready to learn something new today?" styleClass="dash-hero-subtitle"/>
-            <HBox spacing="10" alignment="CENTER_LEFT">
-                <Label text="📅  Upcoming lessons" styleClass="dash-hero-pill"/>
-                <Label text="⭐  Keep learning!" styleClass="dash-hero-pill"/>
-            </HBox>
-        </VBox>
+        <!-- Background photo (size bound to pane in controller) -->
+        <ImageView fx:id="heroBgImageView" preserveRatio="false" smooth="true"/>
 
-        <!-- Right: illustration -->
-        <StackPane styleClass="dash-hero-img-wrap">
-            <ImageView fx:id="heroImageView" fitWidth="200" fitHeight="150" preserveRatio="false"/>
-        </StackPane>
-    </HBox>
+        <!-- Dark gradient overlay -->
+        <Region styleClass="dash-hero-overlay" maxWidth="Infinity" maxHeight="Infinity"/>
+
+        <!-- Text content -->
+        <HBox alignment="CENTER_LEFT" spacing="36" maxWidth="Infinity">
+            <padding><Insets top="28" right="32" bottom="28" left="32"/></padding>
+            <VBox spacing="14" HBox.hgrow="ALWAYS">
+                <HBox spacing="8" alignment="CENTER_LEFT">
+                    <Label text="🎓" style="-fx-font-size:18px;"/>
+                    <Label text="STUDENT DASHBOARD" styleClass="dash-hero-chip"/>
+                </HBox>
+                <Label fx:id="welcomeTitle" text="Welcome back!" styleClass="dash-hero-title"/>
+                <Label text="Ready to learn something new today?" styleClass="dash-hero-subtitle"/>
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="📅  Upcoming lessons" styleClass="dash-hero-pill"/>
+                    <Label text="⭐  Keep learning!" styleClass="dash-hero-pill"/>
+                </HBox>
+            </VBox>
+        </HBox>
+
+    </StackPane>
 
     <!-- ============================================================ -->
     <!-- Stats row                                                    -->

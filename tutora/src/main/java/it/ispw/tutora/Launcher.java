@@ -1,4 +1,4 @@
-package it.ispw.tutora;
+ package it.ispw.tutora;
 
 /**
  * Entry point per l'avvio dall'IDE e da JAR eseguibile.

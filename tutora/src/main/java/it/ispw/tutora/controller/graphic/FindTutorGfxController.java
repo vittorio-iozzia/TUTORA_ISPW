@@ -22,7 +22,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -85,16 +85,16 @@ public class FindTutorGfxController {
 
     private static final Map<String, String> PHOTO_URLS = Map.of(
         "tutor_vitto",
-        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=104&h=104&fit=crop&crop=face"
+        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=200&fit=crop&crop=faces"
     );
 
     private static final List<String> PORTRAIT_POOL = List.of(
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=104&h=104&fit=crop&crop=face",
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=104&h=104&fit=crop&crop=face",
-        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=104&h=104&fit=crop&crop=face",
-        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=104&h=104&fit=crop&crop=face",
-        "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=104&h=104&fit=crop&crop=face",
-        "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=104&h=104&fit=crop&crop=face"
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=200&fit=crop&crop=faces",
+        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&h=200&fit=crop&crop=faces",
+        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&h=200&fit=crop&crop=faces",
+        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=200&fit=crop&crop=faces",
+        "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=300&h=200&fit=crop&crop=faces",
+        "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300&h=200&fit=crop&crop=faces"
     );
 
     // ----------------------------------------------------------------
@@ -312,46 +312,38 @@ public class FindTutorGfxController {
     // ----------------------------------------------------------------
 
     private VBox buildTutorCard(Tutor tutor, int poolIndex) {
-        VBox card = new VBox(12);
+        VBox card = new VBox(0);
         card.getStyleClass().add("tutor-card");
-        card.setPrefWidth(295);
+        card.setPrefWidth(280);
 
-        // ── Header: photo + name + desc ──
-        HBox header = new HBox(14);
-        header.setAlignment(Pos.CENTER_LEFT);
-        StackPane photo = buildPhotoPane(tutor, poolIndex);
+        // ── Cover photo (top half) ──
+        StackPane photo = buildPhotoHalf(tutor, poolIndex);
 
-        VBox nameBox = new VBox(3);
+        // ── Body ──
+        VBox body = new VBox(10);
+        body.getStyleClass().add("tutor-card-body");
+
         Label name = new Label(tutor.getFullName());
         name.getStyleClass().add("tutor-name");
+
         String descText = tutor.getDescription() != null
-                ? truncate(tutor.getDescription(), 48)
+                ? truncate(tutor.getDescription(), 55)
                 : "@" + tutor.getUsername();
         Label desc = new Label(descText);
         desc.getStyleClass().add("tutor-subject");
         desc.setWrapText(true);
-        nameBox.getChildren().addAll(name, desc);
-        HBox.setHgrow(nameBox, Priority.ALWAYS);
-        header.getChildren().addAll(photo, nameBox);
 
-        // ── Rating ──
         HBox ratingRow = buildRatingRow(tutor);
 
-        // ── Expertise chips ──
         List<String> chips = expertiseNames.getOrDefault(tutor.getUsername(), List.of());
-        FlowPane chipsPane = buildChipsPane(chips);
 
-        // ── Divider ──
-        Separator sep = new Separator();
-        sep.setStyle("-fx-background-color: #F3F4F6;");
-
-        // ── Footer: price + book ──
         HBox footer = buildFooter(tutor);
 
-        card.getChildren().addAll(header, ratingRow);
-        if (!chips.isEmpty()) card.getChildren().add(chipsPane);
-        card.getChildren().addAll(sep, footer);
+        body.getChildren().addAll(name, desc, ratingRow);
+        if (!chips.isEmpty()) body.getChildren().add(buildChipsPane(chips));
+        body.getChildren().add(footer);
 
+        card.getChildren().addAll(photo, body);
         addHoverLift(card);
         return card;
     }
@@ -474,44 +466,59 @@ public class FindTutorGfxController {
     }
 
     // ----------------------------------------------------------------
-    // Photo pane
+    // Photo half (card cover — top-only rounded corners)
     // ----------------------------------------------------------------
 
-    private StackPane buildPhotoPane(Tutor tutor, int poolIndex) {
+    private StackPane buildPhotoHalf(Tutor tutor, int poolIndex) {
         StackPane pane = new StackPane();
-        pane.getStyleClass().add("tutor-avatar");
+        pane.getStyleClass().add("tutor-card-photo-wrap");
+        pane.setPrefHeight(160);
+        pane.setMinHeight(160);
+        pane.setMaxHeight(160);
+
+        Label initial = new Label(String.valueOf(tutor.getName().charAt(0)).toUpperCase());
+        initial.getStyleClass().add("tutor-card-photo-initial");
+        pane.getChildren().add(initial);
+
+        ImageView imgView = new ImageView();
+        imgView.setFitWidth(280);
+        imgView.setFitHeight(160);
+        imgView.setPreserveRatio(false);
+        imgView.setSmooth(true);
+        pane.getChildren().add(imgView);
+
+        // Clip taller than pane so bottom arcs are invisible — only top corners round
+        Rectangle photoClip = new Rectangle(280, 400);
+        photoClip.setArcWidth(28);
+        photoClip.setArcHeight(28);
+        pane.setClip(photoClip);
+
+        // Featured badge — top-left
+        Label featured = new Label("⭐ Featured");
+        featured.getStyleClass().add("tutor-card-featured-badge");
+        StackPane.setAlignment(featured, Pos.TOP_LEFT);
+        StackPane.setMargin(featured, new Insets(10, 0, 0, 10));
+
+        // Mode badge — top-right
+        boolean isRemote = (poolIndex % 2 == 0);
+        Label mode = new Label(isRemote ? "Online" : "In-Person");
+        mode.getStyleClass().add(isRemote ? "tutor-card-online-badge" : "tutor-card-inperson-badge");
+        StackPane.setAlignment(mode, Pos.TOP_RIGHT);
+        StackPane.setMargin(mode, new Insets(10, 10, 0, 0));
+
+        pane.getChildren().addAll(featured, mode);
 
         String photoUrl = PHOTO_URLS.getOrDefault(
                 tutor.getUsername(),
                 PORTRAIT_POOL.get(poolIndex % PORTRAIT_POOL.size()));
-
-        ImageView imgView = new ImageView();
-        imgView.setFitWidth(52);
-        imgView.setFitHeight(52);
-        imgView.setPreserveRatio(false);
-        imgView.setSmooth(true);
-        imgView.setClip(buildCircleClip());
-
-        Label initial = new Label(String.valueOf(tutor.getName().charAt(0)).toUpperCase());
-        initial.getStyleClass().add("tutor-avatar-letter");
-        pane.getChildren().add(initial);
-
-        Image img = new Image(photoUrl, 104, 104, true, true, true);
+        Image img = new Image(photoUrl, 300, 200, false, true, true);
         img.progressProperty().addListener((obs, oldV, newV) -> {
             if (newV.doubleValue() >= 1.0 && !img.isError()) {
                 imgView.setImage(img);
-                pane.getChildren().setAll(imgView);
             }
         });
 
         return pane;
-    }
-
-    private Circle buildCircleClip() {
-        Circle clip = new Circle(26);
-        clip.setCenterX(26);
-        clip.setCenterY(26);
-        return clip;
     }
 
     private String truncate(String text, int max) {

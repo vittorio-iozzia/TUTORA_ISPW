@@ -250,9 +250,18 @@
    Student home – Dashboard Hero Banner
    ================================================================ */
 .dash-hero {
-    -fx-background-color: linear-gradient(from 0% 100% to 100% 0%, #163325 0%, #2F6E52 100%);
+    -fx-background-color: #163325;
     -fx-background-radius: 20;
-    -fx-effect: dropshadow(gaussian, rgba(22,51,37,0.38), 22, 0, 0, 7);
+}
+
+.dash-hero-overlay {
+    -fx-background-color: linear-gradient(
+        from 0% 0% to 100% 0%,
+        rgba(16,45,30,0.90) 0%,
+        rgba(22,55,38,0.72) 55%,
+        rgba(16,45,30,0.42) 100%
+    );
+    -fx-background-radius: 20;
 }
 
 .dash-hero-chip {
@@ -286,14 +295,6 @@
     -fx-padding: 5 14;
 }
 
-.dash-hero-img-wrap {
-    -fx-background-color: rgba(255,255,255,0.08);
-    -fx-background-radius: 14;
-    -fx-min-width: 200;
-    -fx-max-width: 200;
-    -fx-min-height: 150;
-    -fx-max-height: 150;
-}
 
 /* Legacy welcome classes (still used in My Lessons / Find Tutors heroes) */
 .welcome-section {
@@ -479,30 +480,67 @@
     -fx-border-color: #E5E7EB;
     -fx-border-radius: 14;
     -fx-border-width: 1;
-    -fx-padding: 24;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);
+    -fx-padding: 0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 10, 0, 0, 3);
     -fx-cursor: hand;
 }
 
 .tutor-card:hover {
     -fx-border-color: #CBD5E1;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.13), 16, 0, 0, 6);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 18, 0, 0, 6);
 }
 
-.tutor-avatar {
-    -fx-min-width: 52px;
-    -fx-min-height: 52px;
-    -fx-max-width: 52px;
-    -fx-max-height: 52px;
+/* Cover photo area (top half of card) */
+.tutor-card-photo-wrap {
     -fx-background-color: #2A5C45;
-    -fx-background-radius: 26;
+    -fx-background-radius: 14 14 0 0;
 }
 
-.tutor-avatar-letter {
-    -fx-text-fill: white;
-    -fx-font-size: 20px;
+.tutor-card-photo-initial {
+    -fx-text-fill: rgba(255,255,255,0.65);
+    -fx-font-size: 38px;
     -fx-font-weight: bold;
     -fx-font-family: "Segoe UI";
+}
+
+/* Featured badge */
+.tutor-card-featured-badge {
+    -fx-background-color: #F97316;
+    -fx-background-radius: 20;
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-padding: 5 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.32), 6, 0, 0, 2);
+}
+
+/* Online / In-Person mode badges */
+.tutor-card-online-badge {
+    -fx-background-color: rgba(5,150,105,0.92);
+    -fx-background-radius: 20;
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-padding: 5 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.30), 6, 0, 0, 2);
+}
+
+.tutor-card-inperson-badge {
+    -fx-background-color: rgba(79,70,229,0.92);
+    -fx-background-radius: 20;
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-padding: 5 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.30), 6, 0, 0, 2);
+}
+
+/* Card body below photo */
+.tutor-card-body {
+    -fx-padding: 14 16 16 16;
 }
 
 .tutor-name {
@@ -536,6 +574,31 @@
     -fx-font-family: "Segoe UI";
 }
 
+.tutor-price {
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1C2621;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+}
+
+.profile-btn {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+    -fx-border-color: #2A5C45;
+    -fx-border-radius: 8;
+    -fx-border-width: 1.5;
+    -fx-text-fill: #2A5C45;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI";
+    -fx-padding: 8 14;
+    -fx-cursor: hand;
+}
+
+.profile-btn:hover {
+    -fx-background-color: #F0F7F3;
+}
+
 .book-btn {
     -fx-background-color: #2A5C45;
     -fx-background-radius: 8;
@@ -543,7 +606,7 @@
     -fx-font-size: 13px;
     -fx-font-weight: 600;
     -fx-font-family: "Segoe UI";
-    -fx-padding: 8 20;
+    -fx-padding: 8 14;
     -fx-cursor: hand;
 }
 

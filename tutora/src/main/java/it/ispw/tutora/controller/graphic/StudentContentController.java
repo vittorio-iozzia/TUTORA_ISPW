@@ -43,8 +43,9 @@ public class StudentContentController {
     // FXML – Welcome
     // ----------------------------------------------------------------
 
-    @FXML private Label     welcomeTitle;
-    @FXML private ImageView heroImageView;
+    @FXML private Label      welcomeTitle;
+    @FXML private StackPane  heroPane;
+    @FXML private ImageView  heroBgImageView;
 
     // ----------------------------------------------------------------
     // FXML – Stats
@@ -90,14 +91,14 @@ public class StudentContentController {
 
     private static final Map<String, String> PHOTO_URLS = Map.of(
         "tutor_vitto",
-        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=104&h=104&fit=crop&crop=face"
+        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=280&h=200&fit=crop&crop=faces"
     );
 
     private static final List<String> PORTRAIT_POOL = List.of(
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=104&h=104&fit=crop&crop=face",
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=104&h=104&fit=crop&crop=face",
-        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=104&h=104&fit=crop&crop=face",
-        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=104&h=104&fit=crop&crop=face"
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=280&h=200&fit=crop&crop=faces",
+        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=280&h=200&fit=crop&crop=faces",
+        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=280&h=200&fit=crop&crop=faces",
+        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=280&h=200&fit=crop&crop=faces"
     );
 
     // ----------------------------------------------------------------
@@ -154,18 +155,27 @@ public class StudentContentController {
     // ----------------------------------------------------------------
 
     private void loadHeroImage() {
-        Rectangle clip = new Rectangle(200, 150);
-        clip.setArcWidth(18);
-        clip.setArcHeight(18);
-        heroImageView.setClip(clip);
+        // Clip the hero pane to rounded corners
+        Rectangle heroClip = new Rectangle();
+        heroClip.setArcWidth(24);
+        heroClip.setArcHeight(24);
+        heroClip.widthProperty().bind(heroPane.widthProperty());
+        heroClip.heightProperty().bind(heroPane.heightProperty());
+        heroPane.setClip(heroClip);
+
+        // Background image fills the pane
+        heroBgImageView.fitWidthProperty().bind(heroPane.widthProperty());
+        heroBgImageView.fitHeightProperty().bind(heroPane.heightProperty());
+        heroBgImageView.setPreserveRatio(false);
+        heroBgImageView.setSmooth(true);
 
         Image img = new Image(
-            "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=300&fit=crop",
-            400, 300, false, true, true
+            "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1200&h=300&fit=crop",
+            1200, 300, false, true, true
         );
         img.progressProperty().addListener((obs, oldV, newV) -> {
             if (newV.doubleValue() >= 1.0 && !img.isError()) {
-                heroImageView.setImage(img);
+                heroBgImageView.setImage(img);
             }
         });
     }
@@ -283,26 +293,27 @@ public class StudentContentController {
     }
 
     private VBox buildTutorCard(Tutor tutor, int poolIndex) {
-        VBox card = new VBox(16);
+        VBox card = new VBox(0);
         card.getStyleClass().add("tutor-card");
-        card.setPrefWidth(300);
+        card.setPrefWidth(260);
 
-        HBox header = new HBox(12);
-        header.setAlignment(Pos.CENTER_LEFT);
-        StackPane photoPane = buildPhotoPane(tutor, poolIndex);
+        // Top half: cover photo with badge overlays
+        StackPane photoPane = buildPhotoHalf(tutor, poolIndex);
 
-        VBox nameBox = new VBox(3);
+        // Body section
+        VBox body = new VBox(10);
+        body.getStyleClass().add("tutor-card-body");
+
         Label name = new Label(tutor.getFullName());
         name.getStyleClass().add("tutor-name");
+
         Label desc = new Label(tutor.getDescription() != null
-                ? truncate(tutor.getDescription(), 40)
+                ? truncate(tutor.getDescription(), 55)
                 : tutor.getUsername());
         desc.getStyleClass().add("tutor-subject");
         desc.setWrapText(true);
-        nameBox.getChildren().addAll(name, desc);
-        header.getChildren().addAll(photoPane, nameBox);
 
-        HBox ratingRow = new HBox(6);
+        HBox ratingRow = new HBox(5);
         ratingRow.setAlignment(Pos.CENTER_LEFT);
         FontIcon star = new FontIcon("fas-star");
         star.getStyleClass().add("star-icon");
@@ -313,60 +324,85 @@ public class StudentContentController {
         ratingLabel.getStyleClass().add("tutor-rating");
         ratingRow.getChildren().addAll(star, ratingLabel);
 
-        HBox footer = new HBox();
-        footer.setAlignment(Pos.CENTER_LEFT);
-        Label contact = new Label("Contact");
-        contact.getStyleClass().add("tutor-rate");
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Label price = new Label("From €30/h");
+        price.getStyleClass().add("tutor-price");
+
+        HBox buttons = new HBox(10);
+        buttons.setAlignment(Pos.CENTER_LEFT);
+        Button profileBtn = new Button("Profile");
+        profileBtn.getStyleClass().add("profile-btn");
+        HBox.setHgrow(profileBtn, Priority.ALWAYS);
+        profileBtn.setMaxWidth(Double.MAX_VALUE);
         Button bookBtn = new Button("Book");
         bookBtn.getStyleClass().add("book-btn");
+        HBox.setHgrow(bookBtn, Priority.ALWAYS);
+        bookBtn.setMaxWidth(Double.MAX_VALUE);
         bookBtn.setOnAction(e -> SceneManager.getInstance().showSearchTutor());
-        footer.getChildren().addAll(contact, spacer, bookBtn);
+        buttons.getChildren().addAll(profileBtn, bookBtn);
 
-        card.getChildren().addAll(header, ratingRow, footer);
+        body.getChildren().addAll(name, desc, ratingRow, price, buttons);
+        card.getChildren().addAll(photoPane, body);
         return card;
     }
 
     // ----------------------------------------------------------------
-    // Photo pane
+    // Photo half (card cover)
     // ----------------------------------------------------------------
 
-    private StackPane buildPhotoPane(Tutor tutor, int poolIndex) {
+    private StackPane buildPhotoHalf(Tutor tutor, int poolIndex) {
         StackPane pane = new StackPane();
-        pane.getStyleClass().add("tutor-avatar");
+        pane.getStyleClass().add("tutor-card-photo-wrap");
+        pane.setPrefHeight(160);
+        pane.setMinHeight(160);
+        pane.setMaxHeight(160);
 
+        // Fallback letter shown while image loads
+        Label initial = new Label(String.valueOf(tutor.getName().charAt(0)).toUpperCase());
+        initial.getStyleClass().add("tutor-card-photo-initial");
+        pane.getChildren().add(initial);
+
+        // Cover image
+        ImageView imgView = new ImageView();
+        imgView.setFitWidth(260);
+        imgView.setFitHeight(160);
+        imgView.setPreserveRatio(false);
+        imgView.setSmooth(true);
+        pane.getChildren().add(imgView);
+
+        // Clip taller than the pane so bottom arcs fall below visible area —
+        // only the top-left and top-right corners appear rounded
+        Rectangle photoClip = new Rectangle(260, 400);
+        photoClip.setArcWidth(28);
+        photoClip.setArcHeight(28);
+        pane.setClip(photoClip);
+
+        // Featured badge — top-left
+        Label featured = new Label("⭐ Featured");
+        featured.getStyleClass().add("tutor-card-featured-badge");
+        StackPane.setAlignment(featured, Pos.TOP_LEFT);
+        StackPane.setMargin(featured, new Insets(10, 0, 0, 10));
+
+        // Mode badge — top-right (alternate per pool index)
+        boolean isRemote = (poolIndex % 2 == 0);
+        Label mode = new Label(isRemote ? "Online" : "In-Person");
+        mode.getStyleClass().add(isRemote ? "tutor-card-online-badge" : "tutor-card-inperson-badge");
+        StackPane.setAlignment(mode, Pos.TOP_RIGHT);
+        StackPane.setMargin(mode, new Insets(10, 10, 0, 0));
+
+        pane.getChildren().addAll(featured, mode);
+
+        // Async load
         String photoUrl = PHOTO_URLS.getOrDefault(
                 tutor.getUsername(),
                 PORTRAIT_POOL.get(poolIndex % PORTRAIT_POOL.size()));
-
-        ImageView imgView = new ImageView();
-        imgView.setFitWidth(52);
-        imgView.setFitHeight(52);
-        imgView.setPreserveRatio(false);
-        imgView.setSmooth(true);
-        imgView.setClip(buildCircleClip());
-
-        Label initial = new Label(String.valueOf(tutor.getName().charAt(0)).toUpperCase());
-        initial.getStyleClass().add("tutor-avatar-letter");
-        pane.getChildren().add(initial);
-
-        Image img = new Image(photoUrl, 104, 104, true, true, true);
+        Image img = new Image(photoUrl, 280, 200, false, true, true);
         img.progressProperty().addListener((obs, oldV, newV) -> {
             if (newV.doubleValue() >= 1.0 && !img.isError()) {
                 imgView.setImage(img);
-                pane.getChildren().setAll(imgView);
             }
         });
 
         return pane;
-    }
-
-    private javafx.scene.shape.Circle buildCircleClip() {
-        javafx.scene.shape.Circle clip = new javafx.scene.shape.Circle(26);
-        clip.setCenterX(26);
-        clip.setCenterY(26);
-        return clip;
     }
 
     private String truncate(String text, int max) {
