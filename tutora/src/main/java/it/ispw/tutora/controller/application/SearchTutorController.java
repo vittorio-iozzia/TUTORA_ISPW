@@ -40,10 +40,6 @@ public class SearchTutorController {
      * Filters the given list keeping only tutors who have at least one
      * expertise whose parent category name matches {@code categoryName}
      * (case-insensitive).
-     *
-     * @param all          full tutor list to filter
-     * @param categoryName category name to match
-     * @return filtered list; empty on no match or on DAO error
      */
     public List<Tutor> filterByCategory(List<Tutor> all, String categoryName) {
         DaoFactory factory = DaoFactory.getInstance();

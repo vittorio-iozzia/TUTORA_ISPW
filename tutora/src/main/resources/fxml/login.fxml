@@ -33,9 +33,9 @@
               maxWidth="Infinity" maxHeight="Infinity">
 
             <!-- Logo -->
-            <HBox alignment="CENTER_LEFT" spacing="12">
+            <HBox alignment="CENTER_LEFT" spacing="14">
                 <FontIcon iconLiteral="fas-book-open"
-                          iconSize="32"
+                          iconSize="44"
                           styleClass="hero-icon"/>
                 <Label text="TUTORA" styleClass="hero-brand-label"/>
             </HBox>
@@ -43,40 +43,40 @@
             <!-- Headline -->
             <Label text="Learn from the&#10;best tutors"
                    styleClass="hero-headline"
-                   maxWidth="380"
+                   maxWidth="460"
                    wrapText="true">
-                <VBox.margin><Insets top="32"/></VBox.margin>
+                <VBox.margin><Insets top="36"/></VBox.margin>
             </Label>
 
             <!-- Subtitle -->
             <Label text="Connect with expert tutors in academics, music, art, photography, and more. Start your learning journey today."
                    styleClass="hero-subtitle"
-                   maxWidth="360"
+                   maxWidth="440"
                    wrapText="true">
-                <VBox.margin><Insets top="16"/></VBox.margin>
+                <VBox.margin><Insets top="20"/></VBox.margin>
             </Label>
 
             <!-- Stats -->
-            <VBox spacing="16">
-                <VBox.margin><Insets top="40"/></VBox.margin>
+            <VBox spacing="22">
+                <VBox.margin><Insets top="52"/></VBox.margin>
 
-                <HBox spacing="14" alignment="CENTER_LEFT">
+                <HBox spacing="18" alignment="CENTER_LEFT">
                     <StackPane styleClass="stat-icon-bg">
-                        <FontIcon iconLiteral="fas-graduation-cap" iconSize="16" styleClass="stat-icon"/>
+                        <FontIcon iconLiteral="fas-graduation-cap" iconSize="22" styleClass="stat-icon"/>
                     </StackPane>
                     <Label text="500+ Expert Tutors" styleClass="stat-label"/>
                 </HBox>
 
-                <HBox spacing="14" alignment="CENTER_LEFT">
+                <HBox spacing="18" alignment="CENTER_LEFT">
                     <StackPane styleClass="stat-icon-bg">
-                        <FontIcon iconLiteral="fas-users" iconSize="16" styleClass="stat-icon"/>
+                        <FontIcon iconLiteral="fas-users" iconSize="22" styleClass="stat-icon"/>
                     </StackPane>
                     <Label text="10,000+ Happy Students" styleClass="stat-label"/>
                 </HBox>
 
-                <HBox spacing="14" alignment="CENTER_LEFT">
+                <HBox spacing="18" alignment="CENTER_LEFT">
                     <StackPane styleClass="stat-icon-bg">
-                        <FontIcon iconLiteral="fas-book-open" iconSize="16" styleClass="stat-icon"/>
+                        <FontIcon iconLiteral="fas-book-open" iconSize="22" styleClass="stat-icon"/>
                     </StackPane>
                     <Label text="50+ Subject Categories" styleClass="stat-label"/>
                 </HBox>

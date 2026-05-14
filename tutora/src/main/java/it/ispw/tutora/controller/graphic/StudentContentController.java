@@ -105,13 +105,13 @@ public class StudentContentController {
     private record LessonMock(String subject, String tutorName, String datetime) {}
 
     private static final List<LessonMock> MOCK_UPCOMING = List.of(
-        new LessonMock("Guitar Lesson",      "tutor_vitto", "Tomorrow · 10:00 AM"),
-        new LessonMock("Photography Basics", "tutor_vitto", "Friday · 2:00 PM"),
-        new LessonMock("Tennis Coaching",    "tutor_vitto", "Saturday · 9:00 AM")
+        new LessonMock("Guitar Lesson", "tutor_vitto", "Tomorrow · 10:00 AM"),
+        new LessonMock("Photography Basics","tutor_vitto", "Friday · 2:00 PM"),
+        new LessonMock("Tennis Coaching", "tutor_vitto", "Saturday · 9:00 AM")
     );
 
     private static final List<LessonMock> MOCK_HISTORY = List.of(
-        new LessonMock("Piano Lesson",  "tutor_vitto", "3 days ago"),
+        new LessonMock("Piano Lesson", "tutor_vitto", "3 days ago"),
         new LessonMock("Guitar Lesson", "tutor_vitto", "1 week ago")
     );
 
@@ -128,10 +128,10 @@ public class StudentContentController {
         allTutors     = loadTutors();
         allCategories = loadCategories();
 
-        animateStat(totalLessonsLabel, 24,               "%.0f");
-        animateStat(hoursLearnedLabel, 36,               "%.0fh");
-        animateStat(activeTutorsLabel, allTutors.size(), "%.0f");
-        animateStat(avgRatingLabel,    4.8,              "%.1f");
+        animateStat(totalLessonsLabel,24,"%.0f");
+        animateStat(hoursLearnedLabel, 36,"%.0fh");
+        animateStat(activeTutorsLabel, allTutors.size(),"%.0f");
+        animateStat(avgRatingLabel, 4.8, "%.1f");
 
         addHoverLift(statCard1);
         addHoverLift(statCard2);
@@ -179,7 +179,7 @@ public class StudentContentController {
         ScaleTransition down = new ScaleTransition(Duration.millis(140), card);
         down.setToX(1.0);  down.setToY(1.0);
         card.setOnMouseEntered(e -> { down.stop(); up.playFromStart(); });
-        card.setOnMouseExited (e -> { up.stop();   down.playFromStart(); });
+        card.setOnMouseExited (e -> { up.stop(); down.playFromStart(); });
         card.setStyle("-fx-cursor: default;");
     }
 

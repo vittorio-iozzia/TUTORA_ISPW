@@ -12,9 +12,9 @@
    ---------------------------------------------------------------- */
 .sidebar {
     -fx-background-color: white;
-    -fx-min-width: 256px;
-    -fx-max-width: 256px;
-    -fx-pref-width: 256px;
+    -fx-min-width: 300px;
+    -fx-max-width: 300px;
+    -fx-pref-width: 300px;
     -fx-border-color: transparent #E2E8E4 transparent transparent;
     -fx-border-width: 0 1 0 0;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 2, 0);
@@ -192,7 +192,24 @@
     -fx-min-height: 36px;
     -fx-max-width: 36px;
     -fx-max-height: 36px;
-    -fx-cursor: default;
+    -fx-cursor: hand;
+}
+
+.header-profile-btn {
+    -fx-padding: 6 12;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+}
+
+.header-profile-btn:hover {
+    -fx-background-color: #F0F7F3;
+}
+
+.header-username-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #1C2621;
+    -fx-font-family: "Segoe UI";
 }
 
 .header-avatar-letter {
@@ -391,13 +408,13 @@
 .category-pill {
     -fx-background-color: white;
     -fx-background-radius: 20;
-    -fx-border-color: #E0E8E0;
+    -fx-border-color: #E5E7EB;
     -fx-border-radius: 20;
     -fx-border-width: 1;
     -fx-padding: 8 20;
     -fx-font-size: 13px;
     -fx-font-family: "Segoe UI";
-    -fx-text-fill: #6B8F7A;
+    -fx-text-fill: #6B7280;
     -fx-cursor: hand;
 }
 
@@ -409,8 +426,8 @@
 }
 
 .category-pill:hover:!selected {
-    -fx-background-color: #F0F7F3;
-    -fx-border-color: #5DBB8A;
+    -fx-background-color: #F3F4F6;
+    -fx-border-color: #D1D5DB;
 }
 
 /* ================================================================
@@ -423,7 +440,7 @@
 .tutor-card {
     -fx-background-color: white;
     -fx-background-radius: 14;
-    -fx-border-color: #E8EEE8;
+    -fx-border-color: #E5E7EB;
     -fx-border-radius: 14;
     -fx-border-width: 1;
     -fx-padding: 24;
@@ -432,8 +449,8 @@
 }
 
 .tutor-card:hover {
-    -fx-border-color: #5DBB8A;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 12, 0, 0, 4);
+    -fx-border-color: #CBD5E1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.13), 16, 0, 0, 6);
 }
 
 .tutor-avatar {
@@ -461,7 +478,7 @@
 
 .tutor-subject {
     -fx-font-size: 13px;
-    -fx-text-fill: #8FAF9A;
+    -fx-text-fill: #9CA3AF;
     -fx-font-family: "Segoe UI";
 }
 
@@ -472,7 +489,7 @@
 
 .tutor-rating {
     -fx-font-size: 13px;
-    -fx-text-fill: #6B8F7A;
+    -fx-text-fill: #6B7280;
     -fx-font-family: "Segoe UI";
 }
 
@@ -1114,6 +1131,526 @@
     -fx-font-weight: 600;
     -fx-font-family: "Segoe UI";
     -fx-padding: 4 12;
+}
+
+/* ================================================================
+   Find Tutors – Hero section
+   ================================================================ */
+.ft-hero {
+    -fx-background-color: linear-gradient(160deg, #F8FAFF 0%, #EEF2FB 100%);
+    -fx-border-color: #E5E7EB;
+    -fx-border-width: 0 0 1 0;
+}
+
+.ft-hero-icon-badge {
+    -fx-background-color: #2A5C45;
+    -fx-background-radius: 14;
+    -fx-min-width: 52;
+    -fx-min-height: 52;
+    -fx-max-width: 52;
+    -fx-max-height: 52;
+}
+
+.ft-hero-icon {
+    -fx-icon-color: white;
+}
+
+.ft-hero-title {
+    -fx-font-size: 34px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-text-fill: #111827;
+}
+
+.ft-hero-subtitle {
+    -fx-font-size: 15px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: #6B7280;
+}
+
+.ft-search-box {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-padding: 10 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 12, 0, 0, 3);
+}
+
+.ft-search-icon {
+    -fx-icon-color: #9CA3AF;
+}
+
+.ft-search-input {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-font-size: 13px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: #111827;
+    -fx-prompt-text-fill: #9CA3AF;
+}
+
+.ft-search-input:focused {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.ft-results-label {
+    -fx-font-size: 12px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: #9CA3AF;
+    -fx-font-weight: 600;
+}
+
+.ft-scroll {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.ft-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.ft-pills-scroll {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.ft-pills-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+/* ================================================================
+   Find Tutors – Stats bar
+   ================================================================ */
+.ft-stats-bar {
+    -fx-background-color: white;
+    -fx-background-radius: 16;
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 16;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 8, 0, 0, 2);
+}
+
+.ft-stat-cell {
+    -fx-padding: 20 28;
+}
+
+.ft-stat-icon-wrap {
+    -fx-min-width: 46;
+    -fx-min-height: 46;
+    -fx-max-width: 46;
+    -fx-max-height: 46;
+    -fx-background-radius: 12;
+}
+
+.ft-stat-wrap-blue   { -fx-background-color: #EFF6FF; -fx-background-radius: 12; }
+.ft-stat-wrap-purple { -fx-background-color: #F5F3FF; -fx-background-radius: 12; }
+.ft-stat-wrap-amber  { -fx-background-color: #FFFBEB; -fx-background-radius: 12; }
+.ft-stat-wrap-green  { -fx-background-color: #ECFDF5; -fx-background-radius: 12; }
+
+.ft-stat-icon-blue   { -fx-icon-color: #3B82F6; }
+.ft-stat-icon-purple { -fx-icon-color: #8B5CF6; }
+.ft-stat-icon-amber  { -fx-icon-color: #F59E0B; }
+.ft-stat-icon-green  { -fx-icon-color: #2A5C45; }
+
+.ft-stat-value {
+    -fx-font-size: 18px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-text-fill: #111827;
+}
+
+.ft-stat-label {
+    -fx-font-size: 12px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: #9CA3AF;
+}
+
+/* ================================================================
+   Find Tutors – Expertise chips on tutor card
+   ================================================================ */
+.expertise-chip {
+    -fx-background-color: #F3F4F6;
+    -fx-background-radius: 6;
+    -fx-text-fill: #4B5563;
+    -fx-font-size: 11px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-weight: 600;
+    -fx-padding: 4 10;
+}
+
+/* ================================================================
+   Find Tutors – Apply button
+   ================================================================ */
+.apply-tutor-btn {
+    -fx-background-color: #2A5C45;
+    -fx-background-radius: 20;
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-padding: 8 18;
+    -fx-cursor: hand;
+}
+
+.apply-tutor-btn:hover {
+    -fx-background-color: #1E4433;
+}
+
+.apply-tutor-btn:disabled {
+    -fx-background-color: #E5E7EB;
+    -fx-text-fill: #9CA3AF;
+    -fx-cursor: default;
+}
+
+/* ================================================================
+   Tutor Application Dialog
+   ================================================================ */
+
+/* ── Header ── */
+.app-dialog-header {
+    -fx-background-color: linear-gradient(to right, #F5F3FF, #FAFAFF);
+    -fx-border-color: #E5E7EB;
+    -fx-border-width: 0 0 1 0;
+}
+
+.app-header-icon-wrap {
+    -fx-background-color: linear-gradient(to bottom right, #6366F1, #8B5CF6);
+    -fx-background-radius: 12;
+    -fx-min-width: 44;
+    -fx-min-height: 44;
+    -fx-max-width: 44;
+    -fx-max-height: 44;
+}
+
+.app-header-icon {
+    -fx-icon-color: white;
+}
+
+.app-header-title {
+    -fx-font-size: 17px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-text-fill: #111827;
+}
+
+.app-header-subtitle {
+    -fx-font-size: 12px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: #6B7280;
+}
+
+/* ── Applying For banner ── */
+.app-applying-banner {
+    -fx-background-color: #E8F0EC;
+    -fx-background-radius: 10;
+    -fx-border-color: #C8D8D0;
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+}
+
+.app-applying-icon-wrap {
+    -fx-background-color: #2A5C45;
+    -fx-background-radius: 11;
+    -fx-min-width: 22;
+    -fx-min-height: 22;
+    -fx-max-width: 22;
+    -fx-max-height: 22;
+}
+
+.app-applying-icon {
+    -fx-icon-color: white;
+}
+
+.app-applying-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-text-fill: #2A5C45;
+}
+
+/* ── Scroll area ── */
+.app-scroll {
+    -fx-background-color: #F8F9FB;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.app-scroll > .viewport {
+    -fx-background-color: #F8F9FB;
+}
+
+/* ── Field cards ── */
+.app-field-box {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-padding: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 4, 0, 0, 1);
+}
+
+/* ── Step badge (indigo) ── */
+.app-step-badge {
+    -fx-background-color: #6366F1;
+    -fx-background-radius: 20;
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-min-width: 24;
+    -fx-min-height: 24;
+    -fx-max-width: 24;
+    -fx-max-height: 24;
+    -fx-alignment: center;
+}
+
+.app-field-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-text-fill: #111827;
+}
+
+.app-optional-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #9CA3AF;
+    -fx-font-family: "Segoe UI", sans-serif;
+}
+
+.app-field-desc {
+    -fx-font-size: 12px;
+    -fx-text-fill: #6B7280;
+    -fx-font-family: "Segoe UI", sans-serif;
+}
+
+/* ── Text area (focus = indigo) ── */
+.app-text-area {
+    -fx-background-color: #F9FAFB;
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-border-width: 1;
+    -fx-font-size: 13px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: #111827;
+    -fx-prompt-text-fill: #9CA3AF;
+}
+
+.app-text-area:focused {
+    -fx-border-color: #6366F1;
+    -fx-border-width: 1.5;
+    -fx-effect: dropshadow(gaussian, rgba(99,102,241,0.12), 6, 0, 0, 0);
+}
+
+/* ── File upload button (indigo – contrasts with yellow folder icon) ── */
+.app-file-btn {
+    -fx-background-color: #6366F1;
+    -fx-background-radius: 8;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-padding: 8 16;
+    -fx-cursor: hand;
+    -fx-graphic-text-gap: 8;
+}
+
+.app-file-btn:hover {
+    -fx-background-color: #4F46E5;
+    -fx-effect: dropshadow(gaussian, rgba(99,102,241,0.25), 8, 0, 0, 2);
+}
+
+/* ── Footer ── */
+.app-dialog-footer {
+    -fx-background-color: white;
+    -fx-border-color: #E5E7EB;
+    -fx-border-width: 1 0 0 0;
+}
+
+/* ── Submit button (indigo-purple gradient) ── */
+.app-submit-btn {
+    -fx-background-color: linear-gradient(to right, #6366F1, #8B5CF6);
+    -fx-background-radius: 10;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-padding: 12 24;
+    -fx-cursor: hand;
+}
+
+.app-submit-btn:hover {
+    -fx-background-color: linear-gradient(to right, #4F46E5, #7C3AED);
+    -fx-effect: dropshadow(gaussian, rgba(99,102,241,0.30), 12, 0, 0, 3);
+}
+
+.app-submit-btn:disabled {
+    -fx-background-color: #D1D5DB;
+    -fx-text-fill: #9CA3AF;
+    -fx-cursor: default;
+    -fx-effect: none;
+}
+
+/* ── Error label ── */
+.app-error-label {
+    -fx-text-fill: #9C2121;
+    -fx-font-size: 12px;
+    -fx-background-color: #FEE2E2;
+    -fx-background-radius: 8;
+    -fx-padding: 10 14;
+    -fx-font-family: "Segoe UI", sans-serif;
+}
+
+/* ── ToS row (checkbox + label) ── */
+.app-tos-box {
+    -fx-background-color: #F5F3FF;
+    -fx-background-radius: 8;
+    -fx-border-color: #DDD6FE;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 10 12 10 12;
+}
+
+.app-tos-check {
+    -fx-cursor: hand;
+}
+
+.app-tos-check > .box {
+    -fx-background-color: white;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-border-color: #6366F1;
+    -fx-border-width: 1.5;
+    -fx-min-width: 18;
+    -fx-min-height: 18;
+}
+
+.app-tos-check:selected > .box {
+    -fx-background-color: #6366F1;
+}
+
+.app-tos-check:selected > .box > .mark {
+    -fx-background-color: white;
+}
+
+.app-tos-label {
+    -fx-font-size: 13px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: #1C2621;
+    -fx-wrap-text: true;
+}
+
+/* ── Availability calendar ── */
+.app-avail-icon-wrap {
+    -fx-background-color: #F59E0B;
+    -fx-background-radius: 12;
+    -fx-min-width: 24;
+    -fx-min-height: 24;
+    -fx-max-width: 24;
+    -fx-max-height: 24;
+}
+
+.app-avail-day-header {
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-text-fill: #6B7280;
+    -fx-background-color: #F3F4F6;
+    -fx-background-radius: 6;
+    -fx-padding: 4 0;
+    -fx-alignment: center;
+}
+
+.app-avail-time-label {
+    -fx-font-size: 11px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: #6B7280;
+    -fx-text-alignment: right;
+    -fx-alignment: center-right;
+}
+
+.app-avail-cell {
+    -fx-background-color: #F3F4F6;
+    -fx-background-radius: 7;
+    -fx-border-color: transparent;
+    -fx-border-radius: 7;
+    -fx-border-width: 1.5;
+    -fx-text-fill: transparent;
+    -fx-cursor: hand;
+    -fx-min-height: 32;
+    -fx-padding: 0;
+}
+
+.app-avail-cell:hover {
+    -fx-background-color: #EEF2FF;
+    -fx-border-color: #C7D2FE;
+}
+
+.app-avail-cell:selected {
+    -fx-background-color: linear-gradient(to bottom right, #6366F1, #8B5CF6);
+    -fx-border-color: transparent;
+    -fx-effect: dropshadow(gaussian, rgba(99,102,241,0.25), 5, 0, 0, 1);
+}
+
+/* ── Success pane ── */
+.app-success-icon-wrap {
+    -fx-background-color: #EEF2FF;
+    -fx-background-radius: 50%;
+    -fx-min-width: 72;
+    -fx-min-height: 72;
+    -fx-max-width: 72;
+    -fx-max-height: 72;
+}
+
+.app-success-icon {
+    -fx-icon-color: #6366F1;
+}
+
+.app-success-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: 800;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-text-fill: #111827;
+}
+
+.app-success-desc {
+    -fx-font-size: 14px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: #6B7280;
+    -fx-text-alignment: center;
+}
+
+.app-success-steps {
+    -fx-background-color: #F3F4F6;
+    -fx-background-radius: 12;
+}
+
+.app-success-step {
+    -fx-font-size: 13px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: #374151;
+}
+
+/* ================================================================
+   Find Tutors – Price in card footer
+   ================================================================ */
+.ft-price-from {
+    -fx-font-size: 10px;
+    -fx-text-fill: #9CA3AF;
+    -fx-font-family: "Segoe UI", sans-serif;
+}
+
+.ft-price-value {
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-text-fill: #111827;
 }
 
 /* ================================================================
