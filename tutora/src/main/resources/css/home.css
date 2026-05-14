@@ -1,0 +1,1133 @@
+/* ================================================================
+   home.css  –  Dashboard layout
+   ================================================================ */
+
+/* Root */
+.home-root {
+    -fx-background-color: #F4F6F4;
+}
+
+/* ----------------------------------------------------------------
+   Sidebar
+   ---------------------------------------------------------------- */
+.sidebar {
+    -fx-background-color: white;
+    -fx-min-width: 256px;
+    -fx-max-width: 256px;
+    -fx-pref-width: 256px;
+    -fx-border-color: transparent #E2E8E4 transparent transparent;
+    -fx-border-width: 0 1 0 0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 2, 0);
+}
+
+.sidebar-brand {
+    -fx-padding: 0 24;
+    -fx-min-height: 64px;
+    -fx-max-height: 64px;
+    -fx-border-color: transparent transparent #E2E8E4 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.sidebar-brand-icon {
+    -fx-icon-color: #2A5C45;
+}
+
+.sidebar-brand-label {
+    -fx-text-fill: #1C2621;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Segoe UI";
+}
+
+/* Nav items */
+.sidebar-nav {
+    -fx-background-color: transparent;
+}
+
+.nav-item {
+    -fx-background-color: transparent;
+    -fx-text-fill: #5C6661;
+    -fx-font-size: 13px;
+    -fx-font-family: "Segoe UI";
+    -fx-alignment: center-left;
+    -fx-padding: 9 14;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-max-width: Infinity;
+}
+
+.nav-item:hover {
+    -fx-background-color: #E2E8E4;
+    -fx-text-fill: #1C2621;
+}
+
+.nav-item.nav-active {
+    -fx-background-color: #2A5C45;
+    -fx-text-fill: white;
+    -fx-font-weight: 600;
+}
+
+.nav-icon {
+    -fx-icon-color: #5C6661;
+    -fx-icon-size: 15px;
+}
+
+.nav-item.nav-active .nav-icon {
+    -fx-icon-color: white;
+}
+
+/* Role badge */
+.role-badge-wrap {
+    -fx-padding: 12 24;
+}
+
+.role-badge {
+    -fx-background-color: #E2E8E4;
+    -fx-background-radius: 20;
+    -fx-text-fill: #2A5C45;
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI";
+    -fx-padding: 4 12;
+    -fx-text-transform: uppercase;
+}
+
+/* User footer */
+.sidebar-user-footer {
+    -fx-padding: 12 16 8 16;
+    -fx-border-color: #E2E8E4;
+    -fx-border-width: 1 0 0 0;
+}
+
+.avatar-circle {
+    -fx-background-color: #2A5C45;
+    -fx-background-radius: 20;
+    -fx-min-width: 40px;
+    -fx-min-height: 40px;
+    -fx-max-width: 40px;
+    -fx-max-height: 40px;
+}
+
+.avatar-letter {
+    -fx-text-fill: white;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+.sidebar-username {
+    -fx-text-fill: #1C2621;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Segoe UI";
+}
+
+.sidebar-role {
+    -fx-text-fill: #8C9691;
+    -fx-font-size: 11px;
+    -fx-font-family: "Segoe UI";
+}
+
+.logout-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #5C6661;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-alignment: center-left;
+    -fx-padding: 8 14;
+    -fx-background-radius: 8;
+    -fx-font-family: "Segoe UI";
+}
+
+.logout-btn:hover {
+    -fx-background-color: #FEE2E2;
+    -fx-text-fill: #9C2121;
+}
+
+.logout-icon {
+    -fx-icon-color: #9C2121;
+}
+
+/* ----------------------------------------------------------------
+   Main area
+   ---------------------------------------------------------------- */
+.main-area {
+    -fx-background-color: #F4F6F4;
+}
+
+.main-header {
+    -fx-background-color: white;
+    -fx-padding: 16 28;
+    -fx-border-color: #E8EEE8;
+    -fx-border-width: 0 0 1 0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.04), 4, 0, 0, 2);
+}
+
+.main-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1C2621;
+    -fx-font-family: "Segoe UI";
+}
+
+/* Header right icons */
+.header-icon-btn {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+    -fx-padding: 8;
+    -fx-cursor: hand;
+}
+
+.header-icon-btn:hover {
+    -fx-background-color: #F0F7F3;
+}
+
+.header-icon {
+    -fx-icon-color: #214A9C;
+}
+
+.header-avatar {
+    -fx-background-color: #2A5C45;
+    -fx-background-radius: 18;
+    -fx-min-width: 36px;
+    -fx-min-height: 36px;
+    -fx-max-width: 36px;
+    -fx-max-height: 36px;
+    -fx-cursor: default;
+}
+
+.header-avatar-letter {
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Segoe UI";
+}
+
+.content-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-padding: 0;
+}
+
+.content-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.content-area {
+    -fx-background-color: transparent;
+}
+
+/* ----------------------------------------------------------------
+   Dashboard card (pulsante ruolo-specifico)
+   ---------------------------------------------------------------- */
+.dashboard-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-color: #E0E8E0;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-padding: 20 24;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 14px;
+    -fx-text-fill: #1C2621;
+    -fx-cursor: hand;
+    -fx-alignment: center-left;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 6, 0, 0, 2);
+}
+
+.dashboard-card:hover {
+    -fx-background-color: #F0F7F3;
+    -fx-border-color: #5DBB8A;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 10, 0, 0, 3);
+}
+
+/* ================================================================
+   Student home – Welcome
+   ================================================================ */
+.welcome-section {
+    -fx-padding: 0 0 4 0;
+}
+
+.welcome-title {
+    -fx-font-size: 30px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1C2621;
+    -fx-font-family: "Segoe UI";
+}
+
+.welcome-subtitle {
+    -fx-font-size: 16px;
+    -fx-text-fill: #6B8F7A;
+    -fx-font-family: "Segoe UI";
+}
+
+/* ================================================================
+   Student home – Stats row
+   ================================================================ */
+.stat-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-color: #E8EEE8;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 6, 0, 0, 2);
+}
+
+.stat-icon-wrap {
+    -fx-min-width: 48px;
+    -fx-min-height: 48px;
+    -fx-max-width: 48px;
+    -fx-max-height: 48px;
+    -fx-background-radius: 12;
+}
+
+.stat-blue  { -fx-background-color: #EBF3FD; }
+.stat-green { -fx-background-color: #E8F6EE; }
+.stat-purple{ -fx-background-color: #F0EBF8; }
+.stat-orange{ -fx-background-color: #FDF3E7; }
+
+.stat-blue  > .stat-icon { -fx-icon-color: #4A90D9; }
+.stat-green > .stat-icon { -fx-icon-color: #27AE60; }
+.stat-purple> .stat-icon { -fx-icon-color: #8E44AD; }
+.stat-orange> .stat-icon { -fx-icon-color: #E67E22; }
+
+.stat-value {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1C2621;
+    -fx-font-family: "Segoe UI";
+}
+
+.stat-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: #8FAF9A;
+    -fx-font-family: "Segoe UI";
+}
+
+/* ================================================================
+   Student home – TabPane
+   ================================================================ */
+.student-tabs {
+    -fx-background-color: transparent;
+    -fx-tab-min-height: 46px;
+}
+
+.student-tabs > .tab-header-area {
+    -fx-background-color: transparent;
+    -fx-padding: 0 0 0 0;
+}
+
+.student-tabs > .tab-header-area > .tab-header-background {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent #E0E8E0 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.student-tabs > .tab-header-area > .headers-region > .tab {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 10 24 12 24;
+    -fx-cursor: hand;
+}
+
+.student-tabs > .tab-header-area > .headers-region > .tab:selected {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent #2A5C45 transparent;
+    -fx-border-width: 0 0 2 0;
+}
+
+.student-tabs > .tab-header-area > .headers-region > .tab .tab-label {
+    -fx-font-size: 14px;
+    -fx-font-family: "Segoe UI";
+    -fx-text-fill: #8FAF9A;
+}
+
+.student-tabs > .tab-header-area > .headers-region > .tab:selected .tab-label {
+    -fx-text-fill: #2A5C45;
+    -fx-font-weight: 600;
+}
+
+.student-tabs > .tab-content-area {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.tab-content {
+    -fx-background-color: transparent;
+}
+
+/* ================================================================
+   Student home – Search bar
+   ================================================================ */
+.search-box {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-border-color: #E0E8E0;
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-padding: 0 18;
+}
+
+.search-icon {
+    -fx-icon-color: #8FAF9A;
+}
+
+.search-input {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+    -fx-font-size: 14px;
+    -fx-font-family: "Segoe UI";
+    -fx-text-fill: #1C2621;
+    -fx-prompt-text-fill: #AABFB0;
+    -fx-padding: 13 0;
+}
+
+.search-input:focused {
+    -fx-background-color: transparent;
+}
+
+/* ================================================================
+   Student home – Category pills
+   ================================================================ */
+.category-pill {
+    -fx-background-color: white;
+    -fx-background-radius: 20;
+    -fx-border-color: #E0E8E0;
+    -fx-border-radius: 20;
+    -fx-border-width: 1;
+    -fx-padding: 8 20;
+    -fx-font-size: 13px;
+    -fx-font-family: "Segoe UI";
+    -fx-text-fill: #6B8F7A;
+    -fx-cursor: hand;
+}
+
+.category-pill:selected {
+    -fx-background-color: #2A5C45;
+    -fx-border-color: #2A5C45;
+    -fx-text-fill: white;
+    -fx-font-weight: 600;
+}
+
+.category-pill:hover:!selected {
+    -fx-background-color: #F0F7F3;
+    -fx-border-color: #5DBB8A;
+}
+
+/* ================================================================
+   Student home – Tutor grid & cards
+   ================================================================ */
+.tutor-grid {
+    -fx-background-color: transparent;
+}
+
+.tutor-card {
+    -fx-background-color: white;
+    -fx-background-radius: 14;
+    -fx-border-color: #E8EEE8;
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+    -fx-padding: 24;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);
+    -fx-cursor: hand;
+}
+
+.tutor-card:hover {
+    -fx-border-color: #5DBB8A;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 12, 0, 0, 4);
+}
+
+.tutor-avatar {
+    -fx-min-width: 52px;
+    -fx-min-height: 52px;
+    -fx-max-width: 52px;
+    -fx-max-height: 52px;
+    -fx-background-color: #2A5C45;
+    -fx-background-radius: 26;
+}
+
+.tutor-avatar-letter {
+    -fx-text-fill: white;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Segoe UI";
+}
+
+.tutor-name {
+    -fx-font-size: 15px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #1C2621;
+    -fx-font-family: "Segoe UI";
+}
+
+.tutor-subject {
+    -fx-font-size: 13px;
+    -fx-text-fill: #8FAF9A;
+    -fx-font-family: "Segoe UI";
+}
+
+.star-icon {
+    -fx-icon-color: #F5A623;
+    -fx-icon-size: 13px;
+}
+
+.tutor-rating {
+    -fx-font-size: 13px;
+    -fx-text-fill: #6B8F7A;
+    -fx-font-family: "Segoe UI";
+}
+
+.tutor-rate {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2A5C45;
+    -fx-font-family: "Segoe UI";
+}
+
+.book-btn {
+    -fx-background-color: #2A5C45;
+    -fx-background-radius: 8;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI";
+    -fx-padding: 8 20;
+    -fx-cursor: hand;
+}
+
+.book-btn:hover {
+    -fx-background-color: #1E4433;
+}
+
+/* ================================================================
+   Student home – Lesson cards
+   ================================================================ */
+.lesson-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-color: #E8EEE8;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-padding: 20 24;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 6, 0, 0, 2);
+}
+
+.lesson-dot-upcoming {
+    -fx-background-color: #2A5C45;
+    -fx-background-radius: 6;
+    -fx-min-width: 12px;
+    -fx-min-height: 12px;
+    -fx-max-width: 12px;
+    -fx-max-height: 12px;
+}
+
+.lesson-dot-completed {
+    -fx-background-color: #B0C8B8;
+    -fx-background-radius: 6;
+    -fx-min-width: 12px;
+    -fx-min-height: 12px;
+    -fx-max-width: 12px;
+    -fx-max-height: 12px;
+}
+
+.lesson-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #1C2621;
+    -fx-font-family: "Segoe UI";
+}
+
+.lesson-meta-icon {
+    -fx-icon-color: #AABFB0;
+    -fx-icon-size: 13px;
+}
+
+.lesson-meta {
+    -fx-font-size: 13px;
+    -fx-text-fill: #8FAF9A;
+    -fx-font-family: "Segoe UI";
+}
+
+.join-btn {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+    -fx-border-color: #2A5C45;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-text-fill: #2A5C45;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI";
+    -fx-padding: 8 20;
+    -fx-cursor: hand;
+}
+
+.join-btn:hover {
+    -fx-background-color: #F0F7F3;
+}
+
+.badge-completed {
+    -fx-background-color: #E8F6EE;
+    -fx-background-radius: 6;
+    -fx-text-fill: #27AE60;
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI";
+    -fx-padding: 4 10;
+}
+
+/* ================================================================
+   Avatar dropdown menu
+   ================================================================ */
+.avatar-menu {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.14), 12, 0, 0, 4);
+}
+
+.avatar-menu .menu-item {
+    -fx-padding: 10 18;
+    -fx-font-size: 13px;
+    -fx-font-family: "Segoe UI";
+    -fx-text-fill: #1C2621;
+    -fx-background-color: transparent;
+}
+
+/* Override Modena's white-text-on-blue-hover with our green tint */
+.avatar-menu .menu-item:hover,
+.avatar-menu .menu-item:focused {
+    -fx-background-color: #F0F7F3;
+}
+
+.avatar-menu .menu-item:hover > .label,
+.avatar-menu .menu-item:focused > .label {
+    -fx-text-fill: #1C2621;
+}
+
+.avatar-menu .menu-item:hover > .graphic,
+.avatar-menu .menu-item:focused > .graphic {
+    -fx-icon-color: inherit;
+}
+
+/* Red logout icon */
+.avatar-menu-logout > .graphic {
+    -fx-icon-color: #9C2121;
+}
+
+.avatar-menu .separator .line {
+    -fx-border-color: #E8EEE8;
+    -fx-border-width: 1 0 0 0;
+}
+
+.avatar-menu .separator {
+    -fx-padding: 2 0;
+}
+
+/* ================================================================
+   Student Profile – full-page layout
+   ================================================================ */
+.profile-root {
+    -fx-background-color: #F4F6F4;
+}
+
+/* Top bar */
+.profile-topbar {
+    -fx-background-color: white;
+    -fx-padding: 0 24;
+    -fx-min-height: 56px;
+    -fx-max-height: 56px;
+    -fx-border-color: #E8EEE8;
+    -fx-border-width: 0 0 1 0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.04), 4, 0, 0, 2);
+}
+
+.profile-topbar-title {
+    -fx-font-size: 17px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1C2621;
+    -fx-font-family: "Segoe UI";
+}
+
+.profile-back-btn {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+    -fx-padding: 8 10;
+    -fx-cursor: hand;
+}
+
+.profile-back-btn:hover {
+    -fx-background-color: #F0F7F3;
+}
+
+.profile-back-icon {
+    -fx-icon-color: #2A5C45;
+}
+
+.profile-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.profile-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.profile-content {
+    -fx-background-color: transparent;
+}
+
+/* ── Hero card ───────────────────────────────────────────────── */
+.profile-hero-card {
+    -fx-background-color: #2A5C45;
+    -fx-background-radius: 16;
+    -fx-effect: dropshadow(gaussian, rgba(42,92,69,0.30), 16, 0, 0, 4);
+}
+
+.profile-hero-avatar {
+    -fx-background-color: rgba(255,255,255,0.18);
+    -fx-background-radius: 44;
+    -fx-min-width: 88px;
+    -fx-min-height: 88px;
+    -fx-max-width: 88px;
+    -fx-max-height: 88px;
+}
+
+.profile-hero-avatar-letter {
+    -fx-text-fill: white;
+    -fx-font-size: 36px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Segoe UI";
+}
+
+.profile-hero-name {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+    -fx-font-family: "Segoe UI";
+}
+
+.profile-hero-username {
+    -fx-font-size: 14px;
+    -fx-text-fill: rgba(255,255,255,0.70);
+    -fx-font-family: "Segoe UI";
+}
+
+.profile-hero-role-badge {
+    -fx-background-color: rgba(255,255,255,0.18);
+    -fx-background-radius: 20;
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI";
+    -fx-padding: 4 12;
+}
+
+.profile-hero-status-badge {
+    -fx-background-color: #27AE60;
+    -fx-background-radius: 20;
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI";
+    -fx-padding: 4 12;
+}
+
+.profile-hero-since-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: rgba(255,255,255,0.55);
+    -fx-font-family: "Segoe UI";
+}
+
+.profile-hero-since-value {
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-text-fill: white;
+    -fx-font-family: "Segoe UI";
+}
+
+/* ── Profile stat cards ──────────────────────────────────────── */
+.profile-stat-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-color: #E8EEE8;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 6, 0, 0, 2);
+    -fx-cursor: default;
+}
+
+.profile-stat-value {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1C2621;
+    -fx-font-family: "Segoe UI";
+}
+
+/* ── Section cards ───────────────────────────────────────────── */
+.profile-section-card {
+    -fx-background-color: white;
+    -fx-background-radius: 14;
+    -fx-border-color: #E8EEE8;
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 6, 0, 0, 2);
+}
+
+.profile-section-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #1C2621;
+    -fx-font-family: "Segoe UI";
+}
+
+.profile-section-icon {
+    -fx-icon-color: #2A5C45;
+}
+
+.profile-section-body {
+    -fx-font-size: 13px;
+    -fx-text-fill: #5C6661;
+    -fx-font-family: "Segoe UI";
+    -fx-line-spacing: 2;
+}
+
+.profile-section-empty {
+    -fx-font-size: 13px;
+    -fx-text-fill: #AABFB0;
+    -fx-font-family: "Segoe UI";
+}
+
+.profile-field-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #8FAF9A;
+    -fx-font-family: "Segoe UI";
+}
+
+.profile-field-value {
+    -fx-font-size: 13px;
+    -fx-text-fill: #1C2621;
+    -fx-font-family: "Segoe UI";
+}
+
+.profile-field-icon {
+    -fx-icon-color: #AABFB0;
+}
+
+/* Interest pills */
+.interest-pill {
+    -fx-background-color: #E8F6EE;
+    -fx-background-radius: 20;
+    -fx-text-fill: #2A5C45;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI";
+    -fx-padding: 5 14;
+}
+
+/* Preference badge */
+.pref-badge {
+    -fx-background-color: #EBF3FD;
+    -fx-background-radius: 20;
+    -fx-text-fill: #4A90D9;
+    -fx-font-size: 12px;
+    -fx-font-family: "Segoe UI";
+    -fx-padding: 4 12;
+}
+
+/* ================================================================
+   Shared – Tab panel white card wrapper
+   ================================================================ */
+.tab-panel-card {
+    -fx-background-color: white;
+    -fx-background-radius: 14;
+    -fx-border-color: #E8EEE8;
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 8, 0, 0, 2);
+}
+
+/* ================================================================
+   Tutor / Admin – shared tab style (mirrors student-tabs)
+   ================================================================ */
+.tutor-tabs {
+    -fx-background-color: transparent;
+    -fx-tab-min-height: 46px;
+}
+
+.tutor-tabs > .tab-header-area {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.tutor-tabs > .tab-header-area > .tab-header-background {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent #E0E8E0 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.tutor-tabs > .tab-header-area > .headers-region > .tab {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 10 24 12 24;
+    -fx-cursor: hand;
+}
+
+.tutor-tabs > .tab-header-area > .headers-region > .tab:selected {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent #2A5C45 transparent;
+    -fx-border-width: 0 0 2 0;
+}
+
+.tutor-tabs > .tab-header-area > .headers-region > .tab .tab-label {
+    -fx-font-size: 14px;
+    -fx-font-family: "Segoe UI";
+    -fx-text-fill: #8FAF9A;
+}
+
+.tutor-tabs > .tab-header-area > .headers-region > .tab:selected .tab-label {
+    -fx-text-fill: #2A5C45;
+    -fx-font-weight: 600;
+}
+
+.tutor-tabs > .tab-content-area {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+/* ================================================================
+   Shared – Section card (right column panels)
+   ================================================================ */
+.dashboard-section-card {
+    -fx-background-color: white;
+    -fx-background-radius: 14;
+    -fx-border-color: #E8EEE8;
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 6, 0, 0, 2);
+}
+
+.section-card-header {
+    -fx-padding: 16 20;
+    -fx-border-color: transparent transparent #E8EEE8 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.section-card-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #1C2621;
+    -fx-font-family: "Segoe UI";
+}
+
+.section-card-body {
+    -fx-padding: 16 20;
+}
+
+/* ================================================================
+   Tutor dashboard – Time slots
+   ================================================================ */
+.time-slot-btn {
+    -fx-background-color: #E8F6EE;
+    -fx-background-radius: 8;
+    -fx-border-color: #C8E6D4;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-text-fill: #2A5C45;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI";
+    -fx-padding: 8 16;
+    -fx-cursor: hand;
+    -fx-min-width: 90px;
+}
+
+.time-slot-btn:selected {
+    -fx-background-color: #2A5C45;
+    -fx-border-color: #2A5C45;
+    -fx-text-fill: white;
+}
+
+.time-slot-btn.time-slot-unavailable {
+    -fx-background-color: #F5F5F5;
+    -fx-border-color: #E0E0E0;
+    -fx-text-fill: #AABFB0;
+}
+
+/* ================================================================
+   Tutor / Admin – Booking request cards
+   ================================================================ */
+.booking-request-card {
+    -fx-background-color: #F9FCFA;
+    -fx-background-radius: 10;
+    -fx-border-color: #E8EEE8;
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-padding: 12;
+}
+
+.booking-avatar {
+    -fx-background-color: #2A5C45;
+    -fx-background-radius: 20;
+    -fx-min-width: 36px;
+    -fx-min-height: 36px;
+    -fx-max-width: 36px;
+    -fx-max-height: 36px;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Segoe UI";
+    -fx-alignment: center;
+}
+
+.booking-student-name {
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #1C2621;
+    -fx-font-family: "Segoe UI";
+}
+
+.booking-subject {
+    -fx-font-size: 12px;
+    -fx-text-fill: #8FAF9A;
+    -fx-font-family: "Segoe UI";
+}
+
+.badge-pending {
+    -fx-background-color: #FDF3E7;
+    -fx-background-radius: 20;
+    -fx-text-fill: #E67E22;
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI";
+    -fx-padding: 4 10;
+}
+
+.badge-pending-status {
+    -fx-background-color: #FDF3E7;
+    -fx-background-radius: 20;
+    -fx-text-fill: #E67E22;
+    -fx-font-size: 10px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI";
+    -fx-padding: 3 8;
+}
+
+.badge-confirmed-status {
+    -fx-background-color: #E8F6EE;
+    -fx-background-radius: 20;
+    -fx-text-fill: #27AE60;
+    -fx-font-size: 10px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI";
+    -fx-padding: 3 8;
+}
+
+/* ================================================================
+   Tutor / Admin – Action buttons
+   ================================================================ */
+.accept-btn {
+    -fx-background-color: #27AE60;
+    -fx-background-radius: 7;
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI";
+    -fx-padding: 6 14;
+    -fx-cursor: hand;
+}
+
+.accept-btn:hover {
+    -fx-background-color: #1E8449;
+}
+
+.decline-btn {
+    -fx-background-color: transparent;
+    -fx-background-radius: 7;
+    -fx-border-color: #E74C3C;
+    -fx-border-radius: 7;
+    -fx-border-width: 1;
+    -fx-text-fill: #E74C3C;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI";
+    -fx-padding: 6 14;
+    -fx-cursor: hand;
+}
+
+.decline-btn:hover {
+    -fx-background-color: #FEE2E2;
+}
+
+/* ================================================================
+   Tutor dashboard – This Week rows
+   ================================================================ */
+.week-row-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: #6B8F7A;
+    -fx-font-family: "Segoe UI";
+}
+
+.week-row-value {
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #1C2621;
+    -fx-font-family: "Segoe UI";
+}
+
+.week-row-value-green {
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #27AE60;
+    -fx-font-family: "Segoe UI";
+}
+
+/* ================================================================
+   Admin dashboard – Application & user rows
+   ================================================================ */
+.application-card {
+    -fx-background-color: #F9FCFA;
+    -fx-background-radius: 10;
+    -fx-border-color: #E8EEE8;
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-padding: 14;
+}
+
+.user-row {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-border-color: #EEF2EE;
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-padding: 12 16;
+}
+
+.user-row:hover {
+    -fx-background-color: #F5FBF7;
+}
+
+.role-pill-tutor {
+    -fx-background-color: #E8F6EE;
+    -fx-background-radius: 20;
+    -fx-text-fill: #2A5C45;
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI";
+    -fx-padding: 4 12;
+}
+
+/* ================================================================
+   Shared – Tab description text
+   ================================================================ */
+.tutor-tab-desc {
+    -fx-font-size: 13px;
+    -fx-text-fill: #8FAF9A;
+    -fx-font-family: "Segoe UI";
+}
+
+/* ================================================================
+   Admin – Analytics placeholder icon
+   ================================================================ */
+.analytics-placeholder-icon {
+    -fx-icon-color: #C8D8D0;
+}

@@ -254,8 +254,8 @@ public class UserDaoJson implements UserDao {
         String  createdAt;
 
         // Campi specifici del ruolo — null se non applicabili
-        String  budget;       // STUDENT
-        String  rating;       // TUTOR
+        String budget;       // STUDENT
+        String rating;       // TUTOR
         int ratingCount;  // TUTOR
     }
 }

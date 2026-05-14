@@ -34,7 +34,7 @@ import java.util.Map;
  */
 public class UserDaoDemo implements UserDao {
 
-    private final Map<String, User> cache = new HashMap<>();
+    protected final Map<String, User> cache = new HashMap<>();
     private final Map<String, String> pendingPasswordHashes = new HashMap<>();
 
     // ----------------------------------------------------------------

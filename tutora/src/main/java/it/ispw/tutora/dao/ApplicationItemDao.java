@@ -31,8 +31,6 @@ public interface ApplicationItemDao {
     /**
      * Persiste un nuovo item (TextItem o DocumentItem) per una application.
      * La colonna item_type è determinata da {@code item.getItemType()}.
-     *
-     * @return id AUTO_INCREMENT assegnato dal DB
      */
     int insert(Connection conn, ApplicationItem item)
             throws DatabaseException;
@@ -41,9 +39,6 @@ public interface ApplicationItemDao {
      * Aggiorna il contenuto di un item già esistente.
      * Per un TextItem sovrascrive text_content;
      * per un DocumentItem sovrascrive document_id.
-     *
-     * @throws ApplicationItemNotFoundException se l'id non corrisponde
-     *         ad alcuna riga in application_item
      */
     void update(Connection conn, ApplicationItem item)
             throws DatabaseException, ApplicationItemNotFoundException;
@@ -58,9 +53,6 @@ public interface ApplicationItemDao {
 
     /**
      * Carica un singolo item per id.
-     *
-     * @throws ApplicationItemNotFoundException se l'id non corrisponde
-     *         ad alcuna riga in application_item
      */
     ApplicationItem findById(Connection conn, int id)
             throws DatabaseException, ApplicationItemNotFoundException;

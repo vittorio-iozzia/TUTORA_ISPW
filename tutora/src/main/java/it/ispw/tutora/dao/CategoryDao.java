@@ -25,9 +25,6 @@ public interface CategoryDao {
     /**
      * Restituisce una categoria con la lista completa dei suoi requisiti
      * (TextRequirement + DocumentRequirement), pronti per costruire il form.
-     *
-     * @param name nome della categoria (PK)
-     * @throws CategoryNotFoundException se la categoria non esiste
      */
     Category findByNameWithRequirements(String name)
             throws DatabaseException, CategoryNotFoundException;

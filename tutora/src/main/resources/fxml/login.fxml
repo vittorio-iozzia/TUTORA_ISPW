@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<HBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="it.ispw.tutora.controller.graphic.LoginGfxController"
+      styleClass="login-root"
+      stylesheets="@../css/login.css">
+
+    <!-- ToggleGroup definito a livello radice così $roleGroup è visibile ovunque -->
+    <fx:define>
+        <ToggleGroup fx:id="roleGroup"/>
+    </fx:define>
+
+    <!-- ============================================================ -->
+    <!-- LEFT – Hero panel (image + overlay + content)                -->
+    <!-- ============================================================ -->
+    <StackPane fx:id="heroPane" HBox.hgrow="ALWAYS">
+
+        <!-- Immagine di sfondo – fit legato programmaticamente in initialize() -->
+        <ImageView fx:id="heroImage" preserveRatio="false" smooth="true"/>
+
+        <!-- Gradient overlay: da #2A5C45/82% a #1C2621/65%, direzione top-left → bottom-right -->
+        <Region styleClass="hero-overlay" maxWidth="Infinity" maxHeight="Infinity"/>
+
+        <!-- Contenuto testo in primo piano -->
+        <VBox styleClass="hero-content" alignment="TOP_LEFT" spacing="0"
+              maxWidth="Infinity" maxHeight="Infinity">
+
+            <!-- Logo -->
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <FontIcon iconLiteral="fas-book-open"
+                          iconSize="32"
+                          styleClass="hero-icon"/>
+                <Label text="TUTORA" styleClass="hero-brand-label"/>
+            </HBox>
+
+            <!-- Headline -->
+            <Label text="Learn from the&#10;best tutors"
+                   styleClass="hero-headline"
+                   maxWidth="380"
+                   wrapText="true">
+                <VBox.margin><Insets top="32"/></VBox.margin>
+            </Label>
+
+            <!-- Subtitle -->
+            <Label text="Connect with expert tutors in academics, music, art, photography, and more. Start your learning journey today."
+                   styleClass="hero-subtitle"
+                   maxWidth="360"
+                   wrapText="true">
+                <VBox.margin><Insets top="16"/></VBox.margin>
+            </Label>
+
+            <!-- Stats -->
+            <VBox spacing="16">
+                <VBox.margin><Insets top="40"/></VBox.margin>
+
+                <HBox spacing="14" alignment="CENTER_LEFT">
+                    <StackPane styleClass="stat-icon-bg">
+                        <FontIcon iconLiteral="fas-graduation-cap" iconSize="16" styleClass="stat-icon"/>
+                    </StackPane>
+                    <Label text="500+ Expert Tutors" styleClass="stat-label"/>
+                </HBox>
+
+                <HBox spacing="14" alignment="CENTER_LEFT">
+                    <StackPane styleClass="stat-icon-bg">
+                        <FontIcon iconLiteral="fas-users" iconSize="16" styleClass="stat-icon"/>
+                    </StackPane>
+                    <Label text="10,000+ Happy Students" styleClass="stat-label"/>
+                </HBox>
+
+                <HBox spacing="14" alignment="CENTER_LEFT">
+                    <StackPane styleClass="stat-icon-bg">
+                        <FontIcon iconLiteral="fas-book-open" iconSize="16" styleClass="stat-icon"/>
+                    </StackPane>
+                    <Label text="50+ Subject Categories" styleClass="stat-label"/>
+                </HBox>
+            </VBox>
+
+        </VBox>
+    </StackPane>
+
+    <!-- ============================================================ -->
+    <!-- RIGHT – Form panel                                           -->
+    <!-- ============================================================ -->
+    <VBox alignment="CENTER"
+          styleClass="form-panel"
+          HBox.hgrow="ALWAYS">
+
+        <!-- Card -->
+        <VBox fx:id="loginCard" styleClass="login-card" spacing="18">
+
+            <!-- Header -->
+            <VBox alignment="CENTER" spacing="4">
+                <Label fx:id="cardTitle" text="Welcome back" styleClass="card-title"/>
+                <Label fx:id="cardSubtitle" text="Sign in to continue learning" styleClass="card-subtitle"/>
+            </VBox>
+
+            <!-- Role selector -->
+            <VBox spacing="8">
+                <Label text="I am a" styleClass="input-label"/>
+                <HBox styleClass="role-tabs">
+                    <ToggleButton fx:id="studentTab"
+                                  text="Student"
+                                  toggleGroup="$roleGroup"
+                                  selected="true"
+                                  styleClass="role-tab"
+                                  HBox.hgrow="ALWAYS"
+                                  maxWidth="Infinity"/>
+                    <ToggleButton fx:id="tutorTab"
+                                  text="Tutor"
+                                  toggleGroup="$roleGroup"
+                                  styleClass="role-tab"
+                                  HBox.hgrow="ALWAYS"
+                                  maxWidth="Infinity"/>
+                    <ToggleButton fx:id="adminTab"
+                                  text="Admin"
+                                  toggleGroup="$roleGroup"
+                                  styleClass="role-tab"
+                                  HBox.hgrow="ALWAYS"
+                                  maxWidth="Infinity"/>
+                </HBox>
+            </VBox>
+
+            <!-- Social login buttons -->
+            <VBox spacing="10">
+                <Button fx:id="googleBtn"
+                        onAction="#handleGoogleLogin"
+                        styleClass="social-btn,google-btn"
+                        maxWidth="Infinity"/>
+                <Button fx:id="metaBtn"
+                        onAction="#handleMetaLogin"
+                        styleClass="social-btn,meta-btn"
+                        maxWidth="Infinity"/>
+            </VBox>
+
+            <!-- Divider "or continue with email" -->
+            <HBox alignment="CENTER">
+                <Separator HBox.hgrow="ALWAYS"/>
+                <Label text="or continue with email" styleClass="divider-label"/>
+                <Separator HBox.hgrow="ALWAYS"/>
+            </HBox>
+
+            <!-- Campi email / password -->
+            <VBox spacing="14">
+
+                <VBox spacing="5">
+                    <Label text="Username" styleClass="input-label"/>
+                    <TextField fx:id="usernameField"
+                               promptText="Enter your username"
+                               styleClass="form-input"/>
+                </VBox>
+
+                <VBox spacing="5">
+                    <HBox alignment="CENTER_LEFT">
+                        <Label text="Password" styleClass="input-label" HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="forgotPasswordBtn"
+                                text="Forgot password?"
+                                onAction="#handleForgotPassword"
+                                styleClass="link-btn"/>
+                    </HBox>
+                    <PasswordField fx:id="passwordField"
+                                   promptText="••••••••"
+                                   styleClass="form-input"/>
+                </VBox>
+
+            </VBox>
+
+            <!-- Messaggio errore (nascosto di default) -->
+            <Label fx:id="errorLabel"
+                   styleClass="error-label"
+                   visible="false"
+                   managed="false"
+                   maxWidth="Infinity"
+                   wrapText="true"/>
+
+            <!-- Pulsante principale -->
+            <Button fx:id="loginButton"
+                    text="Sign In"
+                    onAction="#handleLogin"
+                    defaultButton="true"
+                    styleClass="primary-btn"
+                    maxWidth="Infinity"/>
+
+            <!-- Toggle sign-up / sign-in -->
+            <HBox alignment="CENTER" spacing="4">
+                <Label fx:id="toggleLabel"
+                       text="Don't have an account?"
+                       styleClass="subtle-text"/>
+                <Button fx:id="toggleAuthBtn"
+                        text="Sign up"
+                        onAction="#handleToggleAuth"
+                        styleClass="link-btn"/>
+            </HBox>
+
+        </VBox>
+
+        <!-- Footer -->
+        <Label text="By continuing, you agree to our Terms of Service and Privacy Policy"
+               styleClass="footer-text"
+               maxWidth="400"
+               wrapText="true"
+               textAlignment="CENTER"/>
+
+    </VBox>
+
+</HBox>

@@ -8,6 +8,8 @@ import it.ispw.tutora.model.Tutor;
 import it.ispw.tutora.model.User;
 
 import java.sql.Connection;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Implementazione di TutorDao basata su file JSON.
@@ -70,5 +72,20 @@ public class TutorDaoJson extends UserDaoJson implements TutorDao {
             throw new UserNotFoundException(username);
         }
         return tutor;
+    }
+
+    @Override
+    public List<Tutor> selectAllTutors(Connection conn) throws DatabaseException {
+        List<Tutor> tutors = new ArrayList<>();
+        for (UserRecord r : readAll()) {
+            if ("TUTOR".equals(r.role)) {
+                try {
+                    tutors.add(selectTutor(conn, r.username));
+                } catch (UserNotFoundException ignored) {
+                    // record exists in file but cast failed — skip
+                }
+            }
+        }
+        return tutors;
     }
 }

@@ -43,8 +43,6 @@ public interface UserDao {
      * Persiste un nuovo utente: INSERT in user + INSERT nella
      * tabella specifica del ruolo (student, tutor o admin).
      * Le due operazioni devono essere atomiche (stessa transazione).
-     *
-     * @throws DuplicateUserException se username o email sono già presenti
      */
     void insert(Connection conn, User user)
             throws DatabaseException, DuplicateUserException;
@@ -52,9 +50,6 @@ public interface UserDao {
     /**
      * Carica un utente per username, ricostruendo il sottotipo corretto.
      * Usata principalmente durante il login e per il caricamento del profilo.
-     *
-     * @throws UserNotFoundException se lo username non corrisponde
-     *         ad alcuna riga in user
      */
     User findByUsername(Connection conn, String username)
             throws DatabaseException, UserNotFoundException;
@@ -63,10 +58,6 @@ public interface UserDao {
      * Aggiorna il passwordHash nella tabella user.
      * Il chiamante è responsabile di calcolare l'hash (BCrypt)
      * prima di invocare questo metodo.
-     *
-     * @param newPasswordHash hash BCrypt della nuova password
-     * @throws UserNotFoundException se lo username non corrisponde
-     *         ad alcuna riga in user
      */
     void updatePassword(Connection conn, String username, String newPasswordHash)
             throws DatabaseException, UserNotFoundException;
@@ -74,9 +65,6 @@ public interface UserDao {
     /**
      * Aggiorna i campi mutabili del profilo (description, isActive).
      * Non aggiorna passwordHash — usare updatePassword per quello.
-     *
-     * @throws UserNotFoundException se lo username non corrisponde
-     *         ad alcuna riga in user
      */
     void updateProfile(Connection conn, String username, String description, boolean isActive)
             throws DatabaseException, UserNotFoundException;

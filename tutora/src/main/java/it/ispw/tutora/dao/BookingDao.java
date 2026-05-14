@@ -39,11 +39,6 @@ public interface BookingDao {
     /**
      * Aggiorna il payment_status di una booking esistente.
      * Usato per segnare una prenotazione come PAID o REFUNDED.
-     *
-     * @param status nuovo PaymentStatus da persistere
-     * @throws BookingNotFoundException se l'id non corrisponde
-     *         ad alcuna riga in booking
-     * @throws DatabaseException        per errori JDBC
      */
     void updateStatus(Connection conn, int id, PaymentStatus status)
             throws DatabaseException, BookingNotFoundException;
@@ -53,9 +48,6 @@ public interface BookingDao {
      * Il Controller deve aver già verificato che lo student abbia
      * budget sufficiente e aggiornato lo status della lesson a BOOKED
      * prima di invocare questo metodo.
-     *
-     * @return id AUTO_INCREMENT assegnato dal DB
-     * @throws DatabaseException per errori JDBC
      */
     int insertBooking(Connection conn, Booking booking)
             throws DatabaseException;
@@ -64,18 +56,12 @@ public interface BookingDao {
      * Carica tutte le prenotazioni di uno student ordinate per
      * data decrescente (più recenti prima).
      * Restituisce una lista vuota se lo student non ha prenotazioni.
-     *
-     * @throws DatabaseException per errori JDBC
      */
     List<Booking> findByStudent(Connection conn, String username)
             throws DatabaseException;
 
     /**
      * Carica una prenotazione per id.
-     *
-     * @throws BookingNotFoundException se l'id non corrisponde
-     *         ad alcuna riga in booking
-     * @throws DatabaseException        per errori JDBC
      */
     Booking selectBooking(Connection conn, int id)
             throws DatabaseException, BookingNotFoundException;

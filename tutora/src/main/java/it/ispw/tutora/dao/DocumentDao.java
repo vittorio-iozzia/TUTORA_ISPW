@@ -31,8 +31,6 @@ public interface DocumentDao {
      * Persiste un nuovo documento (metadati + contenuto binario).
      * Il campo stored_filename deve essere generato (UUID) dal chiamante
      * prima dell'invocazione, così da garantire unicità nel DB.
-     *
-     * @return id AUTO_INCREMENT assegnato dal DB
      */
     int insert(Connection conn, Document document)
             throws DatabaseException;
@@ -40,9 +38,6 @@ public interface DocumentDao {
     /**
      * Carica un documento per id, incluso il contenuto binario.
      * Usata per il download o la visualizzazione da parte dell'admin.
-     *
-     * @throws DocumentNotFoundException se l'id non corrisponde
-     *         ad alcuna riga in document
      */
     Document findById(Connection conn, int id)
             throws DatabaseException, DocumentNotFoundException;
@@ -52,9 +47,6 @@ public interface DocumentDao {
      * ApplicationItem referenzia più il documento (vincolo RESTRICT),
      * altrimenti il DB solleverà un'eccezione di integrità referenziale
      * che verrà propagata come DatabaseException.
-     *
-     * @throws DocumentNotFoundException se l'id non corrisponde
-     *         ad alcuna riga in document
      */
     void delete(Connection conn, int id)
             throws DatabaseException, DocumentNotFoundException;

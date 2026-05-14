@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="it.ispw.tutora.controller.graphic.TutorContentController"
+      spacing="28">
+
+    <!-- ============================================================ -->
+    <!-- Welcome                                                      -->
+    <!-- ============================================================ -->
+    <VBox spacing="4" styleClass="welcome-section">
+        <Label fx:id="welcomeTitle" text="Tutor Dashboard" styleClass="welcome-title"/>
+        <Label text="Manage your schedule, bookings, and profile" styleClass="welcome-subtitle"/>
+    </VBox>
+
+    <!-- ============================================================ -->
+    <!-- Stats row                                                    -->
+    <!-- ============================================================ -->
+    <HBox spacing="20" styleClass="stats-row">
+
+        <HBox fx:id="statCard1" styleClass="stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+              spacing="18" alignment="CENTER_LEFT">
+            <padding><Insets top="22" right="26" bottom="22" left="26"/></padding>
+            <StackPane styleClass="stat-icon-wrap,stat-blue">
+                <FontIcon iconLiteral="fas-users" iconSize="18" styleClass="stat-icon"/>
+            </StackPane>
+            <VBox spacing="4">
+                <Label fx:id="totalStudentsLabel" text="0" styleClass="stat-value"/>
+                <Label text="Total Students" styleClass="stat-label"/>
+            </VBox>
+        </HBox>
+
+        <HBox fx:id="statCard2" styleClass="stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+              spacing="18" alignment="CENTER_LEFT">
+            <padding><Insets top="22" right="26" bottom="22" left="26"/></padding>
+            <StackPane styleClass="stat-icon-wrap,stat-green">
+                <FontIcon iconLiteral="fas-calendar-alt" iconSize="18" styleClass="stat-icon"/>
+            </StackPane>
+            <VBox spacing="4">
+                <Label fx:id="lessonsMonthLabel" text="0" styleClass="stat-value"/>
+                <Label text="Lessons This Month" styleClass="stat-label"/>
+            </VBox>
+        </HBox>
+
+        <HBox fx:id="statCard3" styleClass="stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+              spacing="18" alignment="CENTER_LEFT">
+            <padding><Insets top="22" right="26" bottom="22" left="26"/></padding>
+            <StackPane styleClass="stat-icon-wrap,stat-orange">
+                <FontIcon iconLiteral="fas-euro-sign" iconSize="18" styleClass="stat-icon"/>
+            </StackPane>
+            <VBox spacing="4">
+                <Label fx:id="earningsLabel" text="€0" styleClass="stat-value"/>
+                <Label text="Earnings" styleClass="stat-label"/>
+            </VBox>
+        </HBox>
+
+        <HBox fx:id="statCard4" styleClass="stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+              spacing="18" alignment="CENTER_LEFT">
+            <padding><Insets top="22" right="26" bottom="22" left="26"/></padding>
+            <StackPane styleClass="stat-icon-wrap,stat-purple">
+                <FontIcon iconLiteral="fas-star" iconSize="18" styleClass="stat-icon"/>
+            </StackPane>
+            <VBox spacing="4">
+                <Label fx:id="avgRatingLabel" text="0.0" styleClass="stat-value"/>
+                <Label text="Avg. Rating" styleClass="stat-label"/>
+            </VBox>
+        </HBox>
+
+    </HBox>
+
+    <!-- ============================================================ -->
+    <!-- Two-column content                                           -->
+    <!-- ============================================================ -->
+    <HBox spacing="20" VBox.vgrow="ALWAYS">
+
+        <!-- Left 2/3: tab panel card -->
+        <VBox styleClass="tab-panel-card" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+            <TabPane styleClass="tutor-tabs" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+
+                <!-- Availability -->
+                <Tab text="Availability">
+                    <VBox spacing="16" styleClass="tab-content">
+                        <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+                        <Label text="Set your available time slots for students to book"
+                               styleClass="tutor-tab-desc"/>
+                        <FlowPane fx:id="timeSlotGrid" hgap="10" vgap="10"/>
+                    </VBox>
+                </Tab>
+
+                <!-- Upcoming Lessons -->
+                <Tab text="Upcoming Lessons">
+                    <VBox fx:id="upcomingLessonsList" spacing="12" styleClass="tab-content">
+                        <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+                    </VBox>
+                </Tab>
+
+            </TabPane>
+        </VBox>
+
+        <!-- Right 1/3: Booking Requests + This Week -->
+        <VBox spacing="16" minWidth="280" maxWidth="310" VBox.vgrow="ALWAYS">
+
+            <!-- Booking Requests -->
+            <VBox styleClass="dashboard-section-card" spacing="0">
+                <HBox styleClass="section-card-header" alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Booking Requests" styleClass="section-card-title" HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="pendingBadge" text="0 new" styleClass="badge-pending"/>
+                </HBox>
+                <VBox fx:id="bookingRequestsList" spacing="10" styleClass="section-card-body"/>
+            </VBox>
+
+            <!-- This Week -->
+            <VBox styleClass="dashboard-section-card" VBox.vgrow="ALWAYS" spacing="0">
+                <HBox styleClass="section-card-header" alignment="CENTER_LEFT">
+                    <Label text="This Week" styleClass="section-card-title"/>
+                </HBox>
+                <VBox fx:id="thisWeekList" spacing="14" styleClass="section-card-body"/>
+            </VBox>
+
+        </VBox>
+
+    </HBox>
+
+</VBox>

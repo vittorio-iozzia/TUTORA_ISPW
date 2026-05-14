@@ -10,6 +10,8 @@ import org.intellij.lang.annotations.Language;
 
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Implementazione JDBC di TutorDao.
@@ -44,6 +46,12 @@ import java.time.LocalDateTime;
  * ed è sufficiente per il login.
  */
 public class TutorDaoDb extends UserDaoDb implements TutorDao {
+
+    @Language("SQL")
+    private static final String SQL_SELECT_ALL_TUTORS =
+            "SELECT u.*, t.rating, t.rating_count " +
+            "FROM tutor t JOIN user u ON u.username = t.username " +
+            "WHERE u.is_active = 1";
 
     @Language("SQL")
     private static final String SQL_INSERT_TUTOR =
@@ -104,6 +112,20 @@ public class TutorDaoDb extends UserDaoDb implements TutorDao {
         } catch (SQLException e) {
             throw new DatabaseException("Error retrieving tutor: " + username, e);
         }
+    }
+
+    @Override
+    public List<Tutor> selectAllTutors(Connection conn) throws DatabaseException {
+        List<Tutor> tutors = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(SQL_SELECT_ALL_TUTORS);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                tutors.add(mapTutor(rs));
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Error retrieving all tutors", e);
+        }
+        return tutors;
     }
 
     // ----------------------------------------------------------------

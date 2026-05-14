@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="it.ispw.tutora.controller.graphic.StudentContentController"
+      spacing="32">
+
+    <!-- ============================================================ -->
+    <!-- Welcome                                                      -->
+    <!-- ============================================================ -->
+    <VBox spacing="4" styleClass="welcome-section">
+        <Label fx:id="welcomeTitle" text="Welcome back!" styleClass="welcome-title"/>
+        <Label text="Ready to learn something new today?" styleClass="welcome-subtitle"/>
+    </VBox>
+
+    <!-- ============================================================ -->
+    <!-- Stats row                                                    -->
+    <!-- ============================================================ -->
+    <HBox spacing="20" styleClass="stats-row">
+
+        <HBox fx:id="statCard1" styleClass="stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+              spacing="18" alignment="CENTER_LEFT">
+            <padding><Insets top="22" right="26" bottom="22" left="26"/></padding>
+            <StackPane styleClass="stat-icon-wrap,stat-blue">
+                <FontIcon iconLiteral="fas-book-open" iconSize="18" styleClass="stat-icon"/>
+            </StackPane>
+            <VBox spacing="4">
+                <Label fx:id="totalLessonsLabel" text="0" styleClass="stat-value"/>
+                <Label text="Total Lessons" styleClass="stat-label"/>
+            </VBox>
+        </HBox>
+
+        <HBox fx:id="statCard2" styleClass="stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+              spacing="18" alignment="CENTER_LEFT">
+            <padding><Insets top="22" right="26" bottom="22" left="26"/></padding>
+            <StackPane styleClass="stat-icon-wrap,stat-green">
+                <FontIcon iconLiteral="fas-clock" iconSize="18" styleClass="stat-icon"/>
+            </StackPane>
+            <VBox spacing="4">
+                <Label fx:id="hoursLearnedLabel" text="0h" styleClass="stat-value"/>
+                <Label text="Hours Learned" styleClass="stat-label"/>
+            </VBox>
+        </HBox>
+
+        <HBox fx:id="statCard3" styleClass="stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+              spacing="18" alignment="CENTER_LEFT">
+            <padding><Insets top="22" right="26" bottom="22" left="26"/></padding>
+            <StackPane styleClass="stat-icon-wrap,stat-purple">
+                <FontIcon iconLiteral="fas-user-graduate" iconSize="18" styleClass="stat-icon"/>
+            </StackPane>
+            <VBox spacing="4">
+                <Label fx:id="activeTutorsLabel" text="0" styleClass="stat-value"/>
+                <Label text="Active Tutors" styleClass="stat-label"/>
+            </VBox>
+        </HBox>
+
+        <HBox fx:id="statCard4" styleClass="stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+              spacing="18" alignment="CENTER_LEFT">
+            <padding><Insets top="22" right="26" bottom="22" left="26"/></padding>
+            <StackPane styleClass="stat-icon-wrap,stat-orange">
+                <FontIcon iconLiteral="fas-star" iconSize="18" styleClass="stat-icon"/>
+            </StackPane>
+            <VBox spacing="4">
+                <Label fx:id="avgRatingLabel" text="0.0" styleClass="stat-value"/>
+                <Label text="Avg. Rating" styleClass="stat-label"/>
+            </VBox>
+        </HBox>
+
+    </HBox>
+
+    <!-- ============================================================ -->
+    <!-- TabPane (wrapped in white card)                             -->
+    <!-- ============================================================ -->
+    <VBox styleClass="tab-panel-card" VBox.vgrow="ALWAYS">
+    <TabPane styleClass="student-tabs" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+
+        <!-- ── Explore Tutors ─────────────────────────────────────── -->
+        <Tab text="Explore Tutors">
+            <VBox spacing="18" styleClass="tab-content">
+                <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+
+                <!-- Search bar -->
+                <HBox styleClass="search-box" alignment="CENTER_LEFT" spacing="12">
+                    <FontIcon iconLiteral="fas-search" iconSize="16" styleClass="search-icon"/>
+                    <TextField fx:id="searchField"
+                               promptText="Search tutors by name or subject..."
+                               styleClass="search-input"
+                               HBox.hgrow="ALWAYS"/>
+                </HBox>
+
+                <!-- Category pills (built programmatically) -->
+                <HBox fx:id="categoryPills" spacing="8" alignment="CENTER_LEFT"/>
+
+                <!-- Tutor grid (built programmatically) -->
+                <FlowPane fx:id="tutorGrid" hgap="20" vgap="20" styleClass="tutor-grid"/>
+
+            </VBox>
+        </Tab>
+
+        <!-- ── Upcoming Lessons ───────────────────────────────────── -->
+        <Tab text="Upcoming Lessons">
+            <VBox fx:id="upcomingList" spacing="12" styleClass="tab-content">
+                <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+            </VBox>
+        </Tab>
+
+        <!-- ── Lesson History ─────────────────────────────────────── -->
+        <Tab text="Lesson History">
+            <VBox fx:id="historyList" spacing="12" styleClass="tab-content">
+                <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+            </VBox>
+        </Tab>
+
+    </TabPane>
+    </VBox>
+
+</VBox>

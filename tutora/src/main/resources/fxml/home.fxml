@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<HBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="it.ispw.tutora.controller.graphic.HomeGfxController"
+      styleClass="home-root"
+      stylesheets="@../css/home.css">
+
+    <!-- ============================================================ -->
+    <!-- LEFT – Sidebar                                               -->
+    <!-- ============================================================ -->
+    <VBox styleClass="sidebar" spacing="0">
+
+        <!-- Brand -->
+        <HBox alignment="CENTER_LEFT" spacing="10" styleClass="sidebar-brand">
+            <FontIcon iconLiteral="fas-book-open" iconSize="22" styleClass="sidebar-brand-icon"/>
+            <Label text="TUTORA" styleClass="sidebar-brand-label"/>
+        </HBox>
+
+        <!-- Role badge -->
+        <HBox styleClass="role-badge-wrap">
+            <Label fx:id="roleBadgeLabel" text="Student" styleClass="role-badge"/>
+        </HBox>
+
+        <!-- Nav items (populated programmatically by HomeGfxController) -->
+        <VBox fx:id="sidebarNav" styleClass="sidebar-nav" spacing="2">
+            <padding><Insets top="8" right="12" bottom="8" left="12"/></padding>
+        </VBox>
+
+        <!-- Spacer -->
+        <Region VBox.vgrow="ALWAYS"/>
+
+        <!-- User info footer -->
+        <HBox styleClass="sidebar-user-footer" alignment="CENTER_LEFT" spacing="10">
+            <StackPane fx:id="sidebarAvatarPane" styleClass="avatar-circle">
+                <Label fx:id="avatarLabel" text="U" styleClass="avatar-letter"/>
+            </StackPane>
+            <VBox spacing="2">
+                <Label fx:id="usernameLabel" text="" styleClass="sidebar-username"/>
+                <Label fx:id="roleLabel"     text="" styleClass="sidebar-role"/>
+            </VBox>
+        </HBox>
+
+        <!-- Logout -->
+        <Button text="Log out"
+                onAction="#handleLogout"
+                styleClass="logout-btn"
+                maxWidth="Infinity"
+                contentDisplay="LEFT"
+                graphicTextGap="10">
+            <graphic>
+                <FontIcon iconLiteral="fas-sign-out-alt" iconSize="13" styleClass="logout-icon"/>
+            </graphic>
+            <VBox.margin><Insets bottom="16" left="12" right="12" top="4"/></VBox.margin>
+        </Button>
+
+    </VBox>
+
+    <!-- ============================================================ -->
+    <!-- RIGHT – Main area                                            -->
+    <!-- ============================================================ -->
+    <VBox HBox.hgrow="ALWAYS" styleClass="main-area" spacing="0">
+
+        <!-- Header (white bar) -->
+        <HBox styleClass="main-header" alignment="CENTER_LEFT" spacing="16">
+
+            <!-- Section title -->
+            <Label fx:id="headerTitle" text="Dashboard" styleClass="main-title"/>
+
+            <!-- Spacer -->
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <!-- Notification bell -->
+            <Button styleClass="header-icon-btn" onAction="#handleNotifications">
+                <graphic>
+                    <FontIcon iconLiteral="fas-bell" iconSize="16" styleClass="header-icon"/>
+                </graphic>
+            </Button>
+
+            <!-- User avatar -->
+            <StackPane styleClass="header-avatar">
+                <Label fx:id="headerAvatarLabel" text="U" styleClass="header-avatar-letter"/>
+            </StackPane>
+
+        </HBox>
+
+        <!-- Scrollable content area -->
+        <ScrollPane fitToWidth="true" styleClass="content-scroll" VBox.vgrow="ALWAYS">
+            <VBox fx:id="contentArea" styleClass="content-area" spacing="16">
+                <padding><Insets top="28" right="36" bottom="28" left="36"/></padding>
+            </VBox>
+        </ScrollPane>
+
+    </VBox>
+
+</HBox>

@@ -8,28 +8,20 @@ import it.ispw.tutora.model.Tutor;
 import it.ispw.tutora.model.User;
 
 import java.sql.Connection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 /**
  * Implementazione in memoria di TutorDao.
- * Usata al posto di TutorDaoDb quando il DB non è disponibile.
+ * Estende UserDaoDemo per rispecchiare la gerarchia dell'interfaccia
+ * (TutorDao extends UserDao) e quella DB (TutorDaoDb extends UserDaoDb),
+ * ed eliminare la duplicazione dei metodi comuni.
  *
  * -----------------------------------------------------------------------
  * Nota sulla cache
  * -----------------------------------------------------------------------
- * La Map è tipizzata su Tutor (non su User) per evitare cast nelle
- * operazioni Tutor-specifiche. insert() accetta User per conformarsi
- * al contratto di UserDao, ma lancia IllegalArgumentException se
- * l'oggetto passato non è un Tutor — comportamento intenzionale e
- * consistente con il design Table-Per-Subclass.
- *
- * -----------------------------------------------------------------------
- * Nota sul rating
- * -----------------------------------------------------------------------
- * In produzione rating e ratingCount sono aggiornati dai trigger SQL.
- * In modalità demo, setRating() viene chiamato direttamente sull'oggetto
- * in cache quando una recensione demo viene inserita.
+ * La cache è ereditata da UserDaoDemo (Map<String, User>).
+ * insert() verifica che l'oggetto sia un Tutor prima di delegare a super.
+ * selectTutor() recupera l'utente dalla cache ed esegue il cast a Tutor.
  *
  * -----------------------------------------------------------------------
  * Nota
@@ -39,78 +31,19 @@ import java.util.Map;
  * e spariscono alla chiusura dell'applicazione.
  * Il ciclo di vita è gestito da DemoDaoFactory — non serve Singleton.
  */
-public class TutorDaoDemo implements TutorDao {
-
-    private final Map<String, Tutor> cache = new HashMap<>();
-    private final Map<String, String> pendingPasswordHashes = new HashMap<>();
+public class TutorDaoDemo extends UserDaoDemo implements TutorDao {
 
     // ----------------------------------------------------------------
-    // insert
+    // insert — override per imporre il tipo Tutor
     // ----------------------------------------------------------------
 
     @Override
     public void insert(Connection conn, User user)
             throws DatabaseException, DuplicateUserException {
-
-        // 1. verifica che sia un Tutor
-        if (!(user instanceof Tutor tutor)) {
+        if (!(user instanceof Tutor)) {
             throw new IllegalArgumentException("Expected Tutor instance.");
         }
-
-        // 2. controllo duplicati
-        if (cache.containsKey(tutor.getUsername())) {
-            throw new DuplicateUserException(
-                    "User already exists with username: " + tutor.getUsername());
-        }
-        for (Tutor existing : cache.values()) {
-            if (existing.getEmail().equals(tutor.getEmail())) {
-                throw new DuplicateUserException(
-                        "User already exists with email: " + tutor.getEmail());
-            }
-        }
-
-        // 3. inserimento
-        cache.put(tutor.getUsername(), tutor);
-    }
-
-    // ----------------------------------------------------------------
-    // findByUsername
-    // ----------------------------------------------------------------
-
-    @Override
-    public User findByUsername(Connection conn, String username)
-            throws DatabaseException, UserNotFoundException {
-        Tutor tutor = cache.get(username);
-        if (tutor == null) throw new UserNotFoundException(username);
-        return tutor;
-    }
-
-    // ----------------------------------------------------------------
-    // updatePassword
-    // ----------------------------------------------------------------
-
-    @Override
-    public void updatePassword(Connection conn, String username,
-                               String newPasswordHash)
-            throws DatabaseException, UserNotFoundException {
-        if (!cache.containsKey(username)) {
-            throw new UserNotFoundException(username);
-        }
-        pendingPasswordHashes.put(username, newPasswordHash);
-    }
-
-    // ----------------------------------------------------------------
-    // updateProfile
-    // ----------------------------------------------------------------
-
-    @Override
-    public void updateProfile(Connection conn, String username,
-                              String description, boolean isActive)
-            throws DatabaseException, UserNotFoundException {
-        Tutor tutor = cache.get(username);
-        if (tutor == null) throw new UserNotFoundException(username);
-        tutor.setDescription(description);
-        tutor.setActive(isActive);
+        super.insert(conn, user);
     }
 
     // ----------------------------------------------------------------
@@ -120,6 +53,18 @@ public class TutorDaoDemo implements TutorDao {
     @Override
     public Tutor selectTutor(Connection conn, String username)
             throws DatabaseException, UserNotFoundException {
-        return (Tutor) findByUsername(conn, username);
+        User user = findByUsername(conn, username);
+        if (!(user instanceof Tutor tutor)) {
+            throw new UserNotFoundException(username);
+        }
+        return tutor;
+    }
+
+    @Override
+    public List<Tutor> selectAllTutors(Connection conn) throws DatabaseException {
+        return cache.values().stream()
+                .filter(Tutor.class::isInstance)
+                .map(Tutor.class::cast)
+                .toList();
     }
 }

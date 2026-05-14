@@ -33,6 +33,7 @@
         <junit.version>5.10.2</junit.version>
         <mockito.version>5.11.0</mockito.version>
         <jackson.version>2.17.2</jackson.version>
+        <ikonli.version>12.3.1</ikonli.version>
 
         <!-- Versioni plugin -->
         <plugin.compiler.version>3.13.0</plugin.compiler.version>
@@ -89,6 +90,18 @@
             <version>${jackson.version}</version>
         </dependency>
 
+        <!-- Ikonli – icon fonts (FontAwesome 5) per la GUI -->
+        <dependency>
+            <groupId>org.kordamp.ikonli</groupId>
+            <artifactId>ikonli-javafx</artifactId>
+            <version>${ikonli.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.kordamp.ikonli</groupId>
+            <artifactId>ikonli-fontawesome5-pack</artifactId>
+            <version>${ikonli.version}</version>
+        </dependency>
+
         <!-- ======================================================== -->
         <!-- Dipendenze di test                                        -->
         <!-- ======================================================== -->
@@ -143,7 +156,13 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>${plugin.javafx.version}</version>
                 <configuration>
-                    <mainClass>it.ispw.tutora.TutoraApp</mainClass>
+                    <mainClass>it.ispw.tutora.Launcher</mainClass>
+                    <options>
+                        <!-- Permette l'accesso nativo richiesto da javafx-graphics 21 -->
+                        <option>--enable-native-access=ALL-UNNAMED</option>
+                        <!-- Sopprime il warning di deprecazione di sun.misc.Unsafe (Marlin renderer) -->
+                        <option>-Dsun.java2d.marlin=false</option>
+                    </options>
                 </configuration>
             </plugin>
 
@@ -162,7 +181,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>it.ispw.tutora.TutoraApp</mainClass>
+                            <mainClass>it.ispw.tutora.Launcher</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

@@ -5,6 +5,7 @@ import it.ispw.tutora.exception.UserNotFoundException;
 import it.ispw.tutora.model.Tutor;
 
 import java.sql.Connection;
+import java.util.List;
 
 /**
  * Contratto DAO per le operazioni specifiche del Tutor.
@@ -31,4 +32,6 @@ public interface TutorDao extends UserDao {
 
     Tutor selectTutor(Connection conn, String username)
             throws DatabaseException, UserNotFoundException;
+
+    List<Tutor> selectAllTutors(Connection conn) throws DatabaseException;
 }

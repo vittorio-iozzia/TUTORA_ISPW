@@ -30,8 +30,6 @@ public interface NotificationDao {
 
     /**
      * Persiste una nuova notifica.
-     *
-     * @return id AUTO_INCREMENT assegnato dal DB
      */
     int insert(Connection conn, Notification notification)
             throws DatabaseException;

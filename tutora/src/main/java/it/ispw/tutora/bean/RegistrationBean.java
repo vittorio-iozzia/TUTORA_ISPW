@@ -48,7 +48,7 @@ public class RegistrationBean {
      * Chiamato dal RegistrationController dopo BCrypt.hashpw().
      */
     public void clearPassword() {
-        this.password        = null;
+        this.password = null;
         this.confirmPassword = null;
     }
 
