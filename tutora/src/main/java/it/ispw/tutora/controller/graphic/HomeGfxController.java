@@ -8,9 +8,11 @@ import it.ispw.tutora.view.home.DashboardFactory;
 import javafx.animation.ScaleTransition;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
@@ -206,8 +208,8 @@ public class HomeGfxController {
     private List<NavEntry> resolveNavItems(Session session) {
         if (session.isStudent()) {
             return List.of(
-                new NavEntry("Dashboard",  "fas-home",        "Dashboard",   this::noop),
-                new NavEntry("Find Tutors","fas-search",      "Find Tutors", () -> SceneManager.getInstance().showSearchTutor()),
+                new NavEntry("Dashboard",  "fas-home",        "Dashboard",   () -> swapContent("/fxml/student_content.fxml")),
+                new NavEntry("Find Tutors","fas-search",      "Find Tutors", () -> swapContent("/fxml/find_tutors_content.fxml")),
                 new NavEntry("My Lessons", "fas-calendar-alt","My Lessons",  () -> SceneManager.getInstance().showStudentLessons()),
                 new NavEntry("Messages",   "fas-comments",    "Messages",    this::noop),
                 new NavEntry("Payments",   "fas-credit-card", "Payments",    this::noop),
@@ -253,6 +255,17 @@ public class HomeGfxController {
         if (session.isAdmin()) return "Admin";
         if (session.isTutor()) return "Tutor";
         return "Student";
+    }
+
+    private void swapContent(String fxmlPath) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+            Node content = loader.load();
+            VBox.setVgrow(content, Priority.ALWAYS);
+            contentArea.getChildren().setAll(content);
+        } catch (IOException e) {
+            LOGGER.warning("Cannot load content fragment: " + fxmlPath + " — " + e.getMessage());
+        }
     }
 
     private void noop() {}

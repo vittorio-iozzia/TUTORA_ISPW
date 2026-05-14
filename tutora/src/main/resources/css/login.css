@@ -27,49 +27,49 @@
 
 .hero-brand-label {
     -fx-font-family: 'Manrope', 'Segoe UI', 'Helvetica Neue', sans-serif;
-    -fx-font-size: 28px;
+    -fx-font-size: 36px;
     -fx-font-weight: bold;
     -fx-text-fill: white;
 }
 
 .hero-icon {
     -fx-icon-color: white;
-    -fx-icon-size: 32;
+    -fx-icon-size: 44;
 }
 
 .hero-headline {
     -fx-font-family: 'Manrope', 'Segoe UI', 'Helvetica Neue', sans-serif;
-    -fx-font-size: 36px;
+    -fx-font-size: 50px;
     -fx-font-weight: 800;
     -fx-text-fill: white;
     -fx-wrap-text: true;
 }
 
 .hero-subtitle {
-    -fx-font-size: 14px;
+    -fx-font-size: 17px;
     -fx-text-fill: rgba(255,255,255,0.88);
     -fx-wrap-text: true;
-    -fx-line-spacing: 3px;
+    -fx-line-spacing: 5px;
 }
 
 .stat-icon-bg {
     -fx-background-color: rgba(255,255,255,0.18);
     -fx-background-radius: 50%;
-    -fx-min-width: 40px;
-    -fx-min-height: 40px;
-    -fx-max-width: 40px;
-    -fx-max-height: 40px;
-    -fx-pref-width: 40px;
-    -fx-pref-height: 40px;
+    -fx-min-width: 54px;
+    -fx-min-height: 54px;
+    -fx-max-width: 54px;
+    -fx-max-height: 54px;
+    -fx-pref-width: 54px;
+    -fx-pref-height: 54px;
 }
 
 .stat-icon {
     -fx-icon-color: white;
-    -fx-icon-size: 16;
+    -fx-icon-size: 22;
 }
 
 .stat-label {
-    -fx-font-size: 13px;
+    -fx-font-size: 17px;
     -fx-text-fill: rgba(255,255,255,0.92);
     -fx-font-weight: 500;
 }

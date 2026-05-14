@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="it.ispw.tutora.controller.graphic.FindTutorGfxController"
+      spacing="0" VBox.vgrow="ALWAYS">
+
+    <!-- ============================================================ -->
+    <!-- Hero                                                         -->
+    <!-- ============================================================ -->
+    <VBox styleClass="ft-hero" alignment="CENTER" spacing="10">
+        <padding><Insets top="38" right="48" bottom="32" left="48"/></padding>
+
+        <!-- Icon badge -->
+        <StackPane styleClass="ft-hero-icon-badge" maxWidth="56" maxHeight="56">
+            <FontIcon iconLiteral="fas-graduation-cap" iconSize="24" styleClass="ft-hero-icon"/>
+        </StackPane>
+
+        <Label text="Find Your Perfect Tutor" styleClass="ft-hero-title"/>
+        <Label text="Discover expert tutors in music, sports, arts and much more."
+               styleClass="ft-hero-subtitle"/>
+
+        <!-- Search bar -->
+        <HBox styleClass="ft-search-box" alignment="CENTER_LEFT" spacing="10"
+              maxWidth="600" minWidth="280">
+            <padding><Insets top="0" right="0" bottom="0" left="0"/></padding>
+            <FontIcon iconLiteral="fas-search" iconSize="14" styleClass="ft-search-icon"/>
+            <TextField fx:id="searchField"
+                       promptText="Search by name, subject or description…"
+                       styleClass="ft-search-input"
+                       HBox.hgrow="ALWAYS"/>
+        </HBox>
+    </VBox>
+
+    <!-- ============================================================ -->
+    <!-- Stats row (same structure as dashboard)                     -->
+    <!-- ============================================================ -->
+    <HBox spacing="20">
+        <VBox.margin><Insets top="16" right="0" bottom="20" left="0"/></VBox.margin>
+
+        <HBox fx:id="ftStatCard1" styleClass="stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+              spacing="18" alignment="CENTER_LEFT">
+            <padding><Insets top="22" right="26" bottom="22" left="26"/></padding>
+            <StackPane styleClass="stat-icon-wrap,stat-blue">
+                <FontIcon iconLiteral="fas-users" iconSize="18" styleClass="stat-icon"/>
+            </StackPane>
+            <VBox spacing="4">
+                <Label fx:id="statTutorsLabel" text="—" styleClass="stat-value"/>
+                <Label text="Tutors available" styleClass="stat-label"/>
+            </VBox>
+        </HBox>
+
+        <HBox fx:id="ftStatCard2" styleClass="stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+              spacing="18" alignment="CENTER_LEFT">
+            <padding><Insets top="22" right="26" bottom="22" left="26"/></padding>
+            <StackPane styleClass="stat-icon-wrap,stat-purple">
+                <FontIcon iconLiteral="fas-book-open" iconSize="18" styleClass="stat-icon"/>
+            </StackPane>
+            <VBox spacing="4">
+                <Label fx:id="statSubjectsLabel" text="—" styleClass="stat-value"/>
+                <Label text="Subjects &amp; skills" styleClass="stat-label"/>
+            </VBox>
+        </HBox>
+
+        <HBox fx:id="ftStatCard3" styleClass="stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+              spacing="18" alignment="CENTER_LEFT">
+            <padding><Insets top="22" right="26" bottom="22" left="26"/></padding>
+            <StackPane styleClass="stat-icon-wrap,stat-orange">
+                <FontIcon iconLiteral="fas-star" iconSize="18" styleClass="stat-icon"/>
+            </StackPane>
+            <VBox spacing="4">
+                <Label text="4.8 / 5.0" styleClass="stat-value"/>
+                <Label text="Average rating" styleClass="stat-label"/>
+            </VBox>
+        </HBox>
+
+        <HBox fx:id="ftStatCard4" styleClass="stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+              spacing="18" alignment="CENTER_LEFT">
+            <padding><Insets top="22" right="26" bottom="22" left="26"/></padding>
+            <StackPane styleClass="stat-icon-wrap,stat-green">
+                <FontIcon iconLiteral="fas-check-circle" iconSize="18" styleClass="stat-icon"/>
+            </StackPane>
+            <VBox spacing="4">
+                <Label text="Always free" styleClass="stat-value"/>
+                <Label text="Browse &amp; explore" styleClass="stat-label"/>
+            </VBox>
+        </HBox>
+
+    </HBox>
+
+    <!-- ============================================================ -->
+    <!-- Filter + Grid                                                -->
+    <!-- ============================================================ -->
+    <VBox styleClass="tab-panel-card" VBox.vgrow="ALWAYS" spacing="14">
+        <padding><Insets top="18" right="24" bottom="24" left="24"/></padding>
+
+        <!-- Category pills + Apply button on same row -->
+        <HBox alignment="CENTER_LEFT" spacing="12">
+            <HBox fx:id="categoryPills" spacing="8" alignment="CENTER_LEFT" HBox.hgrow="ALWAYS"/>
+            <Button fx:id="applyBtn"
+                    text="Seleziona una categoria"
+                    onAction="#handleApply"
+                    styleClass="apply-tutor-btn"
+                    disable="true"/>
+        </HBox>
+
+        <!-- Results label -->
+        <Label fx:id="resultsLabel" text="" styleClass="ft-results-label"/>
+
+        <!-- Tutor grid -->
+        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="ft-scroll">
+            <FlowPane fx:id="tutorGrid" hgap="20" vgap="20" styleClass="tutor-grid"/>
+        </ScrollPane>
+
+    </VBox>
+
+</VBox>

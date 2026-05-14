@@ -1,4 +1,4 @@
-﻿package it.ispw.tutora.controller.application;
+package it.ispw.tutora.controller.application;
 
 import it.ispw.tutora.bean.RegistrationBean;
 import it.ispw.tutora.dao.StudentDao;
