@@ -32,4 +32,18 @@ public interface PaymentGateway {
      */
     String processPayment(BigDecimal amount)
             throws PaymentException, PaymentTimeoutException;
+
+    /**
+     * Rimborsa una transazione precedentemente completata.
+     *
+     * @param paymentRef riferimento della transazione originale da rimborsare
+     * @param amount     importo da rimborsare — deve essere > 0
+     * @return refundRef riferimento univoco del rimborso
+     * @throws PaymentException        se il rimborso viene rifiutato
+     *                                 o il sistema non è disponibile
+     * @throws PaymentTimeoutException se il gateway non risponde
+     *                                 entro il timeout di 10 minuti
+     */
+    String refund(String paymentRef, BigDecimal amount)
+            throws PaymentException, PaymentTimeoutException;
 }

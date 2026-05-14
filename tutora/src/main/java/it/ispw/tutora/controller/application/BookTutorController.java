@@ -204,9 +204,16 @@ public class BookTutorController {
      * aperta la connessione DB durante la chiamata al gateway esterno
      * (che puo' impiegare fino a 10 minuti):
      *
-     *   Fase 1 - Lettura dati (connessione read, subito chiusa)
+     *   Fase 1 - Riserva budget (write transaction, subito committata)
+     *            Il budget viene scalato immediatamente come "hold": qualsiasi
+     *            altra sessione concorrente trovera' il budget gia' ridotto e
+     *            fallira' prima di chiamare PayPal, eliminando il rischio di
+     *            addebitare PayPal piu' volte a fronte di un budget insufficiente.
      *   Fase 2 - Chiamata gateway PayPal (fuori da qualsiasi connessione DB)
-     *   Fase 3 - Transazione atomica DB (scritture con dati ricaricati freschi)
+     *            Se fallisce, il budget viene ripristinato tramite restoreBudget().
+     *   Fase 3 - Transazione atomica DB: inserisce il booking e la notifica.
+     *            Il budget e' gia' stato scalato in Fase 1, quindi non viene
+     *            toccato qui. Se la fase fallisce, restoreBudget() lo ripristina.
      */
     public void payment(BookingBean bean, String token) {
         SessionManager sm = SessionManager.getInstance();
@@ -217,58 +224,71 @@ public class BookTutorController {
         }
         String username = sm.getCurrentUser(token).getUsername();
 
-        // Fase 1: leggi il prezzo della lezione e verifica il budget
-        // La connessione viene chiusa prima di chiamare il gateway esterno
+        // Fase 1: riserva del budget (write transaction)
+        // Il budget viene scalato e committato subito: le sessioni concorrenti
+        // vedranno il nuovo saldo e non potranno procedere se insufficiente.
         BigDecimal price;
         try (Connection conn = DaoFactory.getInstance().getConnection()) {
-            Lesson less = lesson.selectLesson(conn, bean.getLessonId());
-            Student stu = student.selectStudent(conn, username);
-            if (!stu.hasSufficientBudget(less.getListedPrice())) {
-                bean.setErrorMessage(ERR_INSUFFICIENT_BUDGET);
+            if (conn != null) conn.setAutoCommit(false);
+            try {
+                Lesson less = lesson.selectLesson(conn, bean.getLessonId());
+                Student stu = student.selectStudent(conn, username);
+                if (!stu.hasSufficientBudget(less.getListedPrice())) {
+                    bean.setErrorMessage(ERR_INSUFFICIENT_BUDGET);
+                    return;
+                }
+                price = less.getListedPrice();
+                stu.deductBudget(price);
+                student.updateStudentBudget(conn, stu.getUsername(), stu.getBudget());
+                if (conn != null) conn.commit();
+            } catch (LessonNotFoundException e) {
+                safeRollback(conn);
+                bean.setErrorMessage(ERR_LESSON_NOT_FOUND);
+                return;
+            } catch (UserNotFoundException e) {
+                safeRollback(conn);
+                bean.setErrorMessage(ERR_ACCOUNT_NOT_FOUND);
+                return;
+            } catch (IllegalArgumentException e) {
+                safeRollback(conn);
+                bean.setErrorMessage(ERR_INVALID_ARGUMENT);
+                return;
+            } catch (DatabaseException | SQLException e) {
+                safeRollback(conn);
+                bean.setErrorMessage(ERR_SYSTEM);
                 return;
             }
-            price = less.getListedPrice();
-        } catch (LessonNotFoundException e) {
-            bean.setErrorMessage(ERR_LESSON_NOT_FOUND);
-            return;
-        } catch (UserNotFoundException e) {
-            bean.setErrorMessage(ERR_ACCOUNT_NOT_FOUND);
-            return;
         } catch (DatabaseException | SQLException e) {
             bean.setErrorMessage(ERR_SYSTEM);
             return;
         }
 
-        // Fase 2: chiama il gateway PayPal fuori da qualsiasi connessione DB
-        // Tenere aperta la connessione durante questa attesa esaurirebbe il pool
-        // e manterrebbe lock inutilmente per fino a 10 minuti
+        // Fase 2: chiama il gateway PayPal fuori da qualsiasi connessione DB.
+        // Tenere aperta la connessione durante questa attesa esaurirebbe il pool.
+        // Se PayPal fallisce il budget viene ripristinato: lo student non ha perso nulla.
         String paymentRef;
         try {
             paymentRef = paymentGateway.processPayment(price);
             bean.setPaymentRef(paymentRef);
         } catch (PaymentException e) {
             // Propaga il messaggio del gateway (es. "Payment declined"): e' informazione utile all'utente
+            restoreBudget(username, price);
             bean.setErrorMessage(e.getMessage());
             return;
         } catch (PaymentTimeoutException e) {
+            restoreBudget(username, price);
             bean.setErrorMessage(e.getMessage());
             return;
         }
 
-        // Fase 3: transazione DB atomica con dati ricaricati freschi
-        // Student e lesson vengono ricaricati perche' i dati della Fase 1 potrebbero
-        // essere cambiati nel frattempo (es. budget scalato da un'altra sessione)
+        // Fase 3: transazione DB atomica.
+        // Il budget e' gia' stato scalato in Fase 1: qui si inserisce solo il booking.
+        // Se qualcosa va storto, restoreBudget() ripristina il saldo.
         try (Connection conn = DaoFactory.getInstance().getConnection()) {
-            // null-check: in modalita' Demo/Json getConnection() restituisce null
             if (conn != null) conn.setAutoCommit(false);
             try {
                 Student stu = student.selectStudent(conn, username);
                 Lesson less = lesson.selectLesson(conn, bean.getLessonId());
-                // Ri-verifica budget: potrebbe essere cambiato tra la Fase 1 e ora
-                if (!stu.hasSufficientBudget(less.getListedPrice())) {
-                    bean.setErrorMessage(ERR_INSUFFICIENT_BUDGET);
-                    return;
-                }
                 Booking booking1 = new Booking.Builder()
                         .lesson(less)
                         .student(stu)
@@ -278,9 +298,6 @@ public class BookTutorController {
                         .paymentRef(paymentRef)
                         .build();
                 bean.setId(booking.insertBooking(conn, booking1));
-                stu.deductBudget(less.getListedPrice());
-                // Persiste il budget aggiornato nel DB: deductBudget modifica solo il model in-memory
-                student.updateStudentBudget(conn, stu.getUsername(), stu.getBudget());
                 // updatePaymentStatus applica la FSM del model: lancia IllegalArgumentException
                 // se la transizione PENDING -> PAID non e' valida
                 booking1.updatePaymentStatus(PaymentStatus.PAID);
@@ -297,23 +314,34 @@ public class BookTutorController {
                 if (conn != null) conn.commit();
             } catch (LessonNotFoundException e) {
                 safeRollback(conn);
+                safeRefund(paymentRef, price);
+                restoreBudget(username, price);
                 bean.setErrorMessage(ERR_LESSON_NOT_FOUND);
             } catch (UserNotFoundException e) {
                 safeRollback(conn);
+                safeRefund(paymentRef, price);
+                restoreBudget(username, price);
                 bean.setErrorMessage(ERR_ACCOUNT_NOT_FOUND);
             } catch (BookingNotFoundException e) {
                 safeRollback(conn);
+                safeRefund(paymentRef, price);
+                restoreBudget(username, price);
                 bean.setErrorMessage("Booking not found.");
             } catch (IllegalArgumentException e) {
-                // FSM violation: stato della booking o del budget non valido
+                // FSM violation: stato della booking non valido
                 safeRollback(conn);
+                safeRefund(paymentRef, price);
+                restoreBudget(username, price);
                 bean.setErrorMessage(ERR_INVALID_ARGUMENT);
             } catch (DatabaseException | SQLException e) {
-                // safeRollback evita che una SQLException dal rollback inghiotta l'eccezione originale
                 safeRollback(conn);
+                safeRefund(paymentRef, price);
+                restoreBudget(username, price);
                 bean.setErrorMessage(ERR_SYSTEM);
             }
         } catch (DatabaseException | SQLException e) {
+            safeRefund(paymentRef, price);
+            restoreBudget(username, price);
             bean.setErrorMessage(ERR_SYSTEM);
         }
     }
@@ -333,6 +361,49 @@ public class BookTutorController {
             conn.rollback();
         } catch (SQLException e) {
             LOGGER.warning("Rollback failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Ripristina il budget dello student in caso di fallimento di PayPal (Fase 2)
+     * o della transazione di booking (Fase 3), entrambi avvenuti dopo che la Fase 1
+     * aveva gia' committato la detrazione.
+     * Gli errori vengono solo loggati: il chiamante ha gia' impostato il messaggio
+     * di errore per l'utente e non deve essere disturbato da eccezioni secondarie.
+     */
+    private void restoreBudget(String username, BigDecimal amount) {
+        try (Connection conn = DaoFactory.getInstance().getConnection()) {
+            if (conn != null) conn.setAutoCommit(false);
+            try {
+                Student stu = student.selectStudent(conn, username);
+                stu.addBudget(amount);
+                student.updateStudentBudget(conn, stu.getUsername(), stu.getBudget());
+                if (conn != null) conn.commit();
+            } catch (Exception e) {
+                safeRollback(conn);
+                LOGGER.warning("Budget restore failed for " + username + ": " + e.getMessage());
+            }
+        } catch (Exception e) {
+            LOGGER.warning("Budget restore connection failed for " + username + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Richiede a PayPal il rimborso di una transazione gia' completata.
+     * Chiamato solo quando la Fase 3 fallisce dopo che PayPal ha addebitato
+     * con successo: senza questo rimborso lo student avrebbe pagato senza
+     * ottenere la prenotazione.
+     * Gli errori vengono loggati con paymentRef per consentire l'intervento
+     * manuale dell'operatore: il chiamante ha gia' impostato il messaggio
+     * di errore per l'utente.
+     */
+    private void safeRefund(String paymentRef, BigDecimal amount) {
+        try {
+            paymentGateway.refund(paymentRef, amount);
+        } catch (PaymentException | PaymentTimeoutException e) {
+            LOGGER.warning("PayPal refund failed — manual intervention required."
+                    + " paymentRef=" + paymentRef + " amount=" + amount
+                    + " reason=" + e.getMessage());
         }
     }
 }

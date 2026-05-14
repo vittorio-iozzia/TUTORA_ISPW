@@ -107,4 +107,49 @@ public class PayPalBoundary implements PaymentGateway {
             executor.shutdownNow();
         }
     }
+
+    /**
+     * Adatta la chiamata di rimborso dell'Adaptee all'interfaccia Target.
+     * Stessa gestione di timeout e traduzione eccezioni di processPayment().
+     */
+    @Override
+    @SuppressWarnings("java:S2095") // ExecutorService.close() introdotto in Java 19
+    public String refund(String paymentRef, BigDecimal amount)
+            throws PaymentException, PaymentTimeoutException {
+
+        if (paymentRef == null || paymentRef.isBlank()) {
+            throw new PaymentException("Invalid payment reference.");
+        }
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new PaymentException("Invalid refund amount.");
+        }
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            Future<String> future = executor.submit(() -> adaptee.refund(paymentRef, amount));
+            String refundId = future.get(TIMEOUT_MINUTES, TimeUnit.MINUTES);
+
+            if (refundId == null) {
+                throw new PaymentException("Refund declined by PayPal.");
+            }
+            return refundId;
+
+        } catch (TimeoutException e) {
+            throw new PaymentTimeoutException(
+                    "Refund service did not respond within "
+                            + TIMEOUT_MINUTES + " minutes.");
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new PaymentTimeoutException("Refund was interrupted.");
+
+        } catch (ExecutionException e) {
+            LOGGER.severe("PayPal refund error: " + e.getCause());
+            throw new PaymentException(
+                    "Refund service unavailable. Please contact support.", e.getCause());
+
+        } finally {
+            executor.shutdownNow();
+        }
+    }
 }
