@@ -19,6 +19,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
@@ -42,7 +43,8 @@ public class StudentContentController {
     // FXML – Welcome
     // ----------------------------------------------------------------
 
-    @FXML private Label welcomeTitle;
+    @FXML private Label     welcomeTitle;
+    @FXML private ImageView heroImageView;
 
     // ----------------------------------------------------------------
     // FXML – Stats
@@ -124,6 +126,7 @@ public class StudentContentController {
         String token = SceneManager.getInstance().getSessionToken();
         Session session = SessionManager.getInstance().getSession(token);
         welcomeTitle.setText("Welcome back, " + session.getUser().getName() + "!");
+        loadHeroImage();
 
         allTutors     = loadTutors();
         allCategories = loadCategories();
@@ -144,6 +147,27 @@ public class StudentContentController {
         buildLessonHistory();
 
         searchField.textProperty().addListener((obs, old, val) -> filterTutors(val));
+    }
+
+    // ----------------------------------------------------------------
+    // Hero image
+    // ----------------------------------------------------------------
+
+    private void loadHeroImage() {
+        Rectangle clip = new Rectangle(200, 150);
+        clip.setArcWidth(18);
+        clip.setArcHeight(18);
+        heroImageView.setClip(clip);
+
+        Image img = new Image(
+            "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=300&fit=crop",
+            400, 300, false, true, true
+        );
+        img.progressProperty().addListener((obs, oldV, newV) -> {
+            if (newV.doubleValue() >= 1.0 && !img.isError()) {
+                heroImageView.setImage(img);
+            }
+        });
     }
 
     // ----------------------------------------------------------------

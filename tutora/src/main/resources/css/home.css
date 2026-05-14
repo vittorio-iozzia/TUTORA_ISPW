@@ -258,21 +258,68 @@
 }
 
 /* ================================================================
-   Student home – Welcome
+   Student home – Dashboard Hero Banner
    ================================================================ */
+.dash-hero {
+    -fx-background-color: linear-gradient(from 0% 100% to 100% 0%, #163325 0%, #2F6E52 100%);
+    -fx-background-radius: 20;
+    -fx-effect: dropshadow(gaussian, rgba(22,51,37,0.38), 22, 0, 0, 7);
+}
+
+.dash-hero-chip {
+    -fx-background-color: rgba(255,255,255,0.15);
+    -fx-background-radius: 20;
+    -fx-text-fill: rgba(255,255,255,0.85);
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-padding: 4 12;
+}
+
+.dash-hero-title {
+    -fx-font-size: 34px;
+    -fx-font-weight: 700;
+    -fx-text-fill: white;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+}
+
+.dash-hero-subtitle {
+    -fx-font-size: 15px;
+    -fx-text-fill: rgba(255,255,255,0.72);
+    -fx-font-family: "Segoe UI", sans-serif;
+}
+
+.dash-hero-pill {
+    -fx-background-color: rgba(255,255,255,0.13);
+    -fx-background-radius: 20;
+    -fx-text-fill: rgba(255,255,255,0.9);
+    -fx-font-size: 12px;
+    -fx-padding: 5 14;
+}
+
+.dash-hero-img-wrap {
+    -fx-background-color: rgba(255,255,255,0.08);
+    -fx-background-radius: 14;
+    -fx-min-width: 200;
+    -fx-max-width: 200;
+    -fx-min-height: 150;
+    -fx-max-height: 150;
+}
+
+/* Legacy welcome classes (still used in My Lessons / Find Tutors heroes) */
 .welcome-section {
     -fx-padding: 0 0 4 0;
 }
 
 .welcome-title {
-    -fx-font-size: 30px;
+    -fx-font-size: 22px;
     -fx-font-weight: bold;
     -fx-text-fill: #1C2621;
     -fx-font-family: "Segoe UI";
 }
 
 .welcome-subtitle {
-    -fx-font-size: 16px;
+    -fx-font-size: 14px;
     -fx-text-fill: #6B8F7A;
     -fx-font-family: "Segoe UI";
 }
@@ -1137,9 +1184,12 @@
    Find Tutors – Hero section
    ================================================================ */
 .ft-hero {
-    -fx-background-color: linear-gradient(160deg, #F8FAFF 0%, #EEF2FB 100%);
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, #F8FAFF 0%, #EEF2FB 100%);
+    -fx-background-radius: 16;
     -fx-border-color: #E5E7EB;
-    -fx-border-width: 0 0 1 0;
+    -fx-border-radius: 16;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 14, 0, 0, 4);
 }
 
 .ft-hero-icon-badge {
@@ -1287,18 +1337,20 @@
    Find Tutors – Apply button
    ================================================================ */
 .apply-tutor-btn {
-    -fx-background-color: #2A5C45;
+    -fx-background-color: #F97316;
     -fx-background-radius: 20;
     -fx-text-fill: white;
-    -fx-font-size: 12px;
+    -fx-font-size: 14px;
     -fx-font-weight: 700;
     -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
-    -fx-padding: 8 18;
+    -fx-padding: 12 28;
     -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(249,115,22,0.35), 10, 0, 0, 3);
 }
 
 .apply-tutor-btn:hover {
-    -fx-background-color: #1E4433;
+    -fx-background-color: #EA6C0A;
+    -fx-effect: dropshadow(gaussian, rgba(249,115,22,0.5), 14, 0, 0, 4);
 }
 
 .apply-tutor-btn:disabled {
@@ -1667,4 +1719,280 @@
    ================================================================ */
 .analytics-placeholder-icon {
     -fx-icon-color: #C8D8D0;
+}
+
+/* ================================================================
+   My Lessons – Hero
+   ================================================================ */
+.ml-hero {
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, #F0FDF4 0%, #DCFCE7 100%);
+    -fx-background-radius: 16;
+    -fx-border-color: #D1FAE5;
+    -fx-border-radius: 16;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 14, 0, 0, 4);
+}
+
+.ml-hero-icon-wrap {
+    -fx-background-color: #2A5C45;
+    -fx-background-radius: 14;
+    -fx-min-width: 52;
+    -fx-min-height: 52;
+    -fx-max-width: 52;
+    -fx-max-height: 52;
+}
+
+.ml-hero-icon {
+    -fx-icon-color: white;
+}
+
+.ml-hero-title {
+    -fx-font-size: 26px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-text-fill: #111827;
+}
+
+.ml-hero-subtitle {
+    -fx-font-size: 14px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: #4B7A62;
+}
+
+/* ================================================================
+   My Lessons – Stats row
+   ================================================================ */
+.ml-stats-row {
+    -fx-background-color: transparent;
+}
+
+.ml-stat-card {
+    -fx-background-color: white;
+    -fx-background-radius: 14;
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 6, 0, 0, 2);
+}
+
+.ml-stat-icon-wrap {
+    -fx-min-width: 42;
+    -fx-min-height: 42;
+    -fx-max-width: 42;
+    -fx-max-height: 42;
+    -fx-background-radius: 11;
+}
+
+.ml-stat-wrap-blue   { -fx-background-color: #EFF6FF; -fx-background-radius: 11; }
+.ml-stat-wrap-green  { -fx-background-color: #ECFDF5; -fx-background-radius: 11; }
+.ml-stat-wrap-purple { -fx-background-color: #F5F3FF; -fx-background-radius: 11; }
+.ml-stat-wrap-amber  { -fx-background-color: #FFFBEB; -fx-background-radius: 11; }
+
+.ml-stat-icon-blue   { -fx-icon-color: #3B82F6; }
+.ml-stat-icon-green  { -fx-icon-color: #2A5C45; }
+.ml-stat-icon-purple { -fx-icon-color: #8B5CF6; }
+.ml-stat-icon-amber  { -fx-icon-color: #F59E0B; }
+
+.ml-stat-value {
+    -fx-font-size: 20px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-text-fill: #111827;
+}
+
+.ml-stat-label {
+    -fx-font-size: 12px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: #9CA3AF;
+}
+
+/* ================================================================
+   My Lessons – Scroll area
+   ================================================================ */
+.ml-scroll {
+    -fx-background-color: #F4F6F4;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.ml-scroll > .viewport {
+    -fx-background-color: #F4F6F4;
+}
+
+/* ================================================================
+   My Lessons – Section headings
+   ================================================================ */
+.ml-section-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-text-fill: #374151;
+}
+
+.ml-section-dot {
+    -fx-background-radius: 5;
+    -fx-min-width: 10;
+    -fx-min-height: 10;
+    -fx-max-width: 10;
+    -fx-max-height: 10;
+}
+
+.ml-dot-upcoming { -fx-background-color: #3B82F6; }
+.ml-dot-past     { -fx-background-color: #6B7280; }
+
+/* ================================================================
+   My Lessons – Lesson cards
+   ================================================================ */
+.ml-card {
+    -fx-background-color: white;
+    -fx-background-radius: 14;
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 6, 0, 0, 2);
+    -fx-min-height: 90;
+    -fx-padding: 0;
+}
+
+.ml-card:hover {
+    -fx-border-color: #CBD5E1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 12, 0, 0, 4);
+}
+
+.ml-accent-upcoming {
+    -fx-background-color: #3B82F6;
+    -fx-background-radius: 14 0 0 14;
+}
+
+.ml-accent-past {
+    -fx-background-color: #D1D5DB;
+    -fx-background-radius: 14 0 0 14;
+}
+
+/* Date badge */
+.ml-date-badge-upcoming {
+    -fx-background-color: #EFF6FF;
+    -fx-background-radius: 10;
+    -fx-min-width: 52;
+    -fx-max-width: 52;
+    -fx-min-height: 52;
+    -fx-max-height: 52;
+    -fx-padding: 6;
+}
+
+.ml-date-badge-past {
+    -fx-background-color: #F3F4F6;
+    -fx-background-radius: 10;
+    -fx-min-width: 52;
+    -fx-max-width: 52;
+    -fx-min-height: 52;
+    -fx-max-height: 52;
+    -fx-padding: 6;
+}
+
+.ml-date-day {
+    -fx-font-size: 18px;
+    -fx-font-weight: 800;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-text-fill: #1C2621;
+    -fx-alignment: center;
+}
+
+.ml-date-month {
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: #6B7280;
+    -fx-alignment: center;
+}
+
+/* Card text */
+.ml-subject {
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-text-fill: #111827;
+}
+
+.ml-tutor {
+    -fx-font-size: 13px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: #6B7280;
+}
+
+.ml-time {
+    -fx-font-size: 12px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: #9CA3AF;
+}
+
+.ml-price {
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-text-fill: #111827;
+}
+
+/* Mode badges */
+.ml-badge-online {
+    -fx-background-color: #ECFDF5;
+    -fx-background-radius: 20;
+    -fx-text-fill: #059669;
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-padding: 3 10;
+}
+
+.ml-badge-person {
+    -fx-background-color: #F5F3FF;
+    -fx-background-radius: 20;
+    -fx-text-fill: #7C3AED;
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-padding: 3 10;
+}
+
+/* Action buttons */
+.ml-join-btn {
+    -fx-background-color: #2A5C45;
+    -fx-background-radius: 8;
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-padding: 7 18;
+    -fx-cursor: hand;
+}
+
+.ml-join-btn:hover {
+    -fx-background-color: #1E4433;
+}
+
+.ml-done-badge {
+    -fx-background-color: #F3F4F6;
+    -fx-background-radius: 20;
+    -fx-text-fill: #6B7280;
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-padding: 4 12;
+}
+
+/* ================================================================
+   My Lessons – Empty state
+   ================================================================ */
+.ml-empty-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-text-fill: #374151;
+}
+
+.ml-empty-subtitle {
+    -fx-font-size: 13px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: #9CA3AF;
+    -fx-text-alignment: center;
 }

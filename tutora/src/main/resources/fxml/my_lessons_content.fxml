@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="it.ispw.tutora.controller.graphic.MyLessonsGfxController"
+      spacing="24">
+
+    <!-- ── Hero ── -->
+    <HBox styleClass="ml-hero" alignment="CENTER_LEFT" spacing="20">
+        <padding><Insets top="24" right="28" bottom="24" left="28"/></padding>
+        <StackPane styleClass="ft-hero-icon-badge" maxWidth="52" maxHeight="52">
+            <FontIcon iconLiteral="fas-calendar-alt" iconSize="22" styleClass="ft-hero-icon"/>
+        </StackPane>
+        <VBox spacing="4" HBox.hgrow="ALWAYS">
+            <Label text="My Lessons" styleClass="welcome-title"/>
+            <Label text="Track your upcoming and completed sessions" styleClass="welcome-subtitle"/>
+        </VBox>
+    </HBox>
+
+    <!-- ── Stats row ── -->
+    <HBox spacing="20">
+
+        <HBox fx:id="statCard1" styleClass="stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+              spacing="18" alignment="CENTER_LEFT">
+            <padding><Insets top="22" right="26" bottom="22" left="26"/></padding>
+            <StackPane styleClass="stat-icon-wrap,stat-blue">
+                <FontIcon iconLiteral="fas-calendar-check" iconSize="18" styleClass="stat-icon"/>
+            </StackPane>
+            <VBox spacing="4">
+                <Label fx:id="statUpcomingValue" text="—" styleClass="stat-value"/>
+                <Label text="Upcoming" styleClass="stat-label"/>
+            </VBox>
+        </HBox>
+
+        <HBox fx:id="statCard2" styleClass="stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+              spacing="18" alignment="CENTER_LEFT">
+            <padding><Insets top="22" right="26" bottom="22" left="26"/></padding>
+            <StackPane styleClass="stat-icon-wrap,stat-green">
+                <FontIcon iconLiteral="fas-check-circle" iconSize="18" styleClass="stat-icon"/>
+            </StackPane>
+            <VBox spacing="4">
+                <Label fx:id="statCompletedValue" text="—" styleClass="stat-value"/>
+                <Label text="Completed" styleClass="stat-label"/>
+            </VBox>
+        </HBox>
+
+        <HBox fx:id="statCard3" styleClass="stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+              spacing="18" alignment="CENTER_LEFT">
+            <padding><Insets top="22" right="26" bottom="22" left="26"/></padding>
+            <StackPane styleClass="stat-icon-wrap,stat-purple">
+                <FontIcon iconLiteral="fas-clock" iconSize="18" styleClass="stat-icon"/>
+            </StackPane>
+            <VBox spacing="4">
+                <Label fx:id="statHoursValue" text="—" styleClass="stat-value"/>
+                <Label text="Hours learned" styleClass="stat-label"/>
+            </VBox>
+        </HBox>
+
+        <HBox fx:id="statCard4" styleClass="stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+              spacing="18" alignment="CENTER_LEFT">
+            <padding><Insets top="22" right="26" bottom="22" left="26"/></padding>
+            <StackPane styleClass="stat-icon-wrap,stat-orange">
+                <FontIcon iconLiteral="fas-euro-sign" iconSize="18" styleClass="stat-icon"/>
+            </StackPane>
+            <VBox spacing="4">
+                <Label fx:id="statSpentValue" text="—" styleClass="stat-value"/>
+                <Label text="Total spent" styleClass="stat-label"/>
+            </VBox>
+        </HBox>
+
+    </HBox>
+
+    <!-- ── Lesson tabs ── -->
+    <VBox styleClass="tab-panel-card" VBox.vgrow="ALWAYS">
+        <TabPane styleClass="student-tabs"
+                 tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+
+            <Tab text="Upcoming">
+                <VBox fx:id="upcomingList" spacing="12" styleClass="tab-content">
+                    <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+                </VBox>
+            </Tab>
+
+            <Tab text="Past">
+                <VBox fx:id="pastList" spacing="12" styleClass="tab-content">
+                    <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+                </VBox>
+            </Tab>
+
+        </TabPane>
+    </VBox>
+
+</VBox>

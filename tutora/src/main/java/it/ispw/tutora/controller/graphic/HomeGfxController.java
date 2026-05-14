@@ -210,7 +210,7 @@ public class HomeGfxController {
             return List.of(
                 new NavEntry("Dashboard",  "fas-home",        "Dashboard",   () -> swapContent("/fxml/student_content.fxml")),
                 new NavEntry("Find Tutors","fas-search",      "Find Tutors", () -> swapContent("/fxml/find_tutors_content.fxml")),
-                new NavEntry("My Lessons", "fas-calendar-alt","My Lessons",  () -> SceneManager.getInstance().showStudentLessons()),
+                new NavEntry("My Lessons", "fas-calendar-alt","My Lessons",  () -> swapContent("/fxml/my_lessons_content.fxml")),
                 new NavEntry("Messages",   "fas-comments",    "Messages",    this::noop),
                 new NavEntry("Payments",   "fas-credit-card", "Payments",    this::noop),
                 new NavEntry("Favorites",  "fas-heart",       "Favorites",   this::noop),
@@ -263,8 +263,9 @@ public class HomeGfxController {
             Node content = loader.load();
             VBox.setVgrow(content, Priority.ALWAYS);
             contentArea.getChildren().setAll(content);
-        } catch (IOException e) {
-            LOGGER.warning("Cannot load content fragment: " + fxmlPath + " — " + e.getMessage());
+        } catch (Exception e) {
+            LOGGER.severe("Cannot load content fragment: " + fxmlPath + " — " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

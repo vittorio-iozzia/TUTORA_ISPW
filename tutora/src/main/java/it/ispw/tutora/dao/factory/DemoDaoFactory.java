@@ -3,9 +3,14 @@ package it.ispw.tutora.dao.factory;
 import it.ispw.tutora.dao.*;
 import it.ispw.tutora.dao.demo.*;
 import it.ispw.tutora.enums.ApplicationStatus;
+import it.ispw.tutora.enums.LessonStatus;
 import it.ispw.tutora.enums.NotificationType;
+import it.ispw.tutora.enums.PaymentStatus;
+import it.ispw.tutora.enums.Status;
 import it.ispw.tutora.exception.DatabaseException;
 import it.ispw.tutora.exception.DuplicateApplicationException;
+import it.ispw.tutora.exception.DuplicateLessonException;
+import it.ispw.tutora.exception.DuplicateTutorExpertiseException;
 import it.ispw.tutora.exception.DuplicateUserException;
 import it.ispw.tutora.model.*;
 import org.mindrot.jbcrypt.BCrypt;
@@ -45,12 +50,18 @@ public class DemoDaoFactory extends DaoFactory {
     // Costanti per i dati di esempio — evitano literal duplicati
     // ----------------------------------------------------------------
 
-    private static final String CAT_MUSIC = "Music";
+    private static final String CAT_MUSIC       = "Music";
     private static final String CAT_PHOTOGRAPHY = "Photography";
-    private static final String CAT_SPORT = "Sport";
-    private static final String REQ_BIOGRAPHY = "Biography";
-    private static final String USER_STUDENT = "student_luigi";
-    private static final String DEMO_HASH_SEED = "Demo1234"; // dato di esempio in-memory, non credenziale reale
+    private static final String CAT_SPORT       = "Sport";
+    private static final String REQ_BIOGRAPHY   = "Biography";
+    private static final String USER_STUDENT    = "student_luigi";
+    private static final String USER_TUTOR      = "tutor_vitto";
+    private static final String DEMO_HASH_SEED  = "Demo1234"; // dato di esempio in-memory, non credenziale reale
+
+    // References to Category objects so populateExpertises() can link SubCategories
+    private Category musicCategory;
+    private Category photographyCategory;
+    private Category sportCategory;
 
     // ----------------------------------------------------------------
     // Istanze condivise dei DAO demo
@@ -74,9 +85,12 @@ public class DemoDaoFactory extends DaoFactory {
         try {
             populateCategories();
             populateUsers();
+            populateExpertises();
             populateApplications();
             populateNotifications();
-        } catch (DatabaseException | DuplicateUserException | DuplicateApplicationException e) {
+            populateLessonsAndBookings();
+        } catch (DatabaseException | DuplicateUserException | DuplicateApplicationException
+                 | DuplicateTutorExpertiseException | DuplicateLessonException e) {
             throw new IllegalStateException("Failed to populate demo data", e);
         }
     }
@@ -88,8 +102,9 @@ public class DemoDaoFactory extends DaoFactory {
     private void populateCategories() {
 
         // Music
-        Category music = new Category(CAT_MUSIC,
+        musicCategory = new Category(CAT_MUSIC,
                 "Musical instrument lessons and music theory");
+        Category music = musicCategory;
         music.addRequirement(new TextRequirement(
                 CAT_MUSIC, "bio", REQ_BIOGRAPHY,
                 "Describe your musical background and experience",
@@ -113,8 +128,9 @@ public class DemoDaoFactory extends DaoFactory {
         categoryDao.add(music);
 
         // Photography
-        Category photography = new Category(CAT_PHOTOGRAPHY,
+        photographyCategory = new Category(CAT_PHOTOGRAPHY,
                 "Photography technique and post-production");
+        Category photography = photographyCategory;
         photography.addRequirement(new TextRequirement(
                 CAT_PHOTOGRAPHY, "bio", REQ_BIOGRAPHY,
                 "Describe your photography experience",
@@ -126,8 +142,9 @@ public class DemoDaoFactory extends DaoFactory {
         categoryDao.add(photography);
 
         // Sport
-        Category sport = new Category(CAT_SPORT,
+        sportCategory = new Category(CAT_SPORT,
                 "Athletic training and sports coaching");
+        Category sport = sportCategory;
         sport.addRequirement(new TextRequirement(
                 CAT_SPORT, "bio", REQ_BIOGRAPHY,
                 "Describe your sports background",
@@ -188,6 +205,37 @@ public class DemoDaoFactory extends DaoFactory {
         tutorDao.insert(null, tutor);
     }
 
+    private void populateExpertises()
+            throws DatabaseException, DuplicateTutorExpertiseException {
+
+        Tutor vitto;
+        try {
+            vitto = tutorDao.selectTutor(null, USER_TUTOR);
+        } catch (Exception e) {
+            return; // tutor not found, skip
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // Saxophone – Music (APPROVED)
+        SubCategory saxophone = new SubCategory(
+                "Saxophone", musicCategory, "Saxophone lessons for all levels");
+        tutorExpertiseDao.insertExpertise(null, new TutorExpertise(
+                vitto, saxophone, new BigDecimal("35.00"), Status.APPROVED, now));
+
+        // Guitar – Music (APPROVED)
+        SubCategory guitar = new SubCategory(
+                "Guitar", musicCategory, "Classical and electric guitar");
+        tutorExpertiseDao.insertExpertise(null, new TutorExpertise(
+                vitto, guitar, new BigDecimal("30.00"), Status.APPROVED, now));
+
+        // Blues Piano – Music (APPROVED)
+        SubCategory piano = new SubCategory(
+                "Piano", musicCategory, "Piano from beginner to advanced");
+        tutorExpertiseDao.insertExpertise(null, new TutorExpertise(
+                vitto, piano, new BigDecimal("40.00"), Status.APPROVED, now));
+    }
+
     private void populateApplications() throws DatabaseException, DuplicateApplicationException {
 
         LocalDateTime submittedAt = LocalDateTime.now().minusDays(2);
@@ -215,6 +263,113 @@ public class DemoDaoFactory extends DaoFactory {
                 0, 1, "teaching_exp",
                 "I have taught guitar to beginners for 3 years at a local music school.");
         applicationItemDao.insert(null, teachingExpItem);
+    }
+
+    private void populateLessonsAndBookings() throws DatabaseException, DuplicateLessonException {
+
+        Tutor vitto;
+        Student luigi;
+        try {
+            vitto = tutorDao.selectTutor(null, USER_TUTOR);
+            luigi = studentDao.selectStudent(null, USER_STUDENT);
+        } catch (Exception e) {
+            return;
+        }
+
+        // Retrieve TutorExpertise objects already seeded in populateExpertises()
+        var expertises = tutorExpertiseDao.findByTutor(null, USER_TUTOR);
+        if (expertises.size() < 3) return;
+
+        // findByTutor returns sorted by subcategory name: Guitar[0], Piano[1], Saxophone[2]
+        var guitarExpertise = expertises.get(0);
+        var pianoExpertise  = expertises.get(1);
+        var saxExpertise    = expertises.get(2);
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // ── Upcoming lesson 1: Guitar – in 2 days, BOOKED ──────────────
+        Lesson guitarLesson = new Lesson.Builder()
+                .expertise(guitarExpertise)
+                .startTime(now.plusDays(2).withHour(10).withMinute(0).withSecond(0).withNano(0))
+                .endTime(now.plusDays(2).withHour(11).withMinute(0).withSecond(0).withNano(0))
+                .remote(true)
+                .listedPrice(new BigDecimal("30.00"))
+                .lessonStatus(LessonStatus.BOOKED)
+                .createdAt(now.minusDays(3))
+                .build();
+        lessonDao.insertLesson(null, guitarLesson);
+
+        bookingDao.insertBooking(null, new Booking.Builder()
+                .lesson(guitarLesson)
+                .student(luigi)
+                .bookedAt(now.minusDays(3))
+                .pricePaid(new BigDecimal("30.00"))
+                .paymentStatus(PaymentStatus.PAID)
+                .paymentRef("TXN-GUITAR-001")
+                .build());
+
+        // ── Upcoming lesson 2: Saxophone – in 5 days, BOOKED ───────────
+        Lesson saxLesson = new Lesson.Builder()
+                .expertise(saxExpertise)
+                .startTime(now.plusDays(5).withHour(15).withMinute(0).withSecond(0).withNano(0))
+                .endTime(now.plusDays(5).withHour(16).withMinute(0).withSecond(0).withNano(0))
+                .remote(false)
+                .listedPrice(new BigDecimal("35.00"))
+                .lessonStatus(LessonStatus.BOOKED)
+                .createdAt(now.minusDays(1))
+                .build();
+        lessonDao.insertLesson(null, saxLesson);
+
+        bookingDao.insertBooking(null, new Booking.Builder()
+                .lesson(saxLesson)
+                .student(luigi)
+                .bookedAt(now.minusDays(1))
+                .pricePaid(new BigDecimal("35.00"))
+                .paymentStatus(PaymentStatus.PAID)
+                .paymentRef("TXN-SAX-002")
+                .build());
+
+        // ── Past lesson 1: Piano – 10 days ago, COMPLETED ──────────────
+        Lesson pianoLesson = new Lesson.Builder()
+                .expertise(pianoExpertise)
+                .startTime(now.minusDays(10).withHour(14).withMinute(0).withSecond(0).withNano(0))
+                .endTime(now.minusDays(10).withHour(15).withMinute(0).withSecond(0).withNano(0))
+                .remote(true)
+                .listedPrice(new BigDecimal("40.00"))
+                .lessonStatus(LessonStatus.COMPLETED)
+                .createdAt(now.minusDays(14))
+                .build();
+        lessonDao.insertLesson(null, pianoLesson);
+
+        bookingDao.insertBooking(null, new Booking.Builder()
+                .lesson(pianoLesson)
+                .student(luigi)
+                .bookedAt(now.minusDays(14))
+                .pricePaid(new BigDecimal("40.00"))
+                .paymentStatus(PaymentStatus.PAID)
+                .paymentRef("TXN-PIANO-003")
+                .build());
+
+        // ── Past lesson 2: Guitar – 3 weeks ago, COMPLETED ─────────────
+        Lesson guitarLesson2 = new Lesson.Builder()
+                .expertise(guitarExpertise)
+                .startTime(now.minusDays(21).withHour(11).withMinute(0).withSecond(0).withNano(0))
+                .endTime(now.minusDays(21).withHour(12).withMinute(0).withSecond(0).withNano(0))
+                .remote(true)
+                .listedPrice(new BigDecimal("30.00"))
+                .lessonStatus(LessonStatus.COMPLETED)
+                .createdAt(now.minusDays(24))
+                .build();
+        lessonDao.insertLesson(null, guitarLesson2);
+
+        bookingDao.insertBooking(null, new Booking.Builder()
+                .lesson(guitarLesson2)
+                .student(luigi)
+                .bookedAt(now.minusDays(24))
+                .pricePaid(new BigDecimal("30.00"))
+                .paymentStatus(PaymentStatus.PAID)
+                .paymentRef("TXN-GUITAR-004")
+                .build());
     }
 
     private void populateNotifications() throws DatabaseException {
