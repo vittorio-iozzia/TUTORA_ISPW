@@ -13,11 +13,25 @@ import java.sql.Connection;
 /**
  * Implementazione in-memory di StudentDao per l'ambiente demo.
  *
- * Estende UserDaoDemo per ereditare la cache condivisa degli utenti.
+ * Estende UserDaoDemo per la propria cache student-specifica e riceve
+ * in costruzione un riferimento alla UserDaoDemo condivisa (quella usata
+ * dal LoginController). In questo modo insert() scrive in entrambe le
+ * cache: il login trova l'utente in userDao, le operazioni student-specific
+ * lo trovano in questa cache.
+ *
+ * In DB mode la stessa coerenza è garantita da StudentDaoDb.insert()
+ * che chiama super.insert() (riga in user) + INSERT in student.
+ *
  * La Connection viene accettata nelle firme per rispettare l'interfaccia
  * ma non viene usata: in demo non esiste una transazione reale.
  */
 public class StudentDaoDemo extends UserDaoDemo implements StudentDao {
+
+    private final UserDaoDemo sharedUserDao;
+
+    public StudentDaoDemo(UserDaoDemo sharedUserDao) {
+        this.sharedUserDao = sharedUserDao;
+    }
 
     /**
      * Aggiorna il budget dello student in cache.
@@ -58,8 +72,12 @@ public class StudentDaoDemo extends UserDaoDemo implements StudentDao {
     }
 
     /**
-     * Inserisce uno Student in cache dopo aver verificato il tipo.
-     * Delega la logica di duplicato a UserDaoDemo.insert().
+     * Inserisce uno Student in entrambe le cache:
+     *   1. sharedUserDao (UserDaoDemo) → trovato dal LoginController
+     *   2. questa cache (StudentDaoDemo) → trovato da selectStudent()
+     *
+     * Specchia il comportamento di StudentDaoDb.insert() che esegue
+     * super.insert() (tabella user) + INSERT in student.
      *
      * @throws IllegalArgumentException se user non è un'istanza di Student
      */
@@ -68,6 +86,7 @@ public class StudentDaoDemo extends UserDaoDemo implements StudentDao {
             throws DatabaseException, DuplicateUserException {
         if (!(user instanceof Student))
             throw new IllegalArgumentException("Expected Student instance.");
+        sharedUserDao.insert(conn, user);
         super.insert(conn, user);
     }
 }

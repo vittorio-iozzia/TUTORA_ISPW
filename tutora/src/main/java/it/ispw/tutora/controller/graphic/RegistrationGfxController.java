@@ -6,9 +6,9 @@ import it.ispw.tutora.view.SceneManager;
 import javafx.animation.FadeTransition;
 import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
-import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.Group;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -64,8 +64,6 @@ public class RegistrationGfxController {
 
     @FXML private ToggleGroup roleGroup;
     @FXML private ToggleButton studentTab;
-    @FXML private ToggleButton tutorTab;
-    @FXML private ToggleButton adminTab;
 
     // ----------------------------------------------------------------
     // FXML – campi form
@@ -75,9 +73,6 @@ public class RegistrationGfxController {
     @FXML private TextField lastNameField;
     @FXML private TextField usernameField;
     @FXML private TextField emailField;
-    @FXML private TextField phoneField;
-    @FXML private DatePicker dobPicker;
-    @FXML private ComboBox<String> countryCombo;
 
     @FXML private PasswordField passwordField;
     @FXML private TextField     passwordVisible;
@@ -122,7 +117,6 @@ public class RegistrationGfxController {
         bindHeroImage();
         loadHeroImageAsync();
         setupRoleGroup();
-        setupCountryCombo();
         setupPasswordSync();
         setupTermsCheckBox();
         setupSocialButtons();
@@ -145,24 +139,13 @@ public class RegistrationGfxController {
     }
 
     // ----------------------------------------------------------------
-    // Role tabs – impedisce deselezione totale
+    // Role group – impedisce che Student venga deselezionato
     // ----------------------------------------------------------------
 
     private void setupRoleGroup() {
         roleGroup.selectedToggleProperty().addListener((obs, old, nw) -> {
             if (nw == null && old != null) old.setSelected(true);
         });
-    }
-
-    // ----------------------------------------------------------------
-    // Country combo
-    // ----------------------------------------------------------------
-
-    private void setupCountryCombo() {
-        countryCombo.setItems(FXCollections.observableArrayList(
-                "United States", "United Kingdom", "Canada", "Australia",
-                "Germany", "France", "Italy", "Spain", "Other"
-        ));
     }
 
     // ----------------------------------------------------------------
@@ -308,39 +291,19 @@ public class RegistrationGfxController {
 
     @FXML
     public void handleRegister() {
-        String firstName  = firstNameField.getText().trim();
-        String lastName   = lastNameField.getText().trim();
-        String username   = usernameField.getText().trim();
-        String email      = emailField.getText().trim();
-        String password   = showPassword
+        RegistrationBean bean = new RegistrationBean();
+        bean.setName(firstNameField.getText().trim());
+        bean.setSurname(lastNameField.getText().trim());
+        bean.setUsername(usernameField.getText().trim());
+        bean.setEmail(emailField.getText().trim());
+        bean.setPassword(showPassword
                 ? passwordVisible.getText()
-                : passwordField.getText();
-        String confirm    = showConfirmPassword
+                : passwordField.getText());
+        bean.setConfirmPassword(showConfirmPassword
                 ? confirmPasswordVisible.getText()
-                : confirmPasswordField.getText();
-
-        if (firstName.isEmpty() || lastName.isEmpty()
-                || username.isEmpty() || email.isEmpty()
-                || password.isEmpty()) {
-            showError("Please fill in all required fields.");
-            return;
-        }
-
-        if (password.length() < 8) {
-            showError("Password must be at least 8 characters.");
-            return;
-        }
+                : confirmPasswordField.getText());
 
         hideError();
-
-        RegistrationBean bean = new RegistrationBean();
-        bean.setName(firstName);
-        bean.setSurname(lastName);
-        bean.setUsername(username);
-        bean.setEmail(email);
-        bean.setPassword(password);
-        bean.setConfirmPassword(confirm);
-
         registrationController.register(bean);
 
         if (bean.isSuccess()) {

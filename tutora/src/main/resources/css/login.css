@@ -351,48 +351,12 @@
 }
 
 /* ----------------------------------------------------------------
-   DatePicker e ComboBox form styling
+   Role tab disabilitato (Tutor / Admin in registrazione)
    ---------------------------------------------------------------- */
 
-.date-picker-input {
-    -fx-background-color: white;
-    -fx-border-color: #E2E8E4;
-    -fx-border-radius: 8px;
-    -fx-background-radius: 8px;
-    -fx-padding: 0;
-}
-
-.date-picker-input > .text-field {
-    -fx-background-color: transparent;
-    -fx-border-width: 0;
-    -fx-padding: 10px 8px 10px 14px;
-    -fx-font-size: 13px;
-    -fx-text-fill: #1C2621;
-    -fx-prompt-text-fill: #8C9691;
-}
-
-/* noinspection CssInvalidPseudoSelector */
-.date-picker-input:focused {
-    -fx-border-color: #2A5C45;
-    -fx-border-width: 1.5px;
-    -fx-effect: dropshadow(gaussian, rgba(42,92,69,0.18), 8, 0, 0, 0);
-}
-
-.combo-input {
-    -fx-background-color: white;
-    -fx-border-color: #E2E8E4;
-    -fx-border-radius: 8px;
-    -fx-background-radius: 8px;
-    -fx-font-size: 13px;
-    -fx-text-fill: #1C2621;
-    -fx-padding: 0 8px 0 6px;
-    -fx-pref-height: 42px;
-}
-
-/* noinspection CssInvalidPseudoSelector */
-.combo-input:focused {
-    -fx-border-color: #2A5C45;
-    -fx-border-width: 1.5px;
+.role-tab-disabled {
+    -fx-opacity: 0.38;
+    -fx-cursor: default;
 }
 
 /* ----------------------------------------------------------------
