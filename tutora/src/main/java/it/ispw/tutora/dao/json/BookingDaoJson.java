@@ -153,13 +153,13 @@ public class BookingDaoJson implements BookingDao {
     // ----------------------------------------------------------------
     @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
     private static class BookingRecord {
-        public int id;
-        public int lessonId;
-        public String studentUsername;
-        public String bookedAt;
-        public String pricePaid;
-        public String paymentStatus;
-        public String paymentRef;
+        int id;
+        int lessonId;
+        String studentUsername;
+        String bookedAt;
+        String pricePaid;
+        String paymentStatus;
+        String paymentRef;
     }
 
     // ----------------------------------------------------------------

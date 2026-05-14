@@ -78,4 +78,39 @@ public class PayPalClient {
         LOGGER.log(Level.INFO, "PayPal response: SUCCESS — {0}", transactionId);
         return transactionId;
     }
+
+    /**
+     * Chiama l'SDK PayPal per rimborsare una transazione precedente.
+     * Stessa interfaccia incompatibile di charge():
+     *   - restituisce null in caso di rifiuto invece di lanciare eccezioni Java
+     *   - lancia RuntimeException invece di PaymentException
+     *
+     * @param transactionId riferimento della transazione originale da rimborsare
+     * @param amount        importo da rimborsare
+     * @return refundId se il rimborso è andato a buon fine, null se rifiutato
+     * @throws InterruptedException se il thread viene interrotto durante l'attesa
+     */
+    public String refund(String transactionId, BigDecimal amount) throws InterruptedException {
+
+        long responseTime = (long) (random.nextDouble() * MAX_SIMULATED_RESPONSE_MS);
+
+        LOGGER.log(Level.INFO,
+                "Calling PayPal Refund API for {0}... (simulated delay: {1}ms)",
+                new Object[]{transactionId, responseTime});
+
+        Thread.sleep(responseTime);
+
+        if (random.nextDouble() < ERROR_PROBABILITY) {
+            throw new RuntimeException("PayPal refund service internal error.");
+        }
+
+        if (random.nextDouble() < DECLINED_PROBABILITY) {
+            LOGGER.info("PayPal refund response: DECLINED");
+            return null;
+        }
+
+        String refundId = "REF-" + UUID.randomUUID().toString().toUpperCase();
+        LOGGER.log(Level.INFO, "PayPal refund response: SUCCESS — {0}", refundId);
+        return refundId;
+    }
 }
