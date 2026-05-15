@@ -65,4 +65,12 @@ public interface BookingDao {
      */
     Booking selectBooking(Connection conn, int id)
             throws DatabaseException, BookingNotFoundException;
+
+    /**
+     * Carica tutte le prenotazioni relative alle lezioni di un tutor,
+     * ordinate per data di inizio lezione crescente.
+     * Restituisce una lista vuota se il tutor non ha prenotazioni.
+     */
+    List<Booking> findByTutor(Connection conn, String tutorUsername)
+            throws DatabaseException;
 }

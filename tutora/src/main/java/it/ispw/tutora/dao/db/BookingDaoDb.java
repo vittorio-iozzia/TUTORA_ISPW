@@ -88,6 +88,20 @@ public class BookingDaoDb implements BookingDao {
                     "WHERE student_username = ? " +
                     "ORDER BY booked_at DESC";
 
+    /**
+     * SELECT di tutte le booking per le lezioni di un tutor, ordinate
+     * per data di inizio lezione crescente (JOIN su lesson e tutor_expertise).
+     */
+    @Language("SQL")
+    private static final String SQL_FIND_BY_TUTOR =
+            "SELECT b.id, b.lesson_id, b.student_username, b.booked_at, " +
+                   " b.price_paid, b.payment_status, b.payment_ref " +
+                    "FROM booking b " +
+                    "JOIN lesson l ON b.lesson_id = l.id " +
+                    "JOIN tutor_expertise te ON l.expertise_id = te.id " +
+                    "WHERE te.tutor_username = ? " +
+                    "ORDER BY l.start_time ASC";
+
     // ----------------------------------------------------------------
     // updateStatus
     // ----------------------------------------------------------------
@@ -95,10 +109,6 @@ public class BookingDaoDb implements BookingDao {
     /**
      * Aggiorna il payment_status di una booking.
      * Usato per segnare una prenotazione come PAID o REFUNDED.
-     *
-     * @throws BookingNotFoundException se l'id non corrisponde
-     *         ad alcuna riga in booking
-     * @throws DatabaseException        per errori JDBC
      */
     @Override
     public void updateStatus(Connection conn, int id, PaymentStatus status)
@@ -123,9 +133,6 @@ public class BookingDaoDb implements BookingDao {
      * Inserisce una nuova prenotazione e restituisce l'id generato.
      * booked_at e payment_status vengono impostati automaticamente
      * dai DEFAULT del DB (CURRENT_TIMESTAMP e 'Pending').
-     *
-     * @return id AUTO_INCREMENT assegnato dal DB
-     * @throws DatabaseException per errori JDBC
      */
     @Override
     public int insertBooking(Connection conn, Booking booking)
@@ -181,15 +188,36 @@ public class BookingDaoDb implements BookingDao {
     }
 
     // ----------------------------------------------------------------
+    // findByTutor
+    // ----------------------------------------------------------------
+
+    /**
+     * Carica tutte le booking relative alle lezioni di un tutor,
+     * ordinate per data di inizio lezione crescente.
+     * Nota: mapBooking restituisce oggetti Lesson parziali (solo id),
+     * per dati completi il Controller deve eseguire fetch aggiuntivi.
+     */
+    @Override
+    public List<Booking> findByTutor(Connection conn, String tutorUsername)
+            throws DatabaseException {
+        try (PreparedStatement ps = conn.prepareStatement(SQL_FIND_BY_TUTOR)) {
+            ps.setString(1, tutorUsername);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<Booking> list = new ArrayList<>();
+                while (rs.next()) list.add(mapBooking(rs));
+                return list;
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("System Error: ", e);
+        }
+    }
+
+    // ----------------------------------------------------------------
     // selectBooking
     // ----------------------------------------------------------------
 
     /**
      * Carica una prenotazione per id.
-     *
-     * @throws BookingNotFoundException se l'id non corrisponde
-     *         ad alcuna riga in booking
-     * @throws DatabaseException        per errori JDBC
      */
     @Override
     public Booking selectBooking(Connection conn, int id)

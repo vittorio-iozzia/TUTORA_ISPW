@@ -87,8 +87,8 @@ public class DemoDaoFactory extends DaoFactory {
             populateUsers();
             populateExpertises();
             populateApplications();
-            populateNotifications();
-            populateLessonsAndBookings();
+            int[] availableIds = populateLessonsAndBookings(); // cattura gli id assegnati da nextId
+            populateNotifications(availableIds);              // usa gli id reali, zero hardcoding
         } catch (DatabaseException | DuplicateUserException | DuplicateApplicationException
                  | DuplicateTutorExpertiseException | DuplicateLessonException e) {
             throw new IllegalStateException("Failed to populate demo data", e);
@@ -264,7 +264,14 @@ public class DemoDaoFactory extends DaoFactory {
         applicationItemDao.insert(null, teachingExpItem);
     }
 
-    private void populateLessonsAndBookings() throws DatabaseException, DuplicateLessonException {
+    /**
+     * Inserisce lezioni e booking di esempio e restituisce gli id assegnati
+     * da nextId per le lezioni AVAILABLE, usati da populateNotifications()
+     * per costruire targetId senza hardcoding.
+     *
+     * @return array [availSaxId, availGuitarId, availPianoId]
+     */
+    private int[] populateLessonsAndBookings() throws DatabaseException, DuplicateLessonException {
 
         Tutor vitto;
         Student luigi;
@@ -272,12 +279,12 @@ public class DemoDaoFactory extends DaoFactory {
             vitto = tutorDao.selectTutor(null, USER_TUTOR);
             luigi = studentDao.selectStudent(null, USER_STUDENT);
         } catch (Exception e) {
-            return;
+            return new int[0];
         }
 
         // Retrieve TutorExpertise objects already seeded in populateExpertises()
         var expertises = tutorExpertiseDao.findByTutor(null, USER_TUTOR);
-        if (expertises.size() < 3) return;
+        if (expertises.size() < 3) return new int[0];
 
         // findByTutor returns sorted by subcategory name: Guitar[0], Piano[1], Saxophone[2]
         var guitarExpertise = expertises.get(0);
@@ -371,6 +378,8 @@ public class DemoDaoFactory extends DaoFactory {
                 .build());
 
         // ── Available lessons (for booking dialog demo) ─────────────────
+        // Gli id vengono catturati e passati a populateNotifications()
+        // per evitare targetId hardcoded dipendenti dall'ordine di inserzione.
         Lesson availSax = new Lesson.Builder()
                 .expertise(saxExpertise)
                 .startTime(now.plusDays(7).withHour(10).withMinute(0).withSecond(0).withNano(0))
@@ -380,7 +389,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .lessonStatus(LessonStatus.AVAILABLE)
                 .createdAt(now)
                 .build();
-        lessonDao.insertLesson(null, availSax);
+        int availSaxId = lessonDao.insertLesson(null, availSax);
 
         Lesson availGuitar = new Lesson.Builder()
                 .expertise(guitarExpertise)
@@ -391,7 +400,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .lessonStatus(LessonStatus.AVAILABLE)
                 .createdAt(now)
                 .build();
-        lessonDao.insertLesson(null, availGuitar);
+        int availGuitarId = lessonDao.insertLesson(null, availGuitar);
 
         Lesson availPiano = new Lesson.Builder()
                 .expertise(pianoExpertise)
@@ -402,12 +411,19 @@ public class DemoDaoFactory extends DaoFactory {
                 .lessonStatus(LessonStatus.AVAILABLE)
                 .createdAt(now)
                 .build();
-        lessonDao.insertLesson(null, availPiano);
+        int availPianoId = lessonDao.insertLesson(null, availPiano);
+
+        return new int[]{ availSaxId, availGuitarId, availPianoId };
     }
 
-    private void populateNotifications() throws DatabaseException {
+    /**
+     * @param availableLessonIds array [availSaxId, availGuitarId, availPianoId]
+     *                           restituito da populateLessonsAndBookings().
+     *                           Se vuoto (tutor/student non trovati) non inserisce notifiche.
+     */
+    private void populateNotifications(int[] availableLessonIds) throws DatabaseException {
 
-        Notification notification = new Notification.Builder()
+        Notification appNotif = new Notification.Builder()
                 .recipientUsername(USER_STUDENT)
                 .senderUsername(null)
                 .message("Your application for Music has been received and is under review.")
@@ -416,7 +432,25 @@ public class DemoDaoFactory extends DaoFactory {
                 .timestamp(LocalDateTime.now().minusDays(2))
                 .read(false)
                 .build();
-        notificationDao.insert(null, notification);
+        notificationDao.insert(null, appNotif);
+
+        if (availableLessonIds.length == 0) return;
+
+        // targetId reale della prima lezione AVAILABLE (availSax),
+        // ottenuto da insertLesson — nessun hardcoding dipendente dall'ordine.
+        int availSaxId = availableLessonIds[0];
+
+        Notification tutorNotif = new Notification.Builder()
+                .recipientUsername(USER_TUTOR)
+                .senderUsername(USER_STUDENT)
+                .message(USER_STUDENT + " has requested a lesson on "
+                        + "Saxophone. Please review and respond.")
+                .type(NotificationType.LESSON_BOOKED)
+                .targetId(availSaxId)
+                .timestamp(LocalDateTime.now().minusHours(1))
+                .read(false)
+                .build();
+        notificationDao.insert(null, tutorNotif);
     }
 
     // ----------------------------------------------------------------

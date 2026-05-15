@@ -24,11 +24,17 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.logging.Logger;
 
 public class BookTutorController {
 
     private static final Logger LOGGER = Logger.getLogger(BookTutorController.class.getName());
+
+    /** Formato leggibile per le date nei messaggi di notifica: "1 Jun 2026 at 10:00" */
+    private static final DateTimeFormatter MSG_FMT =
+            DateTimeFormatter.ofPattern("d MMM yyyy 'at' HH:mm", Locale.ENGLISH);
 
     private static final String ERR_UNAUTHORIZED = "Unauthorized.";
     private static final String ERR_INSUFFICIENT_BUDGET = "Insufficient budget.";
@@ -103,9 +109,11 @@ public class BookTutorController {
             Notification notify = new Notification.Builder()
                     .recipientUsername(less.getExpertise().getTutor().getUsername())
                     .senderUsername(stu.getUsername())
-                    .message(stu.getUsername() + " has just booked a lesson with you from "
-                            + less.getStartTime() + " to " + less.getEndTime()
-                            + " Please check your dashboard for more details.")
+                    .message(stu.getUsername() + " has requested a lesson on "
+                            + less.getStartTime().format(MSG_FMT)
+                            + " (" + less.getExpertise().getSubcategory().getName() + ")"
+                            + " — " + less.getEndTime().format(DateTimeFormatter.ofPattern("HH:mm", Locale.ENGLISH))
+                            + ". Accept or decline from your notifications.")
                     .type(NotificationType.LESSON_BOOKED)
                     .targetId(less.getId())
                     .timestamp(LocalDateTime.now())
@@ -143,14 +151,21 @@ public class BookTutorController {
             // null-check: in modalita' Demo/Json getConnection() restituisce null
             if (conn != null) conn.setAutoCommit(false);
             try {
+                // Carica la lezione prima del branch: serve in entrambi i casi
+                // (rifiuto e accettazione) per costruire messaggi espliciti.
+                Lesson less = lesson.selectLesson(conn, bean.getLessonId());
+                String subject = less.getExpertise().getSubcategory().getName();
+                String lessonDate = less.getStartTime().format(MSG_FMT);
+
                 Notification.Builder builder = new Notification.Builder();
                 if (!bean.isAccepted()) {
                     // Rifiuto: notifica lo student e committa
                     Notification n = builder
                             .recipientUsername(bean.getStudentUsername())
                             .senderUsername(tutorUsername)
-                            .message("Your reservation for this lesson: "
-                                    + bean.getLessonId() + " has been rejected.")
+                            .message("Your request for the lesson on " + lessonDate
+                                    + " (" + subject + ") has been declined by "
+                                    + tutorUsername + ". You can browse other available tutors.")
                             .type(NotificationType.LESSON_REJECTED)
                             .targetId(bean.getLessonId())
                             .timestamp(LocalDateTime.now())
@@ -160,7 +175,6 @@ public class BookTutorController {
                     return;
                 }
                 // Accettazione: aggiorna status lezione poi notifica lo student
-                Lesson less = lesson.selectLesson(conn, bean.getLessonId());
                 // updateLessonStatus applica la FSM del model: lancia IllegalArgumentException
                 // se la lezione non e' in stato AVAILABLE (es. gia' cancellata o prenotata)
                 less.updateLessonStatus(LessonStatus.BOOKED);
@@ -168,8 +182,9 @@ public class BookTutorController {
                 Notification notification1 = builder
                         .recipientUsername(bean.getStudentUsername())
                         .senderUsername(tutorUsername)
-                        .message("Your reservation for this lesson: "
-                                + bean.getLessonId() + " has been accepted.")
+                        .message("Your request for the lesson on " + lessonDate
+                                + " (" + subject + ") has been accepted by "
+                                + tutorUsername + ". Please proceed with payment to confirm your booking.")
                         .type(NotificationType.LESSON_ACCEPTED)
                         .targetId(bean.getLessonId())
                         .timestamp(LocalDateTime.now())
@@ -302,15 +317,32 @@ public class BookTutorController {
                 // se la transizione PENDING -> PAID non e' valida
                 booking1.updatePaymentStatus(PaymentStatus.PAID);
                 booking.updateStatus(conn, bean.getId(), PaymentStatus.PAID);
-                Notification notification1 = new Notification.Builder()
+                // Notifica al tutor: il pagamento è stato ricevuto
+                Notification tutorNotif = new Notification.Builder()
                         .recipientUsername(less.getExpertise().getTutor().getUsername())
                         .senderUsername(username)
-                        .message("The booking has been paid.")
+                        .message(username + " has completed the payment for the lesson on "
+                                + less.getStartTime().format(MSG_FMT)
+                                + " (" + less.getExpertise().getSubcategory().getName() + ")"
+                                + ". Amount: €" + price.toPlainString()
+                                + ". The booking is now confirmed.")
                         .type(NotificationType.PAYMENT_CONFIRMED)
                         .targetId(bean.getId())
                         .timestamp(LocalDateTime.now())
                         .build();
-                notification.insert(conn, notification1);
+                notification.insert(conn, tutorNotif);
+                // Notifica allo student: conferma di sistema del pagamento
+                Notification studentNotif = new Notification.Builder()
+                        .recipientUsername(username)
+                        .message("Your payment of €" + price.toPlainString()
+                                + " for the lesson on " + less.getStartTime().format(MSG_FMT)
+                                + " (" + less.getExpertise().getSubcategory().getName() + ")"
+                                + " was successful. Transaction ref: " + paymentRef + ".")
+                        .type(NotificationType.PAYMENT_CONFIRMED)
+                        .targetId(bean.getId())
+                        .timestamp(LocalDateTime.now())
+                        .build();
+                notification.insert(conn, studentNotif);
                 if (conn != null) conn.commit();
             } catch (LessonNotFoundException e) {
                 safeRollback(conn);

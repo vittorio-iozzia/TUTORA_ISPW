@@ -1,16 +1,23 @@
 package it.ispw.tutora.controller.graphic;
 
+import it.ispw.tutora.bean.NotificationBean;
+import it.ispw.tutora.controller.application.GetNotificationsController;
 import it.ispw.tutora.model.session.Session;
 import it.ispw.tutora.model.session.SessionManager;
 import it.ispw.tutora.view.SceneManager;
 import it.ispw.tutora.view.home.DashboardComponent;
 import it.ispw.tutora.view.home.DashboardFactory;
+import it.ispw.tutora.view.home.StudentDashboardDecorator;
+import it.ispw.tutora.view.home.TutorDashboardDecorator;
+import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.effect.GaussianBlur;
 import javafx.scene.control.*;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -46,12 +53,15 @@ public class HomeGfxController {
     @FXML private Label avatarLabel;
     @FXML private Label headerTitle;
     @FXML private Button headerProfileBtn;
+    @FXML private Button notifBtn;
+    @FXML private Label  notifBadge;
     @FXML private VBox contentArea;
 
     private final List<Button> navButtons = new ArrayList<>();
     private Button activeNavBtn;
 
     private ContextMenu avatarMenu;
+    private final GetNotificationsController notifController = new GetNotificationsController();
 
     // ----------------------------------------------------------------
     // Inizializzazione
@@ -76,6 +86,7 @@ public class HomeGfxController {
 
         DashboardComponent dashboard = DashboardFactory.create(session);
         dashboard.decorateContent(contentArea);
+        refreshNotifBadge();
     }
 
     // ----------------------------------------------------------------
@@ -233,7 +244,68 @@ public class HomeGfxController {
 
     @FXML
     public void handleNotifications() {
-        SceneManager.getInstance().showNotifications();
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/notifications.fxml"));
+            Parent root = loader.load();
+            NotificationGfxController notifCtrl = loader.getController();
+
+            // Registra il callback che aggiorna "Upcoming Lessons" dopo il pagamento
+            Session currentSession = SessionManager.getInstance().getSession(
+                    SceneManager.getInstance().getSessionToken());
+            if (currentSession.isStudent()) {
+                NotificationGfxController.setPaymentConfirmedCallback(
+                        StudentDashboardDecorator::refreshUpcoming);
+            } else if (currentSession.isTutor()) {
+                NotificationGfxController.setPaymentConfirmedCallback(
+                        TutorDashboardDecorator::refreshUpcoming);
+            } else {
+                NotificationGfxController.setPaymentConfirmedCallback(null);
+            }
+
+            Stage dialog = new Stage();
+            dialog.initOwner(notifBtn.getScene().getWindow());
+            dialog.initModality(Modality.WINDOW_MODAL);
+            dialog.setTitle("Notifications – TUTORA");
+            dialog.setScene(new javafx.scene.Scene(root));
+            dialog.setMinWidth(460);
+            dialog.setMinHeight(400);
+
+            // Sfuma lo sfondo mentre il dialog è aperto (come BookTutor)
+            Parent sceneRoot = (Parent) notifBtn.getScene().getRoot();
+            sceneRoot.setEffect(new GaussianBlur(8));
+            dialog.setOnHiding(e -> {
+                // Marca come lette tutte le notifiche viste tranne le
+                // richieste di booking pendenti del tutor
+                notifCtrl.markVisibleAsRead();
+                sceneRoot.setEffect(null);
+                refreshNotifBadge();
+            });
+
+            dialog.show();
+        } catch (IOException e) {
+            LOGGER.warning("Cannot open notifications: " + e.getMessage());
+        }
+    }
+
+    private void refreshNotifBadge() {
+        String tk = SceneManager.getInstance().getSessionToken();
+        Task<Integer> task = new Task<>() {
+            @Override protected Integer call() { return notifController.getUnreadCount(tk); }
+        };
+        task.setOnSucceeded(e -> Platform.runLater(() -> {
+            int count = task.getValue();
+            if (count > 0) {
+                notifBadge.setText(count > 99 ? "99+" : String.valueOf(count));
+                notifBadge.setVisible(true);
+                notifBadge.setManaged(true);
+            } else {
+                notifBadge.setVisible(false);
+                notifBadge.setManaged(false);
+            }
+        }));
+        Thread t = new Thread(task, "notif-badge");
+        t.setDaemon(true);
+        t.start();
     }
 
     // ----------------------------------------------------------------

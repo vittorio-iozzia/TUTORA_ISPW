@@ -33,13 +33,20 @@ public class BookingDaoDemo implements BookingDao {
      * la macchina a stati finiti definita in Booking.updatePaymentStatus().
      * La modifica è in-place: il riferimento in cache non cambia.
      *
+     * Guard: se lo status è già quello richiesto il metodo torna subito.
+     * In Demo mode payment() chiama booking1.updatePaymentStatus(PAID) prima
+     * di invocare questo metodo sullo stesso oggetto in cache → senza guard
+     * la FSM riceverebbe PAID → PAID e lancerebbe IllegalArgumentException.
+     *
      * @throws BookingNotFoundException se l'id non è presente in cache
      */
     @Override
     public void updateStatus(Connection conn, int id, PaymentStatus status)
             throws DatabaseException, BookingNotFoundException {
         if (!cache.containsKey(id)) throw new BookingNotFoundException(id);
-        cache.get(id).updatePaymentStatus(status);
+        Booking booking = cache.get(id);
+        if (booking.getPaymentStatus() == status) return;
+        booking.updatePaymentStatus(status);
     }
 
     /**
@@ -78,5 +85,23 @@ public class BookingDaoDemo implements BookingDao {
             throws DatabaseException, BookingNotFoundException {
         if (!cache.containsKey(id)) throw new BookingNotFoundException(id);
         return cache.get(id);
+    }
+
+    /**
+     * Restituisce le booking relative alle lezioni di un tutor,
+     * ordinate per data di inizio lezione crescente.
+     * Lista vuota se il tutor non ha prenotazioni.
+     */
+    @Override
+    public List<Booking> findByTutor(Connection conn, String tutorUsername)
+            throws DatabaseException {
+        return cache.values().stream()
+                .filter(b -> b.getLesson()
+                              .getExpertise()
+                              .getTutor()
+                              .getUsername()
+                              .equals(tutorUsername))
+                .sorted(Comparator.comparing(b -> b.getLesson().getStartTime()))
+                .toList();
     }
 }

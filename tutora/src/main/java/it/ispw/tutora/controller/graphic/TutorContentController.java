@@ -1,11 +1,23 @@
 package it.ispw.tutora.controller.graphic;
 
+import it.ispw.tutora.dao.BookingDao;
+import it.ispw.tutora.dao.factory.DaoFactory;
+import it.ispw.tutora.enums.PaymentStatus;
+import it.ispw.tutora.exception.DatabaseException;
+import it.ispw.tutora.model.Booking;
+import it.ispw.tutora.model.Lesson;
 import it.ispw.tutora.model.session.Session;
 import it.ispw.tutora.model.session.SessionManager;
 import it.ispw.tutora.view.SceneManager;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
+import java.util.logging.Logger;
 import javafx.animation.*;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -16,6 +28,14 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import java.util.List;
 
 public class TutorContentController {
+
+    private static final Logger LOGGER =
+            Logger.getLogger(TutorContentController.class.getName());
+
+    private static final DateTimeFormatter CARD_FMT =
+            DateTimeFormatter.ofPattern("EEE d MMM · HH:mm", java.util.Locale.ENGLISH);
+
+    private String tutorUsername;
 
     // Stats
     @FXML private HBox statCard1;
@@ -42,7 +62,6 @@ public class TutorContentController {
     // ----------------------------------------------------------------
 
     private record BookingMock(String student, String subject, String date, String time, boolean pending) {}
-    private record LessonMock(String subject, String student, String date, String time) {}
 
     private static final List<String>  TIME_SLOTS     = List.of(
         "9:00 AM","10:00 AM","11:00 AM","12:00 PM",
@@ -56,11 +75,6 @@ public class TutorContentController {
         new BookingMock("Michael Brown","Statistics",    "Jan 17","2:00 PM", false)
     );
 
-    private static final List<LessonMock> MOCK_UPCOMING = List.of(
-        new LessonMock("Calculus I",             "Sarah Davis","Today",   "4:00 PM"),
-        new LessonMock("Differential Equations", "John Smith", "Tomorrow","11:00 AM")
-    );
-
     // ----------------------------------------------------------------
     // Init
     // ----------------------------------------------------------------
@@ -69,6 +83,7 @@ public class TutorContentController {
     public void initialize() {
         String token   = SceneManager.getInstance().getSessionToken();
         Session session = SessionManager.getInstance().getSession(token);
+        this.tutorUsername = session.getUser().getUsername();
         welcomeTitle.setText("Welcome, " + session.getUser().getName() + "!");
 
         animateStat(totalStudentsLabel, 48,   "%.0f");
@@ -129,16 +144,79 @@ public class TutorContentController {
     }
 
     // ----------------------------------------------------------------
-    // Upcoming lessons
+    // Upcoming lessons — dati reali da BookingDao (solo booking PAID)
     // ----------------------------------------------------------------
 
     private void buildUpcomingLessons() {
-        for (LessonMock lesson : MOCK_UPCOMING) {
-            upcomingLessonsList.getChildren().add(buildUpcomingCard(lesson));
+        try {
+            BookingDao dao = DaoFactory.getInstance().createBookingDao();
+            LocalDateTime now = LocalDateTime.now();
+            List<Lesson> upcoming = dao.findByTutor(
+                            DaoFactory.getInstance().getConnection(), tutorUsername).stream()
+                    .filter(b -> b.getPaymentStatus() == PaymentStatus.PAID)
+                    .filter(b -> b.getLesson().getStartTime().isAfter(now))
+                    .sorted(Comparator.comparing(b -> b.getLesson().getStartTime()))
+                    .map(Booking::getLesson)
+                    .toList();
+            if (upcoming.isEmpty()) {
+                Label empty = new Label("No upcoming lessons.");
+                empty.setStyle("-fx-text-fill:#9CA3AF;-fx-font-size:13px;");
+                upcomingLessonsList.getChildren().add(empty);
+            } else {
+                for (Lesson l : upcoming) upcomingLessonsList.getChildren().add(buildUpcomingCard(l));
+            }
+        } catch (DatabaseException e) {
+            LOGGER.warning("Cannot load upcoming lessons: " + e.getMessage());
         }
     }
 
-    private HBox buildUpcomingCard(LessonMock lesson) {
+    /**
+     * Ricarica la lista delle lezioni imminenti in background.
+     * Chiamato da HomeGfxController dopo che un pagamento è stato confermato.
+     */
+    public void refreshUpcomingLessons() {
+        upcomingLessonsList.getChildren().clear();
+
+        Task<List<Lesson>> task = new Task<>() {
+            @Override
+            protected List<Lesson> call() throws Exception {
+                BookingDao dao = DaoFactory.getInstance().createBookingDao();
+                LocalDateTime now = LocalDateTime.now();
+                return dao.findByTutor(
+                                DaoFactory.getInstance().getConnection(), tutorUsername).stream()
+                        .filter(b -> b.getPaymentStatus() == PaymentStatus.PAID)
+                        .filter(b -> b.getLesson().getStartTime().isAfter(now))
+                        .sorted(Comparator.comparing(b -> b.getLesson().getStartTime()))
+                        .map(Booking::getLesson)
+                        .toList();
+            }
+        };
+
+        task.setOnSucceeded(e -> javafx.application.Platform.runLater(() -> {
+            List<Lesson> upcoming = task.getValue();
+            upcomingLessonsList.getChildren().clear();
+            if (upcoming.isEmpty()) {
+                Label empty = new Label("No upcoming lessons.");
+                empty.setStyle("-fx-text-fill:#9CA3AF;-fx-font-size:13px;");
+                upcomingLessonsList.getChildren().add(empty);
+            } else {
+                for (Lesson l : upcoming) upcomingLessonsList.getChildren().add(buildUpcomingCard(l));
+            }
+        }));
+
+        task.setOnFailed(e ->
+                LOGGER.warning("Cannot refresh upcoming lessons: " + task.getException().getMessage()));
+
+        Thread t = new Thread(task, "tutor-upcoming-refresh");
+        t.setDaemon(true);
+        t.start();
+    }
+
+    private HBox buildUpcomingCard(Lesson lesson) {
+        String subject  = lesson.getExpertise().getSubcategory().getName();
+        String mode     = lesson.isRemote() ? "Remote" : "In-Person";
+        String datetime = lesson.getStartTime().format(CARD_FMT);
+
         HBox card = new HBox(16);
         card.getStyleClass().add("lesson-card");
         card.setAlignment(Pos.CENTER_LEFT);
@@ -148,21 +226,21 @@ public class TutorContentController {
 
         VBox info = new VBox(4);
         HBox.setHgrow(info, Priority.ALWAYS);
-        Label subject = new Label(lesson.subject());
-        subject.getStyleClass().add("lesson-title");
+        Label subjectLbl = new Label(subject);
+        subjectLbl.getStyleClass().add("lesson-title");
 
         HBox meta = new HBox(8);
         meta.setAlignment(Pos.CENTER_LEFT);
-        FontIcon userIcon = new FontIcon("fas-user");
-        userIcon.getStyleClass().add("lesson-meta-icon");
-        Label studentLbl = new Label(lesson.student());
-        studentLbl.getStyleClass().add("lesson-meta");
+        FontIcon modeIcon = new FontIcon(lesson.isRemote() ? "fas-video" : "fas-map-marker-alt");
+        modeIcon.getStyleClass().add("lesson-meta-icon");
+        Label modeLbl = new Label(mode);
+        modeLbl.getStyleClass().add("lesson-meta");
         FontIcon clockIcon = new FontIcon("fas-clock");
         clockIcon.getStyleClass().add("lesson-meta-icon");
-        Label time = new Label(lesson.date() + " · " + lesson.time());
+        Label time = new Label(datetime);
         time.getStyleClass().add("lesson-meta");
-        meta.getChildren().addAll(userIcon, studentLbl, clockIcon, time);
-        info.getChildren().addAll(subject, meta);
+        meta.getChildren().addAll(modeIcon, modeLbl, clockIcon, time);
+        info.getChildren().addAll(subjectLbl, meta);
 
         Button startBtn = new Button("Start");
         startBtn.getStyleClass().add("book-btn");

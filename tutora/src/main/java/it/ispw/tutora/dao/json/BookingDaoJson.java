@@ -4,11 +4,10 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.ispw.tutora.dao.BookingDao;
 import it.ispw.tutora.enums.PaymentStatus;
+import it.ispw.tutora.enums.Status;
 import it.ispw.tutora.exception.BookingNotFoundException;
 import it.ispw.tutora.exception.DatabaseException;
-import it.ispw.tutora.model.Booking;
-import it.ispw.tutora.model.Lesson;
-import it.ispw.tutora.model.Student;
+import it.ispw.tutora.model.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Implementazione JSON di BookingDao.
@@ -28,13 +28,17 @@ import java.util.List;
  * ma non viene usata: non c'è nessun DB.
  *
  * -----------------------------------------------------------------------
- * Nota su toBooking (oggetti parziali)
+ * Nota su toRecord / toBooking (campi denormalizzati)
  * -----------------------------------------------------------------------
- * Il file JSON conserva solo lessonId e studentUsername come riferimenti.
- * toBooking() ricostruisce oggetti Lesson e Student parziali (solo id /
- * username popolati) sufficienti per il dominio applicativo.
- * Se servono oggetti completi, il Controller deve fare un secondo fetch
- * tramite LessonDao / StudentDao.
+ * Oltre ai campi relazionali essenziali (lessonId, studentUsername),
+ * il record JSON memorizza anche i dati necessari alla visualizzazione
+ * (subjectName, lessonStartTime, lessonRemote, tutorUsername/Name/Surname).
+ * Questo evita di dover caricare Lesson e TutorExpertise completi
+ * tramite DAO aggiuntivi — accettabile in un'implementazione JSON di test.
+ *
+ * Backward compatibility: i record esistenti senza questi campi
+ * vengono deserializzati con valori null/false; toBooking() li gestisce
+ * costruendo un Lesson parziale o completo a seconda di ciò che è disponibile.
  *
  * -----------------------------------------------------------------------
  * Nota su insertBooking
@@ -46,6 +50,7 @@ import java.util.List;
  */
 public class BookingDaoJson implements BookingDao {
 
+    private static final Logger LOGGER = Logger.getLogger(BookingDaoJson.class.getName());
     private static final String JSON_PATH = "../tutora_data/bookings.json";
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -98,9 +103,36 @@ public class BookingDaoJson implements BookingDao {
         List<BookingRecord> records = readAll();
         List<Booking> list = new ArrayList<>();
         for (BookingRecord r : records) {
-            if (r.studentUsername.equals(username))
+            if (username.equals(r.studentUsername))
                 list.add(toBooking(r));
         }
+        return list;
+    }
+
+    /**
+     * Restituisce le booking relative alle lezioni di un tutor,
+     * ordinate per data di inizio lezione crescente.
+     * Il filtro usa il campo tutorUsername salvato in fase di insertBooking.
+     * I record legacy senza tutorUsername vengono ignorati.
+     */
+    @Override
+    public List<Booking> findByTutor(Connection conn, String tutorUsername)
+            throws DatabaseException {
+        List<BookingRecord> records = readAll();
+        List<Booking> list = new ArrayList<>();
+        for (BookingRecord r : records) {
+            if (tutorUsername.equals(r.tutorUsername))
+                list.add(toBooking(r));
+        }
+        // Ordina per data di inizio lezione crescente; null va in coda
+        list.sort((a, b) -> {
+            LocalDateTime ta = a.getLesson().getStartTime();
+            LocalDateTime tb = b.getLesson().getStartTime();
+            if (ta == null && tb == null) return 0;
+            if (ta == null) return 1;
+            if (tb == null) return -1;
+            return ta.compareTo(tb);
+        });
         return list;
     }
 
@@ -122,11 +154,45 @@ public class BookingDaoJson implements BookingDao {
     // Mapping record ↔ model
     // ----------------------------------------------------------------
 
-    /** Ricostruisce un oggetto Booking da un record JSON. */
+    /**
+     * Ricostruisce un oggetto Booking da un record JSON.
+     *
+     * Se il record contiene i campi denormalizzati (subjectName, lessonStartTime
+     * ecc.) costruisce una Lesson con TutorExpertise parziale ma sufficiente
+     * per la visualizzazione nella UI. I record legacy senza questi campi
+     * producono una Lesson con solo l'id (comportamento precedente).
+     */
     private Booking toBooking(BookingRecord r) {
+        // Costruzione della Lesson — parziale o arricchita a seconda dei campi disponibili
+        Lesson.Builder lessonBuilder = new Lesson.Builder()
+                .id(r.lessonId)
+                .remote(r.lessonRemote);
+
+        if (r.lessonStartTime != null) {
+            lessonBuilder.startTime(LocalDateTime.parse(r.lessonStartTime));
+        }
+
+        if (r.subjectName != null) {
+            // SubCategory con parentCategory null: toString() la gestisce con "N/A"
+            SubCategory sub = new SubCategory(r.subjectName, null, "");
+
+            // Tutor ricostruito con username, name e surname per getFullName()
+            Tutor tutor = null;
+            if (r.tutorUsername != null) {
+                tutor = new Tutor.Builder()
+                        .username(r.tutorUsername)
+                        .name(r.tutorName != null ? r.tutorName : "")
+                        .surname(r.tutorSurname != null ? r.tutorSurname : "")
+                        .build();
+            }
+            // TutorExpertise richiede price > 0: BigDecimal.ONE è un placeholder
+            TutorExpertise exp = new TutorExpertise(
+                    tutor, sub, BigDecimal.ONE, Status.APPROVED, LocalDateTime.now());
+            lessonBuilder.expertise(exp);
+        }
         return new Booking.Builder()
                 .id(r.id)
-                .lesson(new Lesson.Builder().id(r.lessonId).build())
+                .lesson(lessonBuilder.build())
                 .student(new Student.Builder().username(r.studentUsername).build())
                 .bookedAt(LocalDateTime.parse(r.bookedAt))
                 .pricePaid(new BigDecimal(r.pricePaid))
@@ -135,7 +201,11 @@ public class BookingDaoJson implements BookingDao {
                 .build();
     }
 
-    /** Converte un oggetto Booking nel corrispondente record JSON. */
+    /**
+     * Converte un oggetto Booking nel corrispondente record JSON.
+     * Salva i campi denormalizzati dalla Lesson quando disponibili,
+     * in modo che toBooking() e findByTutor() possano usarli al reload.
+     */
     private BookingRecord toRecord(Booking booking) {
         BookingRecord b = new BookingRecord();
         b.id = booking.getId();
@@ -145,23 +215,63 @@ public class BookingDaoJson implements BookingDao {
         b.pricePaid = booking.getPricePaid().toPlainString();
         b.paymentStatus = toJsonStatus(booking.getPaymentStatus());
         b.paymentRef = booking.getPaymentRef();
+
+        // Campi denormalizzati — disponibili quando insertBooking riceve
+        // una Booking con Lesson completa (es. da BookTutorController.payment)
+        Lesson lesson = booking.getLesson();
+        if (lesson != null) {
+            if (lesson.getStartTime() != null)
+                b.lessonStartTime = lesson.getStartTime().toString();
+            b.lessonRemote = lesson.isRemote();
+
+            TutorExpertise exp = lesson.getExpertise();
+            if (exp != null) {
+                if (exp.getSubcategory() != null)
+                    b.subjectName = exp.getSubcategory().getName();
+                Tutor tutor = exp.getTutor();
+                if (tutor != null) {
+                    b.tutorUsername = tutor.getUsername();
+                    b.tutorName = tutor.getName();
+                    b.tutorSurname = tutor.getSurname();
+                }
+            }
+        }
         return b;
     }
-
     // ----------------------------------------------------------------
     // POJO interno per la serializzazione Jackson
     // ----------------------------------------------------------------
+
+    /**
+     * Record JSON di una booking.
+     *
+     * Campi core (sempre presenti):
+     *   id, lessonId, studentUsername, bookedAt, pricePaid, paymentStatus, paymentRef
+     *
+     * Campi denormalizzati (null/false nei record legacy):
+     *   tutorUsername, tutorName, tutorSurname — per findByTutor() e display tutor
+     *   subjectName                             — nome della sotto-categoria
+     *   lessonStartTime                         — ISO string del startTime della lezione
+     *   lessonRemote                            — true se la lezione è da remoto
+     */
     @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
     private static class BookingRecord {
-        int id;
-        int lessonId;
+        // Core
+        int    id;
+        int    lessonId;
         String studentUsername;
         String bookedAt;
         String pricePaid;
         String paymentStatus;
         String paymentRef;
+        // Denormalizzati — null/false per record legacy
+        String  tutorUsername;
+        String  tutorName;
+        String  tutorSurname;
+        String  subjectName;
+        String  lessonStartTime;
+        boolean lessonRemote;
     }
-
     // ----------------------------------------------------------------
     // I/O JSON
     // ----------------------------------------------------------------

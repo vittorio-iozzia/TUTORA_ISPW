@@ -75,12 +75,16 @@
             <!-- Spacer -->
             <Region HBox.hgrow="ALWAYS"/>
 
-            <!-- Notification bell -->
-            <Button styleClass="header-icon-btn" onAction="#handleNotifications">
-                <graphic>
-                    <FontIcon iconLiteral="fas-bell" iconSize="16" styleClass="header-icon"/>
-                </graphic>
-            </Button>
+            <!-- Notification bell with unread badge -->
+            <StackPane>
+                <Button fx:id="notifBtn" styleClass="header-icon-btn" onAction="#handleNotifications">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-bell" iconSize="16" styleClass="header-icon"/>
+                    </graphic>
+                </Button>
+                <Label fx:id="notifBadge" text="0" styleClass="notif-badge"
+                       StackPane.alignment="TOP_RIGHT" visible="false" managed="false"/>
+            </StackPane>
 
             <!-- Profile dropdown trigger (sostituisce il cerchio avatar) -->
             <Button fx:id="headerProfileBtn" styleClass="header-icon-btn">

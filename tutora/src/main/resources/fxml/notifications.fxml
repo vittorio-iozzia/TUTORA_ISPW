@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="it.ispw.tutora.controller.graphic.NotificationGfxController"
+      stylesheets="@../css/home.css"
+      spacing="0" minWidth="460" prefWidth="540" prefHeight="600">
+
+    <!-- ── Header ── -->
+    <HBox styleClass="app-dialog-header" alignment="CENTER_LEFT" spacing="16">
+        <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+        <StackPane styleClass="app-header-icon-wrap">
+            <FontIcon iconLiteral="fas-bell" iconSize="20" styleClass="app-header-icon"/>
+        </StackPane>
+        <VBox spacing="4" HBox.hgrow="ALWAYS">
+            <Label text="Notifications" styleClass="app-header-title"/>
+            <Label fx:id="subtitleLabel" text="Loading…"
+                   styleClass="app-header-subtitle" wrapText="true"/>
+        </VBox>
+        <Button fx:id="markAllReadBtn" text="Mark all read"
+                styleClass="book-btn" onAction="#handleMarkAllRead"/>
+    </HBox>
+
+    <!-- ── Scrollable content ── -->
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="app-scroll">
+        <VBox fx:id="contentContainer" spacing="0">
+            <padding><Insets top="16" right="20" bottom="20" left="20"/></padding>
+        </VBox>
+    </ScrollPane>
+
+</VBox>

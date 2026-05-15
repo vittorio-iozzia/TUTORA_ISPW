@@ -156,9 +156,15 @@ public class LessonDaoDemo implements LessonDao {
             throws DatabaseException, LessonNotFoundException {
 
         if (!cache.containsKey(id)) throw new LessonNotFoundException(id);
+        Lesson lesson = cache.get(id);
+        // Guard: se lo status è già quello richiesto, non chiamare updateLessonStatus()
+        // di nuovo. In Demo mode respondToRequest() aggiorna già l'oggetto in memoria
+        // prima che lessonDao.updateStatus() venga chiamato → senza questo guard la FSM
+        // riceverebbe due volte la stessa transizione e lancerebbe IllegalArgumentException.
+        if (lesson.getLessonStatus() == newStatus) return;
         // Modifica diretta sull'oggetto in cache — la HashMap vede il cambiamento
         // perché contiene il riferimento all'oggetto, non una copia
-        cache.get(id).updateLessonStatus(newStatus);
+        lesson.updateLessonStatus(newStatus);
     }
 
     // ----------------------------------------------------------------

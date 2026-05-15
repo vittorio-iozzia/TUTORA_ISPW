@@ -2100,3 +2100,163 @@
     -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
     -fx-text-fill: #2A5C45;
 }
+
+/* ================================================================
+   Header – Notification badge (red circle on bell)
+   ================================================================ */
+.notif-badge {
+    -fx-background-color: #EF4444;
+    -fx-background-radius: 10;
+    -fx-text-fill: white;
+    -fx-font-size: 9px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-min-width: 18;
+    -fx-min-height: 18;
+    -fx-max-width: 18;
+    -fx-max-height: 18;
+    -fx-alignment: center;
+    -fx-padding: 0;
+    -fx-translate-x: 6;
+    -fx-translate-y: -6;
+}
+
+/* ================================================================
+   Notification panel – Section headers
+   ================================================================ */
+.notif-section-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-text-fill: #374151;
+}
+
+.notif-count-badge-pending {
+    -fx-background-color: #FEF3C7;
+    -fx-background-radius: 20;
+    -fx-text-fill: #D97706;
+    -fx-font-size: 10px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-padding: 2 8;
+}
+
+.notif-count-badge-old {
+    -fx-background-color: #F3F4F6;
+    -fx-background-radius: 20;
+    -fx-text-fill: #6B7280;
+    -fx-font-size: 10px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-padding: 2 8;
+}
+
+/* ================================================================
+   Notification panel – Cards
+   ================================================================ */
+.notif-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-padding: 14 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.04), 4, 0, 0, 1);
+}
+
+.notif-card-unread {
+    -fx-background-color: #F0F6FF;
+    -fx-border-color: #BFDBFE;
+}
+
+.notif-card-payment {
+    -fx-background-color: #F0FDF4;
+    -fx-border-color: #A7F3D0;
+}
+
+.notif-icon-wrap {
+    -fx-background-radius: 10;
+    -fx-min-width: 38;
+    -fx-min-height: 38;
+    -fx-max-width: 38;
+    -fx-max-height: 38;
+}
+
+.notif-icon-blue   { -fx-background-color: #EFF6FF; -fx-background-radius: 10; }
+.notif-icon-green  { -fx-background-color: #ECFDF5; -fx-background-radius: 10; }
+.notif-icon-amber  { -fx-background-color: #FFFBEB; -fx-background-radius: 10; }
+.notif-icon-red    { -fx-background-color: #FEF2F2; -fx-background-radius: 10; }
+.notif-icon-purple { -fx-background-color: #F5F3FF; -fx-background-radius: 10; }
+
+.notif-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-text-fill: #111827;
+}
+
+.notif-message {
+    -fx-font-size: 12px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: #6B7280;
+    -fx-wrap-text: true;
+}
+
+.notif-time {
+    -fx-font-size: 10px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: #9CA3AF;
+    -fx-alignment: center-right;
+}
+
+.notif-unread-dot {
+    -fx-background-color: #3B82F6;
+    -fx-background-radius: 5;
+    -fx-min-width: 8;
+    -fx-min-height: 8;
+    -fx-max-width: 8;
+    -fx-max-height: 8;
+}
+
+.notif-pay-btn {
+    -fx-background-color: linear-gradient(to right, #6366F1, #8B5CF6);
+    -fx-background-radius: 8;
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-padding: 9 18;
+    -fx-cursor: hand;
+}
+
+.notif-pay-btn:hover {
+    -fx-background-color: linear-gradient(to right, #4F46E5, #7C3AED);
+    -fx-effect: dropshadow(gaussian, rgba(99,102,241,0.28), 10, 0, 0, 2);
+}
+
+.notif-pay-btn:disabled {
+    -fx-background-color: #D1D5DB;
+    -fx-text-fill: #9CA3AF;
+    -fx-cursor: default;
+    -fx-effect: none;
+}
+
+.notif-success-label {
+    -fx-text-fill: #065F46;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-background-color: #D1FAE5;
+    -fx-background-radius: 8;
+    -fx-padding: 9 14;
+}
+
+.notif-error-label {
+    -fx-text-fill: #9C2121;
+    -fx-font-size: 12px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-background-color: #FEE2E2;
+    -fx-background-radius: 8;
+    -fx-padding: 9 14;
+    -fx-wrap-text: true;
+}

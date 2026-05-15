@@ -1,5 +1,6 @@
 package it.ispw.tutora.view.home;
 
+import it.ispw.tutora.controller.graphic.StudentContentController;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.layout.Priority;
@@ -21,6 +22,17 @@ public class StudentDashboardDecorator extends DashboardDecorator {
     private static final Logger LOGGER =
             Logger.getLogger(StudentDashboardDecorator.class.getName());
 
+    /** Ultimo controller caricato — aggiornato ogni volta che viene caricato student_content.fxml. */
+    private static StudentContentController lastController;
+
+    /**
+     * Ricarica la sezione "Upcoming Lessons" dell'ultimo dashboard student caricato.
+     * Thread-safe: viene chiamato dal thread JavaFX tramite il callback di pagamento.
+     */
+    public static void refreshUpcoming() {
+        if (lastController != null) lastController.refreshUpcomingLessons();
+    }
+
     /**
      * @param wrapped il componente da avvolgere
      */
@@ -41,6 +53,7 @@ public class StudentDashboardDecorator extends DashboardDecorator {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/fxml/student_content.fxml"));
             Node content = loader.load();
+            lastController = loader.getController();
             VBox.setVgrow(content, Priority.ALWAYS);
             contentArea.getChildren().add(content);
         } catch (IOException e) {

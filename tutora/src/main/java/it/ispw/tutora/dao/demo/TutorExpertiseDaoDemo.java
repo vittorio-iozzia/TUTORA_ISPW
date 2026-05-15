@@ -96,15 +96,30 @@ public class TutorExpertiseDaoDemo implements TutorExpertiseDao {
      * Aggiorna solo lo status della competenza in cache.
      * La macchina a stati finiti è applicata da TutorExpertise.updateStatus().
      *
+     * Non rimpiazza l'intero oggetto (come farebbe updateExpertise) ma agisce
+     * esclusivamente sul campo status dell'oggetto già in cache, coerentemente
+     * con l'implementazione JSON che scrive solo r.status.
+     *
+     * Guard: se lo status è già quello richiesto il metodo torna subito.
+     * In Demo mode il controller ha già aggiornato l'oggetto in RAM tramite
+     * updateStatus() (stesso riferimento restituito da selectExpertise),
+     * quindi cached.getStatus() == tutorExpertise.getStatus() → return immediato,
+     * senza chiamare updateStatus() una seconda volta sulla FSM.
+     *
      * @throws TutorExpertiseNotFoundException se la coppia non è in cache
      */
     @Override
     public void updateExpertiseStatus(Connection conn, TutorExpertise tutorExpertise)
             throws DatabaseException, TutorExpertiseNotFoundException {
-        if (!cache.containsKey(makeKey(tutorExpertise.getTutor().getUsername(),
-                tutorExpertise.getSubcategory().getName())))
+        String key = makeKey(tutorExpertise.getTutor().getUsername(),
+                tutorExpertise.getSubcategory().getName());
+        if (!cache.containsKey(key))
             throw new TutorExpertiseNotFoundException("Tutor Expertise not found.");
-        cache.put(makeKey(tutorExpertise.getTutor().getUsername(),
-                tutorExpertise.getSubcategory().getName()), tutorExpertise);
+        TutorExpertise cached = cache.get(key);
+        // Guard: se lo status è già quello richiesto non chiamo updateStatus() di nuovo.
+        // In Demo mode il controller ha già aggiornato l'oggetto in RAM (stesso riferimento),
+        // quindi cached.getStatus() == tutorExpertise.getStatus() → return immediato.
+        if (cached.getStatus() == tutorExpertise.getStatus()) return;
+        cached.updateStatus(tutorExpertise.getStatus());
     }
 }
