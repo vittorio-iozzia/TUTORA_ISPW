@@ -109,7 +109,15 @@ public class ApplyToBecomeATutorCLI {
             } else {
                 // Requisito di tipo documento
                 System.out.println();
-                info("Fornisci il percorso assoluto del documento (PDF, JPG, PNG...)");
+                String userHome = System.getProperty("user.home");
+                String cwd      = new File("").getAbsolutePath();
+                info("Inserisci il percorso COMPLETO del file (PDF, JPG, PNG, DOCX...)");
+                System.out.println("    La tua home e': " + userHome);
+                System.out.println("    Esempio Windows: " + userHome + "\\Desktop\\diploma.pdf");
+                System.out.println("    Esempio Mac/Lin: " + userHome + "/Desktop/diploma.pdf");
+                System.out.println("    (puoi anche trascinare il file nel terminale se supportato)");
+                System.out.println();
+                System.out.flush();   // garantisce che tutto il testo sopra sia visibile prima dell'input
                 String percorso;
                 while (true) {
                     if (req.isRequired()) {
@@ -117,19 +125,29 @@ public class ApplyToBecomeATutorCLI {
                     } else {
                         percorso = readOptionalLine(sc, "Percorso file");
                         if (percorso.isEmpty()) {
-                            // Requisito opzionale saltato
                             item = null;
                             break;
                         }
                     }
-                    File file = new File(percorso);
-                    if (!file.exists() || !file.isFile()) {
-                        error("File non trovato: " + percorso);
+                    // Rimuove virgolette (copia da Explorer) e spazi residui
+                    percorso = percorso.trim().replace("\"", "").replace("'", "").trim();
+                    // Espande il tilde Unix/Mac (es. ~/Desktop/file.pdf)
+                    if (percorso.startsWith("~")) {
+                        percorso = userHome + percorso.substring(1);
+                    }
+                    // Prova come percorso assoluto, poi relativo alla home, poi al cwd
+                    File file = resolveFile(percorso, userHome, cwd);
+                    if (file == null) {
+                        error("File non trovato. Percorsi tentati:");
+                        printCandidate(1, percorso);
+                        printCandidate(2, new File(userHome, percorso).getPath());
+                        printCandidate(3, new File(cwd, percorso).getPath());
+                        warn("Copia il percorso COMPLETO dal file manager, incl. lettera unita' (es. C:\\...)");
                         continue;
                     }
                     try {
                         byte[] content = Files.readAllBytes(file.toPath());
-                        item.setDocumentPath(percorso);
+                        item.setDocumentPath(file.getAbsolutePath());
                         item.setOriginalFilename(file.getName());
                         item.setSizeBytes(file.length());
                         item.setContent(content);
@@ -193,6 +211,43 @@ public class ApplyToBecomeATutorCLI {
     // ----------------------------------------------------------------
     // Helper
     // ----------------------------------------------------------------
+
+    /**
+     * Prova a risolvere il percorso inserito dall'utente in questo ordine:
+     *  1. Percorso as-is (assoluto o relativo alla working dir JVM)
+     *  2. Relativo alla home utente
+     *  3. Relativo alla directory da cui è lanciata l'app
+     * Usa getCanonicalFile() per normalizzare separatori e symlink.
+     */
+    private File resolveFile(String percorso, String userHome, String cwd) {
+        File[] candidates = {
+            new File(percorso),
+            new File(userHome, percorso),
+            new File(cwd,      percorso)
+        };
+        for (File f : candidates) {
+            try {
+                File canonical = f.getCanonicalFile();
+                if (canonical.exists() && canonical.isFile()) return canonical;
+            } catch (IOException e) {
+                if (f.exists() && f.isFile()) return f.getAbsoluteFile();
+            }
+        }
+        return null;
+    }
+
+    /** Stampa il percorso assoluto tentato e segnala se esiste ma è directory. */
+    private void printCandidate(int n, String raw) {
+        try {
+            File f = new File(raw).getAbsoluteFile();
+            String note = f.exists()
+                    ? (f.isDirectory() ? " [ESISTE MA E' DIRECTORY]" : " [ESISTE]")
+                    : " [NON TROVATO]";
+            System.out.println("    " + n + ") " + f.getPath() + note);
+        } catch (Exception e) {
+            System.out.println("    " + n + ") " + raw + " [percorso non valido]");
+        }
+    }
 
     private String guessMimeType(String filename) {
         String lower = filename.toLowerCase();

@@ -58,18 +58,21 @@ public class BookTutorCLI {
 
             // Menu filtro
             System.out.println("  " + BOLD + "Filtra per categoria:" + RESET);
-            menuItem(0, "Tutti i tutor");
+            menuItem(0, "Torna al menu principale");
+            menuItem(1, "Tutti i tutor");
             for (int i = 0; i < categories.size(); i++) {
-                menuItem(i + 1, categories.get(i).getName());
+                menuItem(i + 2, categories.get(i).getName());
             }
             System.out.println();
 
-            int filtro = readInt(sc, "Categoria", 0, categories.size());
+            int filtro = readInt(sc, "Categoria", 0, categories.size() + 1);
+            if (filtro == 0) return;
+
             List<Tutor> filtered;
-            if (filtro == 0) {
+            if (filtro == 1) {
                 filtered = allTutors;
             } else {
-                String catName = categories.get(filtro - 1).getName();
+                String catName = categories.get(filtro - 2).getName();
                 filtered = searchCtrl.filterByCategory(allTutors, catName);
             }
 
