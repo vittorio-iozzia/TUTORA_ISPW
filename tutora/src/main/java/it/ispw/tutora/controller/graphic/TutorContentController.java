@@ -32,6 +32,8 @@ public class TutorContentController {
     private static final Logger LOGGER =
             Logger.getLogger(TutorContentController.class.getName());
     private static final String TIME_SLOT_UNAVAILABLE = "time-slot-unavailable";
+    private static final String LESSON_META_ICON       = LESSON_META_ICON;
+    private static final String LESSON_META            = "lesson-meta";
 
     private static final DateTimeFormatter CARD_FMT =
             DateTimeFormatter.ofPattern("EEE d MMM · HH:mm", java.util.Locale.ENGLISH);
@@ -417,13 +419,13 @@ public class TutorContentController {
         HBox meta = new HBox(8);
         meta.setAlignment(Pos.CENTER_LEFT);
         FontIcon modeIcon = new FontIcon(lesson.isRemote() ? "fas-video" : "fas-map-marker-alt");
-        modeIcon.getStyleClass().add("lesson-meta-icon");
+        modeIcon.getStyleClass().add(LESSON_META_ICON);
         Label modeLbl = new Label(mode);
-        modeLbl.getStyleClass().add("lesson-meta");
+        modeLbl.getStyleClass().add(LESSON_META);
         FontIcon clockIcon = new FontIcon("fas-clock");
-        clockIcon.getStyleClass().add("lesson-meta-icon");
+        clockIcon.getStyleClass().add(LESSON_META_ICON);
         Label time = new Label(datetime);
-        time.getStyleClass().add("lesson-meta");
+        time.getStyleClass().add(LESSON_META);
         meta.getChildren().addAll(modeIcon, modeLbl, clockIcon, time);
         info.getChildren().addAll(subjectLbl, meta);
 
@@ -469,13 +471,13 @@ public class TutorContentController {
         HBox metaRow = new HBox(12);
         metaRow.setAlignment(Pos.CENTER_LEFT);
         FontIcon calIcon = new FontIcon("fas-calendar-alt");
-        calIcon.getStyleClass().add("lesson-meta-icon");
+        calIcon.getStyleClass().add(LESSON_META_ICON);
         Label dateLbl = new Label(booking.date());
-        dateLbl.getStyleClass().add("lesson-meta");
+        dateLbl.getStyleClass().add(LESSON_META);
         FontIcon clkIcon = new FontIcon("fas-clock");
-        clkIcon.getStyleClass().add("lesson-meta-icon");
+        clkIcon.getStyleClass().add(LESSON_META_ICON);
         Label timeLbl = new Label(booking.time());
-        timeLbl.getStyleClass().add("lesson-meta");
+        timeLbl.getStyleClass().add(LESSON_META);
         metaRow.getChildren().addAll(calIcon, dateLbl, clkIcon, timeLbl);
 
         card.getChildren().addAll(topRow, metaRow);

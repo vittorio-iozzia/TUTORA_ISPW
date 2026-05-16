@@ -12,6 +12,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -167,7 +168,7 @@ public class GoogleAuthBoundary {
                         "Google non ha restituito un'email. Verifica i permessi OAuth.");
             }
 
-            LOGGER.info("Google OAuth: profilo ricevuto per %s".formatted(email));
+            LOGGER.log(Level.INFO, "Google OAuth: profilo ricevuto per {0}", email);
             return new SocialLoginBean(PROVIDER, oauthId, email, name, surname);
 
         } catch (InterruptedException e) {

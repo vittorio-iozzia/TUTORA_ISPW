@@ -27,6 +27,7 @@ import javafx.util.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -446,19 +447,19 @@ public class ChatGfxController {
     @FXML
     private void handleCall() {
         // Placeholder — voice call not yet implemented
-        LOGGER.info("Voice call requested for: %s".formatted(selectedContactUsername));
+        LOGGER.log(Level.INFO, "Voice call requested for: {0}", selectedContactUsername);
     }
 
     @FXML
     private void handleVideo() {
         // Placeholder — video call not yet implemented
-        LOGGER.info("Video call requested for: %s".formatted(selectedContactUsername));
+        LOGGER.log(Level.INFO, "Video call requested for: {0}", selectedContactUsername);
     }
 
     @FXML
     private void handleMore() {
         // Placeholder — context menu (mute, block, clear) not yet implemented
-        LOGGER.info("More options requested for: %s".formatted(selectedContactUsername));
+        LOGGER.log(Level.INFO, "More options requested for: {0}", selectedContactUsername);
     }
 
     // ----------------------------------------------------------------

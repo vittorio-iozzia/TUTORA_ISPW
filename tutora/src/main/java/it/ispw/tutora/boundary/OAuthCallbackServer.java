@@ -10,6 +10,7 @@ import java.net.Socket;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -71,7 +72,7 @@ public class OAuthCallbackServer {
                 if (requestLine == null || requestLine.isBlank()) {
                     throw new OAuthException("Empty OAuth callback.");
                 }
-                LOGGER.fine("OAuth callback request: %s".formatted(requestLine));
+                LOGGER.log(Level.FINE, "OAuth callback request: {0}", requestLine);
 
                 String code  = extractParam(requestLine, "code");
                 String error = extractParam(requestLine, "error");
@@ -125,7 +126,7 @@ public class OAuthCallbackServer {
             out.write(response.getBytes(StandardCharsets.UTF_8));
             out.flush();
         } catch (Exception e) {
-            LOGGER.warning("Cannot send HTML response to browser: " + e.getMessage());
+            LOGGER.log(Level.WARNING, "Cannot send HTML response to browser: {0}", e.getMessage());
         }
     }
 }

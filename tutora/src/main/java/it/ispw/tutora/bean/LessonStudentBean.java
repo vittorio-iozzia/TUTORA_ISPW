@@ -1,6 +1,5 @@
 package it.ispw.tutora.bean;
 
-import it.ispw.tutora.enums.LessonStatus;
 import it.ispw.tutora.model.Lesson;
 
 import java.time.LocalDateTime;

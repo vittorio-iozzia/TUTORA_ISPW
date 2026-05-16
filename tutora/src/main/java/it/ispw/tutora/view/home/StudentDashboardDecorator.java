@@ -33,6 +33,10 @@ public class StudentDashboardDecorator extends DashboardDecorator {
         if (lastController != null) lastController.refreshUpcomingLessons();
     }
 
+    private static void setLastController(StudentContentController ctrl) {
+        lastController = ctrl;
+    }
+
     /**
      * @param wrapped il componente da avvolgere
      */
@@ -53,7 +57,7 @@ public class StudentDashboardDecorator extends DashboardDecorator {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/fxml/student_content.fxml"));
             Node content = loader.load();
-            lastController = loader.getController();
+            setLastController(loader.getController());
             VBox.setVgrow(content, Priority.ALWAYS);
             contentArea.getChildren().add(content);
         } catch (IOException e) {
