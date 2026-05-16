@@ -1,17 +1,13 @@
 package it.ispw.tutora.boundary;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import it.ispw.tutora.bean.SocialLoginBean;
 import it.ispw.tutora.exception.OAuthException;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URLEncoder;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -40,7 +36,7 @@ import java.util.logging.Logger;
  * Tipo applicazione: "Desktop app"
  * Redirect URI autorizzato: http://localhost:8888/callback
  */
-public class GoogleAuthBoundary {
+public class GoogleAuthBoundary extends AbstractOAuthBoundary {
 
     private static final Logger LOGGER = Logger.getLogger(GoogleAuthBoundary.class.getName());
 
@@ -52,26 +48,15 @@ public class GoogleAuthBoundary {
     private final String clientId;
     private final String clientSecret;
     private final String redirectUri;
-    private final HttpClient httpClient;
-    private final ObjectMapper objectMapper;
 
     public GoogleAuthBoundary(String clientId, String clientSecret, String redirectUri) {
+        super();
         this.clientId     = clientId;
         this.clientSecret = clientSecret;
         this.redirectUri  = redirectUri;
-        this.httpClient   = HttpClient.newHttpClient();
-        this.objectMapper = new ObjectMapper();
     }
 
-    // ----------------------------------------------------------------
-    // Step 1 – URL di autorizzazione
-    // ----------------------------------------------------------------
-
-    /**
-     * Costruisce l'URL di autorizzazione Google da aprire nel browser dell'utente.
-     *
-     * @param state stringa casuale per protezione CSRF
-     */
+    @Override
     public String getAuthorizationUrl(String state) {
         return AUTH_URL
                 + "?client_id="     + enc(clientId)
@@ -83,27 +68,8 @@ public class GoogleAuthBoundary {
                 + "&prompt=select_account";
     }
 
-    // ----------------------------------------------------------------
-    // Step 2 – scambio codice → token → profilo
-    // ----------------------------------------------------------------
-
-    /**
-     * Scambia il codice di autorizzazione per un access token,
-     * poi recupera il profilo utente dall'API Google.
-     *
-     * @param code codice restituito dal callback OAuth
-     * @return bean con provider="google", oauthId, email, name, surname
-     */
-    public SocialLoginBean fetchUserProfile(String code) throws OAuthException {
-        String accessToken = exchangeCodeForToken(code);
-        return fetchProfile(accessToken);
-    }
-
-    // ----------------------------------------------------------------
-    // Metodi privati
-    // ----------------------------------------------------------------
-
-    private String exchangeCodeForToken(String code) throws OAuthException {
+    @Override
+    protected String exchangeCodeForToken(String code) throws OAuthException {
         String body = "grant_type=authorization_code"
                 + "&code="          + enc(code)
                 + "&redirect_uri="  + enc(redirectUri)
@@ -141,7 +107,8 @@ public class GoogleAuthBoundary {
         }
     }
 
-    private SocialLoginBean fetchProfile(String accessToken) throws OAuthException {
+    @Override
+    protected SocialLoginBean fetchProfile(String accessToken) throws OAuthException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(USER_INFO_URL))
                 .header("Authorization", "Bearer " + accessToken)
@@ -157,11 +124,11 @@ public class GoogleAuthBoundary {
                         "Google user info fallito (HTTP " + response.statusCode() + ").");
             }
 
-            JsonNode json    = objectMapper.readTree(response.body());
-            String oauthId   = json.path("id").asText();
-            String email     = json.path("email").asText();
-            String name      = json.path("given_name").asText("Unknown");
-            String surname   = json.path("family_name").asText("");
+            JsonNode json  = objectMapper.readTree(response.body());
+            String oauthId = json.path("id").asText();
+            String email   = json.path("email").asText();
+            String name    = json.path("given_name").asText("Unknown");
+            String surname = json.path("family_name").asText("");
 
             if (email.isBlank()) {
                 throw new OAuthException(
@@ -177,9 +144,5 @@ public class GoogleAuthBoundary {
         } catch (IOException e) {
             throw new OAuthException("Errore nel recupero del profilo Google.", e);
         }
-    }
-
-    private static String enc(String value) {
-        return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 }

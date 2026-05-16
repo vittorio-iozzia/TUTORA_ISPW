@@ -1,7 +1,7 @@
 package it.ispw.tutora.controller.graphic;
 
 import it.ispw.tutora.controller.application.SearchTutorController;
-import it.ispw.tutora.dao.TutorDao;
+import it.ispw.tutora.controller.graphic.util.TutorBrowseUtil;
 import it.ispw.tutora.dao.TutorExpertiseDao;
 import it.ispw.tutora.dao.factory.DaoFactory;
 import it.ispw.tutora.enums.Status;
@@ -19,10 +19,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import javafx.scene.shape.Rectangle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -37,10 +34,6 @@ import java.util.logging.Logger;
 
 /**
  * Controller del frammento find_tutors_content.fxml.
- *
- * Arricchisce ogni tutor card con chip di expertise e prezzo minimo,
- * popola la barra statistiche e anima le card con una FadeTransition +
- * TranslateTransition al hover (nessun effetto bordo indesiderato).
  */
 public class FindTutorGfxController {
 
@@ -52,18 +45,17 @@ public class FindTutorGfxController {
     // ----------------------------------------------------------------
 
     @FXML private TextField searchField;
-    @FXML private HBox      categoryPills;
-    @FXML private FlowPane  tutorGrid;
-    @FXML private Label     resultsLabel;
-    @FXML private Label     statTutorsLabel;
-    @FXML private Label     statSubjectsLabel;
-    @FXML private HBox      ftStatCard1;
-    @FXML private HBox      ftStatCard2;
-    @FXML private HBox      ftStatCard3;
-    @FXML private HBox      ftStatCard4;
-    @FXML private Button    applyBtn;
+    @FXML private HBox categoryPills;
+    @FXML private FlowPane tutorGrid;
+    @FXML private Label resultsLabel;
+    @FXML private Label statTutorsLabel;
+    @FXML private Label statSubjectsLabel;
+    @FXML private HBox ftStatCard1;
+    @FXML private HBox ftStatCard2;
+    @FXML private HBox ftStatCard3;
+    @FXML private HBox ftStatCard4;
+    @FXML private Button applyBtn;
 
-    /** Currently selected category, null when "All" is active. */
     private String selectedCategory = null;
 
     // ----------------------------------------------------------------
@@ -73,10 +65,8 @@ public class FindTutorGfxController {
     private List<Tutor>    allTutors     = List.of();
     private List<Category> allCategories = List.of();
 
-    /** Subcategory names (APPROVED) per tutor username, max 3. */
-    private Map<String, List<String>>   expertiseNames = new HashMap<>();
-    /** Minimum hourly price (APPROVED expertise) per tutor username. */
-    private Map<String, BigDecimal>     minPrices      = new HashMap<>();
+    private Map<String, List<String>>  expertiseNames = new HashMap<>();
+    private Map<String, BigDecimal> minPrices = new HashMap<>();
 
     private final SearchTutorController searchController = new SearchTutorController();
 
@@ -104,15 +94,15 @@ public class FindTutorGfxController {
 
     @FXML
     public void initialize() {
-        allTutors     = loadTutors();
-        allCategories = loadCategories();
+        allTutors     = TutorBrowseUtil.loadTutors(LOGGER);
+        allCategories = TutorBrowseUtil.loadCategories(searchController, LOGGER);
         loadExpertises();
 
         updateStatsBar();
-        addStatCardHover(ftStatCard1);
-        addStatCardHover(ftStatCard2);
-        addStatCardHover(ftStatCard3);
-        addStatCardHover(ftStatCard4);
+        TutorBrowseUtil.addHoverLift(ftStatCard1);
+        TutorBrowseUtil.addHoverLift(ftStatCard2);
+        TutorBrowseUtil.addHoverLift(ftStatCard3);
+        TutorBrowseUtil.addHoverLift(ftStatCard4);
         buildCategoryPills();
         buildTutorGrid(allTutors);
 
@@ -122,25 +112,6 @@ public class FindTutorGfxController {
     // ----------------------------------------------------------------
     // DAO
     // ----------------------------------------------------------------
-
-    private List<Tutor> loadTutors() {
-        try {
-            TutorDao dao = DaoFactory.getInstance().createTutorDao();
-            return dao.selectAllTutors(DaoFactory.getInstance().getConnection());
-        } catch (DatabaseException e) {
-            LOGGER.warning("Cannot load tutors: " + e.getMessage());
-            return List.of();
-        }
-    }
-
-    private List<Category> loadCategories() {
-        try {
-            return searchController.loadCategories();
-        } catch (DatabaseException e) {
-            LOGGER.warning("Cannot load categories: " + e.getMessage());
-            return List.of();
-        }
-    }
 
     private void loadExpertises() {
         DaoFactory factory = DaoFactory.getInstance();
@@ -232,7 +203,6 @@ public class FindTutorGfxController {
             TutorApplicationGfxController ctrl = loader.getController();
             ctrl.initCategory(selectedCategory);
 
-            // Blur + dim the parent window while the modal is open
             javafx.scene.Parent parentRoot = applyBtn.getScene().getRoot();
             GaussianBlur blur = new GaussianBlur(10);
             ColorAdjust dim  = new ColorAdjust();
@@ -284,8 +254,7 @@ public class FindTutorGfxController {
         tutorGrid.getChildren().clear();
 
         if (tutors.isEmpty()) {
-            VBox empty = buildEmptyState();
-            tutorGrid.getChildren().add(empty);
+            tutorGrid.getChildren().add(buildEmptyState());
             updateResultsLabel(0);
             return;
         }
@@ -323,10 +292,8 @@ public class FindTutorGfxController {
         card.getStyleClass().add("tutor-card");
         card.setPrefWidth(280);
 
-        // ── Cover photo (top half) ──
-        StackPane photo = buildPhotoHalf(tutor, poolIndex);
+        StackPane photo = TutorBrowseUtil.buildPhotoHalf(tutor, poolIndex, 280, PHOTO_URLS, PORTRAIT_POOL);
 
-        // ── Body ──
         VBox body = new VBox(10);
         body.getStyleClass().add("tutor-card-body");
 
@@ -334,7 +301,7 @@ public class FindTutorGfxController {
         name.getStyleClass().add("tutor-name");
 
         String descText = tutor.getDescription() != null
-                ? truncate(tutor.getDescription(), 55)
+                ? TutorBrowseUtil.truncate(tutor.getDescription(), 55)
                 : "@" + tutor.getUsername();
         Label desc = new Label(descText);
         desc.getStyleClass().add("tutor-subject");
@@ -351,7 +318,7 @@ public class FindTutorGfxController {
         body.getChildren().add(footer);
 
         card.getChildren().addAll(photo, body);
-        addHoverLift(card);
+        TutorBrowseUtil.addHoverLift(card);
         return card;
     }
 
@@ -406,40 +373,10 @@ public class FindTutorGfxController {
 
         Button bookBtn = new Button("Book");
         bookBtn.getStyleClass().add("book-btn");
-        bookBtn.setOnAction(e -> openBookingDialog(tutor));
+        bookBtn.setOnAction(e -> TutorBrowseUtil.openBookingDialog(tutor, applyBtn, LOGGER));
 
         footer.getChildren().addAll(spacer, profileBtn, bookBtn);
         return footer;
-    }
-
-    private void openBookingDialog(Tutor tutor) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/book_tutor.fxml"));
-            Parent root = loader.load();
-            BookTutorGfxController ctrl = loader.getController();
-            ctrl.initTutor(tutor);
-
-            javafx.scene.Parent parentRoot = applyBtn.getScene().getRoot();
-            javafx.scene.effect.GaussianBlur blur = new javafx.scene.effect.GaussianBlur(10);
-            javafx.scene.effect.ColorAdjust dim = new javafx.scene.effect.ColorAdjust();
-            dim.setBrightness(-0.35);
-            dim.setInput(blur);
-            parentRoot.setEffect(dim);
-
-            Stage stage = new Stage();
-            stage.initOwner(applyBtn.getScene().getWindow());
-            stage.initModality(Modality.WINDOW_MODAL);
-            stage.initStyle(StageStyle.TRANSPARENT);
-            Scene scene = new Scene(root);
-            scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
-            stage.setScene(scene);
-            stage.setMinWidth(560);
-            stage.setMinHeight(500);
-            stage.setOnHiding(ev -> parentRoot.setEffect(null));
-            stage.show();
-        } catch (java.io.IOException e) {
-            LOGGER.warning("Cannot open booking dialog: " + e.getMessage());
-        }
     }
 
     // ----------------------------------------------------------------
@@ -451,14 +388,13 @@ public class FindTutorGfxController {
         box.setAlignment(Pos.CENTER);
         box.setPadding(new Insets(48));
 
-        // magnifying glass via Twemoji CDN – no font rendering issues
         StackPane iconCircle = new StackPane();
         iconCircle.setStyle(
             "-fx-background-color: #EEF2FF;" +
             "-fx-background-radius: 44;" +
             "-fx-min-width: 88; -fx-max-width: 88;" +
             "-fx-min-height: 88; -fx-max-height: 88;");
-        iconCircle.getChildren().add(loadTwemoji("1f50d", 44));
+        iconCircle.getChildren().add(TutorBrowseUtil.loadTwemoji("1f50d", 44));
 
         Label title = new Label("No tutors found");
         title.setStyle("-fx-font-size: 16px; -fx-font-weight: 600; -fx-text-fill: #6B7280;");
@@ -467,103 +403,5 @@ public class FindTutorGfxController {
 
         box.getChildren().addAll(iconCircle, title, sub);
         return box;
-    }
-
-    private ImageView loadTwemoji(String codepoint, double size) {
-        ImageView iv = new ImageView();
-        iv.setFitWidth(size);
-        iv.setFitHeight(size);
-        iv.setSmooth(true);
-        iv.setPreserveRatio(true);
-        String url = "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/" + codepoint + ".png";
-        Image img = new Image(url, size * 2, size * 2, true, true, true);
-        img.progressProperty().addListener((obs, o, n) -> {
-            if (n.doubleValue() >= 1.0 && !img.isError()) iv.setImage(img);
-        });
-        return iv;
-    }
-
-    // ----------------------------------------------------------------
-    // Hover lift (TranslateTransition – no border scaling glitch)
-    // ----------------------------------------------------------------
-
-    private void addStatCardHover(HBox card) {
-        TranslateTransition up   = new TranslateTransition(Duration.millis(160), card);
-        up.setToY(-5);
-        TranslateTransition down = new TranslateTransition(Duration.millis(160), card);
-        down.setToY(0);
-        card.setOnMouseEntered(e -> { down.stop(); up.playFromStart(); });
-        card.setOnMouseExited (e -> { up.stop();   down.playFromStart(); });
-        card.setStyle("-fx-cursor: hand;");
-    }
-
-    private void addHoverLift(VBox card) {
-        TranslateTransition up   = new TranslateTransition(Duration.millis(160), card);
-        up.setToY(-5);
-        TranslateTransition down = new TranslateTransition(Duration.millis(160), card);
-        down.setToY(0);
-        card.setOnMouseEntered(e -> { down.stop(); up.playFromStart(); });
-        card.setOnMouseExited (e -> { up.stop();   down.playFromStart(); });
-        card.setStyle("-fx-cursor: hand;");
-    }
-
-    // ----------------------------------------------------------------
-    // Photo half (card cover — top-only rounded corners)
-    // ----------------------------------------------------------------
-
-    private StackPane buildPhotoHalf(Tutor tutor, int poolIndex) {
-        StackPane pane = new StackPane();
-        pane.getStyleClass().add("tutor-card-photo-wrap");
-        pane.setPrefHeight(160);
-        pane.setMinHeight(160);
-        pane.setMaxHeight(160);
-
-        Label initial = new Label(String.valueOf(tutor.getName().charAt(0)).toUpperCase());
-        initial.getStyleClass().add("tutor-card-photo-initial");
-        pane.getChildren().add(initial);
-
-        ImageView imgView = new ImageView();
-        imgView.setFitWidth(280);
-        imgView.setFitHeight(160);
-        imgView.setPreserveRatio(false);
-        imgView.setSmooth(true);
-        pane.getChildren().add(imgView);
-
-        // Clip taller than pane so bottom arcs are invisible — only top corners round
-        Rectangle photoClip = new Rectangle(280, 400);
-        photoClip.setArcWidth(28);
-        photoClip.setArcHeight(28);
-        pane.setClip(photoClip);
-
-        // Featured badge — top-left
-        Label featured = new Label("⭐ Featured");
-        featured.getStyleClass().add("tutor-card-featured-badge");
-        StackPane.setAlignment(featured, Pos.TOP_LEFT);
-        StackPane.setMargin(featured, new Insets(10, 0, 0, 10));
-
-        // Mode badge — top-right
-        boolean isRemote = poolIndex % 2 == 0;
-        Label mode = new Label(isRemote ? "Online" : "In-Person");
-        mode.getStyleClass().add(isRemote ? "tutor-card-online-badge" : "tutor-card-inperson-badge");
-        StackPane.setAlignment(mode, Pos.TOP_RIGHT);
-        StackPane.setMargin(mode, new Insets(10, 10, 0, 0));
-
-        pane.getChildren().addAll(featured, mode);
-
-        String photoUrl = PHOTO_URLS.getOrDefault(
-                tutor.getUsername(),
-                PORTRAIT_POOL.get(poolIndex % PORTRAIT_POOL.size()));
-        Image img = new Image(photoUrl, 300, 200, false, true, true);
-        img.progressProperty().addListener((obs, oldV, newV) -> {
-            if (newV.doubleValue() >= 1.0 && !img.isError()) {
-                imgView.setImage(img);
-            }
-        });
-
-        return pane;
-    }
-
-    private String truncate(String text, int max) {
-        return text.length() > max ? text.substring(0, max) + "…" : text;
     }
 }

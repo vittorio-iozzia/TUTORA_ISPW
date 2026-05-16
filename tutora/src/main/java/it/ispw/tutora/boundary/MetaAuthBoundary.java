@@ -1,17 +1,13 @@
 package it.ispw.tutora.boundary;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import it.ispw.tutora.bean.SocialLoginBean;
 import it.ispw.tutora.exception.OAuthException;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URLEncoder;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,7 +37,7 @@ import java.util.logging.Logger;
  *   - Aggiungi http://localhost:8888/callback come Valid OAuth Redirect URI
  *   - Permessi richiesti: email, public_profile
  */
-public class MetaAuthBoundary {
+public class MetaAuthBoundary extends AbstractOAuthBoundary {
 
     private static final Logger LOGGER = Logger.getLogger(MetaAuthBoundary.class.getName());
 
@@ -57,26 +53,15 @@ public class MetaAuthBoundary {
     private final String appId;
     private final String appSecret;
     private final String redirectUri;
-    private final HttpClient httpClient;
-    private final ObjectMapper objectMapper;
 
     public MetaAuthBoundary(String appId, String appSecret, String redirectUri) {
+        super();
         this.appId       = appId;
         this.appSecret   = appSecret;
         this.redirectUri = redirectUri;
-        this.httpClient  = HttpClient.newHttpClient();
-        this.objectMapper = new ObjectMapper();
     }
 
-    // ----------------------------------------------------------------
-    // Step 1 – URL di autorizzazione
-    // ----------------------------------------------------------------
-
-    /**
-     * Costruisce l'URL di autorizzazione Meta da aprire nel browser dell'utente.
-     *
-     * @param state stringa casuale per protezione CSRF
-     */
+    @Override
     public String getAuthorizationUrl(String state) {
         return AUTH_URL
                 + "?client_id="    + enc(appId)
@@ -86,27 +71,8 @@ public class MetaAuthBoundary {
                 + "&state="        + enc(state);
     }
 
-    // ----------------------------------------------------------------
-    // Step 2 – scambio codice → token → profilo
-    // ----------------------------------------------------------------
-
-    /**
-     * Scambia il codice di autorizzazione per un access token,
-     * poi recupera il profilo utente dalla Meta Graph API.
-     *
-     * @param code codice restituito dal callback OAuth
-     * @return bean con provider="meta", oauthId, email, name, surname
-     */
-    public SocialLoginBean fetchUserProfile(String code) throws OAuthException {
-        String accessToken = exchangeCodeForToken(code);
-        return fetchProfile(accessToken);
-    }
-
-    // ----------------------------------------------------------------
-    // Metodi privati
-    // ----------------------------------------------------------------
-
-    private String exchangeCodeForToken(String code) throws OAuthException {
+    @Override
+    protected String exchangeCodeForToken(String code) throws OAuthException {
         String url = TOKEN_URL
                 + "?client_id="     + enc(appId)
                 + "&redirect_uri="  + enc(redirectUri)
@@ -143,7 +109,8 @@ public class MetaAuthBoundary {
         }
     }
 
-    private SocialLoginBean fetchProfile(String accessToken) throws OAuthException {
+    @Override
+    protected SocialLoginBean fetchProfile(String accessToken) throws OAuthException {
         String url = USER_INFO_URL + "&access_token=" + enc(accessToken);
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -181,9 +148,5 @@ public class MetaAuthBoundary {
         } catch (IOException e) {
             throw new OAuthException("Errore nel recupero del profilo Meta.", e);
         }
-    }
-
-    private static String enc(String value) {
-        return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 }

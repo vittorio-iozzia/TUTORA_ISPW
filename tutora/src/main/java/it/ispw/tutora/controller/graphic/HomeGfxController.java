@@ -294,12 +294,12 @@ public class HomeGfxController {
     }
 
     private void openStudentProfilePage() {
-        StudentProfileGfxController.setOnBackCallback(this::restoreMainArea);
+        ProfileGfxController.setOnBackCallback(this::restoreMainArea);
         swapMainArea("/fxml/student_profile.fxml");
     }
 
     private void openTutorProfilePage() {
-        TutorProfileGfxController.setOnBackCallback(this::restoreMainArea);
+        ProfileGfxController.setOnBackCallback(this::restoreMainArea);
         swapMainArea("/fxml/tutor_profile.fxml");
     }
 

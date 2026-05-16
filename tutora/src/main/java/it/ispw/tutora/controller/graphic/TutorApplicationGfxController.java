@@ -12,11 +12,8 @@ import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
-import javafx.scene.effect.DropShadow;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -26,7 +23,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.logging.Logger;
 
-public class TutorApplicationGfxController {
+public class TutorApplicationGfxController extends DialogGfxController {
 
     private static final Logger LOGGER =
             Logger.getLogger(TutorApplicationGfxController.class.getName());
@@ -49,25 +46,13 @@ public class TutorApplicationGfxController {
     // FXML
     // ----------------------------------------------------------------
 
-    @FXML private VBox      dialogRoot;
     @FXML private Label     titleLabel;
     @FXML private Label     subtitleLabel;
     @FXML private Label     applyingForLabel;
-    @FXML private VBox      formContainer;
-    @FXML private VBox      successPane;
-    @FXML private VBox      footer;
     @FXML private Button    submitBtn;
     @FXML private Button    backBtn;
-    @FXML private Label     errorLabel;
     @FXML private CheckBox  agreeCheckBox;
     @FXML private Label     agreeLabel;
-
-    @FXML private StackPane headerIconWrap;
-    @FXML private ImageView headerIconView;
-    @FXML private StackPane bannerIconWrap;
-    @FXML private ImageView bannerIconView;
-    @FXML private StackPane successIconWrap;
-    @FXML private ImageView successIconView;
 
     // ----------------------------------------------------------------
     // State
@@ -79,7 +64,7 @@ public class TutorApplicationGfxController {
     private final Map<String, TextArea> textFields    = new LinkedHashMap<>();
     private final Map<String, File[]>   documentFiles = new LinkedHashMap<>();
 
-    /** Selected availability slots: "MON_MORNING", "WED_EVENING", etc. */
+    /** Selected availability slots: "MONDAY|08:00|12:00", etc. */
     private final Set<String> selectedSlots = new LinkedHashSet<>();
 
     private final ApplyToBecomeATutorController appController =
@@ -95,36 +80,6 @@ public class TutorApplicationGfxController {
         setupIconBox(bannerIconWrap, bannerIconView, "1f3f7", 13); // 🏷️ tag
         setupIconBox(successIconWrap, successIconView, "2705", 34); // ✅ check
         applyRoundedClip(dialogRoot);
-    }
-
-    private void applyRoundedClip(VBox root) {
-        if (root == null) return;
-        javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle();
-        clip.setArcWidth(32);
-        clip.setArcHeight(32);
-        root.layoutBoundsProperty().addListener((obs, o, n) -> {
-            if (n.getWidth() > 0 && root.getClip() == null) {
-                clip.setWidth(n.getWidth());
-                clip.setHeight(n.getHeight());
-                root.widthProperty().addListener((o2, ov, nv)  -> clip.setWidth(nv.doubleValue()));
-                root.heightProperty().addListener((o2, ov, nv) -> clip.setHeight(nv.doubleValue()));
-                root.setClip(clip);
-            }
-        });
-    }
-
-    private void setupIconBox(StackPane wrap, ImageView iv, String codepoint, double size) {
-        if (wrap == null) return;
-        wrap.setEffect(new DropShadow(10, 0, 4, Color.web("#00000026")));
-        if (iv != null) {
-            iv.setFitWidth(size);
-            iv.setFitHeight(size);
-            String url = "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/" + codepoint + ".png";
-            Image img = new Image(url, size * 2, size * 2, true, true, true);
-            img.progressProperty().addListener((obs, o, n) -> {
-                if (n.doubleValue() >= 1.0 && !img.isError()) iv.setImage(img);
-            });
-        }
     }
 
     // ----------------------------------------------------------------
@@ -241,7 +196,6 @@ public class TutorApplicationGfxController {
         HBox row = new HBox(12);
         row.setAlignment(Pos.CENTER_LEFT);
 
-        // 📂 open folder – classic browse icon, yellow/warm on the light outlined button
         ImageView uploadIcon = loadTwemoji("1f4c2", 15);
 
         Button pickBtn = new Button("Choose file…");
@@ -277,11 +231,9 @@ public class TutorApplicationGfxController {
         VBox section = new VBox(12);
         section.getStyleClass().add("app-field-box");
 
-        // Section header row
         HBox labelRow = new HBox(8);
         labelRow.setAlignment(Pos.CENTER_LEFT);
 
-        // 📅 calendar emoji via Twemoji CDN – guaranteed rendering
         ImageView calIcon = loadTwemoji("1f4c5", 22);
 
         Label title = new Label("Availability");
@@ -296,7 +248,6 @@ public class TutorApplicationGfxController {
         desc.getStyleClass().add("app-field-desc");
         desc.setWrapText(true);
 
-        // Grid
         GridPane grid = buildAvailabilityGrid();
 
         section.getChildren().addAll(labelRow, desc, grid);
@@ -308,7 +259,6 @@ public class TutorApplicationGfxController {
         grid.setHgap(6);
         grid.setVgap(6);
 
-        // Column constraints: first col for time labels, rest for days
         ColumnConstraints timeCol = new ColumnConstraints(70);
         grid.getColumnConstraints().add(timeCol);
         for (int d = 0; d < DAYS.length; d++) {
@@ -318,7 +268,6 @@ public class TutorApplicationGfxController {
             grid.getColumnConstraints().add(cc);
         }
 
-        // Day headers (row 0, cols 1-7)
         for (int d = 0; d < DAYS.length; d++) {
             Label dayLbl = new Label(DAYS[d]);
             dayLbl.getStyleClass().add("app-avail-day-header");
@@ -328,18 +277,14 @@ public class TutorApplicationGfxController {
             grid.add(dayLbl, d + 1, 0);
         }
 
-        // Time slot rows
         for (int s = 0; s < SLOTS.length; s++) {
-            // Time label
             Label slotLbl = new Label(SLOTS[s]);
             slotLbl.getStyleClass().add("app-avail-time-label");
             slotLbl.setWrapText(true);
             slotLbl.setAlignment(Pos.CENTER_RIGHT);
             grid.add(slotLbl, 0, s + 1);
 
-            // Toggle buttons for each day
             for (int d = 0; d < DAYS.length; d++) {
-                // key format: "MONDAY|08:00|12:00" — parseable as DayOfWeek + LocalTime range
                 final String key = DAY_KEYS[d] + "|" + SLOT_START[s] + "|" + SLOT_END[s];
                 ToggleButton cell = new ToggleButton();
                 cell.getStyleClass().add("app-avail-cell");
@@ -456,7 +401,6 @@ public class TutorApplicationGfxController {
         }
         bean.setItems(items);
 
-        // Availability as a TEXT item (e.g. "MON_MORNING,WED_AFTERNOON")
         if (!selectedSlots.isEmpty()) {
             ApplicationItemBean avail = new ApplicationItemBean();
             avail.setRequirementName("availability");
@@ -483,30 +427,6 @@ public class TutorApplicationGfxController {
         }
     }
 
-    // ----------------------------------------------------------------
-    // UI helpers
-    // ----------------------------------------------------------------
-
-    private void showSuccess() {
-        formContainer.setVisible(false);
-        formContainer.setManaged(false);
-        footer.setVisible(false);
-        footer.setManaged(false);
-        successPane.setVisible(true);
-        successPane.setManaged(true);
-    }
-
-    private void showError(String msg) {
-        if (msg == null || msg.isBlank()) {
-            errorLabel.setVisible(false);
-            errorLabel.setManaged(false);
-        } else {
-            errorLabel.setText(msg);
-            errorLabel.setVisible(true);
-            errorLabel.setManaged(true);
-        }
-    }
-
     private String resolveErrorMessage(Throwable e) {
         if (e instanceof DuplicateApplicationException)
             return "You have already submitted an application for this category.";
@@ -517,24 +437,5 @@ public class TutorApplicationGfxController {
         if (e instanceof AuthenticationException)
             return "Your session has expired. Please log in again.";
         return "An error occurred while submitting. Please try again later.";
-    }
-
-    // ----------------------------------------------------------------
-    // Icon helper
-    // ----------------------------------------------------------------
-
-    /** Loads a Twemoji PNG by Unicode codepoint (e.g. "1f4c5" for 📅). */
-    private ImageView loadTwemoji(String codepoint, double size) {
-        ImageView iv = new ImageView();
-        iv.setFitWidth(size);
-        iv.setFitHeight(size);
-        iv.setSmooth(true);
-        iv.setPreserveRatio(true);
-        String url = "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/" + codepoint + ".png";
-        Image img = new Image(url, size * 2, size * 2, true, true, true);
-        img.progressProperty().addListener((obs, o, n) -> {
-            if (n.doubleValue() >= 1.0 && !img.isError()) iv.setImage(img);
-        });
-        return iv;
     }
 }

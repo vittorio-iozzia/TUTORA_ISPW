@@ -32,8 +32,8 @@ public class TutorContentController {
     private static final Logger LOGGER =
             Logger.getLogger(TutorContentController.class.getName());
     private static final String TIME_SLOT_UNAVAILABLE = "time-slot-unavailable";
-    private static final String LESSON_META_ICON       = LESSON_META_ICON;
-    private static final String LESSON_META            = "lesson-meta";
+    private static final String LESSON_META_ICON = "lesson-meta-icon";
+    private static final String LESSON_META = "lesson-meta";
 
     private static final DateTimeFormatter CARD_FMT =
             DateTimeFormatter.ofPattern("EEE d MMM · HH:mm", java.util.Locale.ENGLISH);
@@ -89,10 +89,10 @@ public class TutorContentController {
         this.tutorUsername = session.getUser().getUsername();
         welcomeTitle.setText("Welcome, " + session.getUser().getName() + "!");
 
-        animateStat(totalStudentsLabel, 48,   "%.0f");
-        animateStat(lessonsMonthLabel,  32,   "%.0f");
-        animateStat(earningsLabel,    1440,   "€%.0f");
-        animateStat(avgRatingLabel,    4.9,   "%.1f");
+        animateStat(totalStudentsLabel, 48, "%.0f");
+        animateStat(lessonsMonthLabel, 32, "%.0f");
+        animateStat(earningsLabel, 1440, "€%.0f");
+        animateStat(avgRatingLabel, 4.9, "%.1f");
 
         addHoverLift(statCard1);
         addHoverLift(statCard2);

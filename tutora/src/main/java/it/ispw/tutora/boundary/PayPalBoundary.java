@@ -4,6 +4,7 @@ import it.ispw.tutora.exception.PaymentException;
 import it.ispw.tutora.exception.PaymentTimeoutException;
 
 import java.math.BigDecimal;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -60,58 +61,24 @@ public class PayPalBoundary implements PaymentGateway {
     // Target — implementazione dell'interfaccia attesa dal Controller
     // ----------------------------------------------------------------
 
-    /**
-     * Adatta la chiamata dell'Adaptee all'interfaccia Target.
-     * Gestisce il timeout di 10 minuti e traduce la risposta
-     * dell'Adaptee nelle eccezioni Java appropriate.
-     */
     @Override
     @SuppressWarnings("java:S2095") // ExecutorService.close() introdotto in Java 19
     public String processPayment(BigDecimal amount)
             throws PaymentException, PaymentTimeoutException {
 
-        // Validazione importo prima di chiamare l'Adaptee
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new PaymentException("Invalid payment amount.");
         }
 
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        try {
-            // Traduce la chiamata Java nell'interfaccia dell'Adaptee
-            Future<String> future = executor.submit(() -> adaptee.charge(amount));
-            String transactionId = future.get(TIMEOUT_MINUTES, TimeUnit.MINUTES);
-
-            // Adatta null → PaymentException (rifiuto PayPal)
-            if (transactionId == null) {
-                throw new PaymentException(
-                        "Payment declined. Please check your payment method.");
-            }
-            return transactionId;
-
-        } catch (TimeoutException e) {
-            throw new PaymentTimeoutException(
-                    "Payment service did not respond within "
-                            + TIMEOUT_MINUTES + " minutes. Please try again.");
-
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new PaymentTimeoutException("Payment was interrupted.");
-
-        } catch (ExecutionException e) {
-            // Adatta RuntimeException dell'Adaptee → PaymentException
-            LOGGER.severe("PayPal service error: " + e.getCause());
-            throw new PaymentException(
-                    "Payment service unavailable. Please try again later.", e.getCause());
-
-        } finally {
-            executor.shutdownNow();
-        }
+        return executeWithTimeout(
+                () -> adaptee.charge(amount),
+                "Payment declined. Please check your payment method.",
+                "Payment service did not respond within " + TIMEOUT_MINUTES + " minutes. Please try again.",
+                "Payment was interrupted.",
+                "PayPal service error: ",
+                "Payment service unavailable. Please try again later.");
     }
 
-    /**
-     * Adatta la chiamata di rimborso dell'Adaptee all'interfaccia Target.
-     * Stessa gestione di timeout e traduzione eccezioni di processPayment().
-     */
     @Override
     @SuppressWarnings("java:S2095") // ExecutorService.close() introdotto in Java 19
     public String refund(String paymentRef, BigDecimal amount)
@@ -124,29 +91,41 @@ public class PayPalBoundary implements PaymentGateway {
             throw new PaymentException("Invalid refund amount.");
         }
 
+        return executeWithTimeout(
+                () -> adaptee.refund(paymentRef, amount),
+                "Refund declined by PayPal.",
+                "Refund service did not respond within " + TIMEOUT_MINUTES + " minutes.",
+                "Refund was interrupted.",
+                "PayPal refund error: ",
+                "Refund service unavailable. Please contact support.");
+    }
+
+    @SuppressWarnings("java:S2095") // ExecutorService.close() introdotto in Java 19
+    private String executeWithTimeout(Callable<String> callable,
+                                      String nullMsg,
+                                      String timeoutMsg,
+                                      String interruptedMsg,
+                                      String execLogPrefix,
+                                      String execMsg)
+            throws PaymentException, PaymentTimeoutException {
+
         ExecutorService executor = Executors.newSingleThreadExecutor();
         try {
-            Future<String> future = executor.submit(() -> adaptee.refund(paymentRef, amount));
-            String refundId = future.get(TIMEOUT_MINUTES, TimeUnit.MINUTES);
-
-            if (refundId == null) {
-                throw new PaymentException("Refund declined by PayPal.");
-            }
-            return refundId;
+            Future<String> future = executor.submit(callable);
+            String result = future.get(TIMEOUT_MINUTES, TimeUnit.MINUTES);
+            if (result == null) throw new PaymentException(nullMsg);
+            return result;
 
         } catch (TimeoutException e) {
-            throw new PaymentTimeoutException(
-                    "Refund service did not respond within "
-                            + TIMEOUT_MINUTES + " minutes.");
+            throw new PaymentTimeoutException(timeoutMsg);
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new PaymentTimeoutException("Refund was interrupted.");
+            throw new PaymentTimeoutException(interruptedMsg);
 
         } catch (ExecutionException e) {
-            LOGGER.severe("PayPal refund error: " + e.getCause());
-            throw new PaymentException(
-                    "Refund service unavailable. Please contact support.", e.getCause());
+            LOGGER.severe(execLogPrefix + e.getCause());
+            throw new PaymentException(execMsg, e.getCause());
 
         } finally {
             executor.shutdownNow();

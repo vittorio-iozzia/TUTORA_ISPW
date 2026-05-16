@@ -1,8 +1,8 @@
 package it.ispw.tutora.controller.graphic;
 
 import it.ispw.tutora.controller.application.SearchTutorController;
+import it.ispw.tutora.controller.graphic.util.TutorBrowseUtil;
 import it.ispw.tutora.dao.BookingDao;
-import it.ispw.tutora.dao.TutorDao;
 import it.ispw.tutora.dao.factory.DaoFactory;
 import it.ispw.tutora.enums.PaymentStatus;
 import it.ispw.tutora.exception.DatabaseException;
@@ -20,19 +20,12 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
@@ -188,22 +181,11 @@ public class StudentContentController {
     // ----------------------------------------------------------------
 
     private List<Tutor> loadTutors() {
-        try {
-            TutorDao dao = DaoFactory.getInstance().createTutorDao();
-            return dao.selectAllTutors(DaoFactory.getInstance().getConnection());
-        } catch (DatabaseException e) {
-            LOGGER.warning("Cannot load tutors: " + e.getMessage());
-            return List.of();
-        }
+        return TutorBrowseUtil.loadTutors(LOGGER);
     }
 
     private List<Category> loadCategories() {
-        try {
-            return searchController.loadCategories();
-        } catch (DatabaseException e) {
-            LOGGER.warning("Cannot load categories: " + e.getMessage());
-            return List.of();
-        }
+        return TutorBrowseUtil.loadCategories(searchController, LOGGER);
     }
 
     // ----------------------------------------------------------------
@@ -301,7 +283,7 @@ public class StudentContentController {
         card.setPrefWidth(260);
 
         // Top half: cover photo with badge overlays
-        StackPane photoPane = buildPhotoHalf(tutor, poolIndex);
+        StackPane photoPane = TutorBrowseUtil.buildPhotoHalf(tutor, poolIndex, 260, PHOTO_URLS, PORTRAIT_POOL);
 
         // Body section
         VBox body = new VBox(10);
@@ -311,7 +293,7 @@ public class StudentContentController {
         name.getStyleClass().add("tutor-name");
 
         Label desc = new Label(tutor.getDescription() != null
-                ? truncate(tutor.getDescription(), 55)
+                ? TutorBrowseUtil.truncate(tutor.getDescription(), 55)
                 : tutor.getUsername());
         desc.getStyleClass().add("tutor-subject");
         desc.setWrapText(true);
@@ -341,106 +323,12 @@ public class StudentContentController {
         bookBtn.getStyleClass().add("book-btn");
         HBox.setHgrow(bookBtn, Priority.ALWAYS);
         bookBtn.setMaxWidth(Double.MAX_VALUE);
-        bookBtn.setOnAction(e -> openBookingDialog(tutor));
+        bookBtn.setOnAction(e -> TutorBrowseUtil.openBookingDialog(tutor, tutorGrid, LOGGER));
         buttons.getChildren().addAll(profileBtn, bookBtn);
 
         body.getChildren().addAll(name, desc, ratingRow, price, buttons);
         card.getChildren().addAll(photoPane, body);
         return card;
-    }
-
-    // ----------------------------------------------------------------
-    // Photo half (card cover)
-    // ----------------------------------------------------------------
-
-    private StackPane buildPhotoHalf(Tutor tutor, int poolIndex) {
-        StackPane pane = new StackPane();
-        pane.getStyleClass().add("tutor-card-photo-wrap");
-        pane.setPrefHeight(160);
-        pane.setMinHeight(160);
-        pane.setMaxHeight(160);
-
-        // Fallback letter shown while image loads
-        Label initial = new Label(String.valueOf(tutor.getName().charAt(0)).toUpperCase());
-        initial.getStyleClass().add("tutor-card-photo-initial");
-        pane.getChildren().add(initial);
-
-        // Cover image
-        ImageView imgView = new ImageView();
-        imgView.setFitWidth(260);
-        imgView.setFitHeight(160);
-        imgView.setPreserveRatio(false);
-        imgView.setSmooth(true);
-        pane.getChildren().add(imgView);
-
-        // Clip taller than the pane so bottom arcs fall below visible area —
-        // only the top-left and top-right corners appear rounded
-        Rectangle photoClip = new Rectangle(260, 400);
-        photoClip.setArcWidth(28);
-        photoClip.setArcHeight(28);
-        pane.setClip(photoClip);
-
-        // Featured badge — top-left
-        Label featured = new Label("⭐ Featured");
-        featured.getStyleClass().add("tutor-card-featured-badge");
-        StackPane.setAlignment(featured, Pos.TOP_LEFT);
-        StackPane.setMargin(featured, new Insets(10, 0, 0, 10));
-
-        // Mode badge — top-right (alternate per pool index)
-        boolean isRemote = poolIndex % 2 == 0;
-        Label mode = new Label(isRemote ? "Online" : "In-Person");
-        mode.getStyleClass().add(isRemote ? "tutor-card-online-badge" : "tutor-card-inperson-badge");
-        StackPane.setAlignment(mode, Pos.TOP_RIGHT);
-        StackPane.setMargin(mode, new Insets(10, 10, 0, 0));
-
-        pane.getChildren().addAll(featured, mode);
-
-        // Async load
-        String photoUrl = PHOTO_URLS.getOrDefault(
-                tutor.getUsername(),
-                PORTRAIT_POOL.get(poolIndex % PORTRAIT_POOL.size()));
-        Image img = new Image(photoUrl, 280, 200, false, true, true);
-        img.progressProperty().addListener((obs, oldV, newV) -> {
-            if (newV.doubleValue() >= 1.0 && !img.isError()) {
-                imgView.setImage(img);
-            }
-        });
-
-        return pane;
-    }
-
-    private String truncate(String text, int max) {
-        return text.length() > max ? text.substring(0, max) + "…" : text;
-    }
-
-    private void openBookingDialog(Tutor tutor) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/book_tutor.fxml"));
-            Parent root = loader.load();
-            BookTutorGfxController ctrl = loader.getController();
-            ctrl.initTutor(tutor);
-
-            javafx.scene.Parent parentRoot = tutorGrid.getScene().getRoot();
-            javafx.scene.effect.GaussianBlur blur = new javafx.scene.effect.GaussianBlur(10);
-            javafx.scene.effect.ColorAdjust dim = new javafx.scene.effect.ColorAdjust();
-            dim.setBrightness(-0.35);
-            dim.setInput(blur);
-            parentRoot.setEffect(dim);
-
-            Stage stage = new Stage();
-            stage.initOwner(tutorGrid.getScene().getWindow());
-            stage.initModality(Modality.WINDOW_MODAL);
-            stage.initStyle(StageStyle.TRANSPARENT);
-            Scene scene = new Scene(root);
-            scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
-            stage.setScene(scene);
-            stage.setMinWidth(560);
-            stage.setMinHeight(500);
-            stage.setOnHiding(ev -> parentRoot.setEffect(null));
-            stage.show();
-        } catch (java.io.IOException e) {
-            LOGGER.warning("Cannot open booking dialog: " + e.getMessage());
-        }
     }
 
     // ----------------------------------------------------------------

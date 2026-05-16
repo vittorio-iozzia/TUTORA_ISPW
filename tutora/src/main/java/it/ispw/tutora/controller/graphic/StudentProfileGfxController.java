@@ -8,70 +8,24 @@ import it.ispw.tutora.model.Student;
 import it.ispw.tutora.model.Tutor;
 import it.ispw.tutora.model.session.Session;
 import it.ispw.tutora.model.session.SessionManager;
-import it.ispw.tutora.view.AvatarManager;
 import it.ispw.tutora.view.SceneManager;
-import javafx.animation.*;
 import javafx.application.Platform;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
-import javafx.scene.Cursor;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.shape.Circle;
-import javafx.stage.FileChooser;
-import javafx.util.Duration;
 
-import java.io.File;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Graphic controller per la vista student_profile.fxml.
- *
- * Popola hero, stats, about, interessi, contatto e preferiti
- * dai dati reali del model. Gestisce foto profilo con FileChooser
- * e sincronizza il cambio via {@link AvatarManager}.
+ * Graphic controller per student_profile.fxml.
+ * Contiene solo la logica specifica dello studente; tutto il codice comune
+ * è ereditato da {@link ProfileGfxController}.
  */
-public class StudentProfileGfxController {
-
-    private static final DateTimeFormatter DATE_FMT =
-            DateTimeFormatter.ofPattern("MMMM yyyy");
-
-    // ----------------------------------------------------------------
-    // Callback di navigazione (pattern statico)
-    // ----------------------------------------------------------------
-
-    private static Runnable onBackCallback;
-
-    public static void setOnBackCallback(Runnable r) {
-        onBackCallback = r;
-    }
-
-    // ----------------------------------------------------------------
-    // FXML fields
-    // ----------------------------------------------------------------
-
-    @FXML private StackPane heroAvatarPane;
-    @FXML private Label     heroAvatarLabel;
-    @FXML private ImageView heroAvatarImage;
-    @FXML private StackPane avatarOverlay;
-
-    @FXML private Label heroNameLabel;
-    @FXML private Label heroUsernameLabel;
-    @FXML private Label heroRoleLabel;
-    @FXML private Label heroStatusLabel;
-    @FXML private Label heroMemberSinceLabel;
+public class StudentProfileGfxController extends ProfileGfxController {
 
     @FXML private VBox  budgetCard;
     @FXML private VBox  lessonsCard;
@@ -83,37 +37,29 @@ public class StudentProfileGfxController {
     @FXML private Label tutorsValueLabel;
     @FXML private Label ratingValueLabel;
 
-    @FXML private Label    aboutLabel;
-    @FXML private TextArea aboutTextArea;
-    @FXML private HBox     descEditButtons;
-    @FXML private Button   editDescBtn;
-
     @FXML private FlowPane interestsPills;
-    @FXML private Label interestsEmptyLabel;
+    @FXML private Label    interestsEmptyLabel;
 
     @FXML private VBox  preferredTutorsBox;
     @FXML private Label preferredTutorsEmptyLabel;
 
-    @FXML private Label emailLabel;
-    @FXML private Label joinedLabel;
-    @FXML private Label accountStatusLabel;
     @FXML private Label budgetDetailLabel;
 
-    // username corrente (usato per AvatarManager)
-    private String  username;
-    private Student currentStudent;
+    @Override
+    protected String getRoleLabel() { return "STUDENT"; }
 
-    // ----------------------------------------------------------------
-    // Inizializzazione
-    // ----------------------------------------------------------------
+    @Override
+    protected String getDefaultDescription() {
+        return "No description added yet. Tell the world about yourself and what you want to learn!";
+    }
 
     @FXML
     public void initialize() {
         String token = SceneManager.getInstance().getSessionToken();
         Session session = SessionManager.getInstance().getSession(token);
         Student student = (Student) session.getUser();
-        this.username = student.getUsername();
-        this.currentStudent = student;
+        this.username    = student.getUsername();
+        this.currentUser = student;
 
         populateHero(student);
         populateAbout(student);
@@ -132,41 +78,6 @@ public class StudentProfileGfxController {
         addHoverLift(ratingCard);
     }
 
-    // ----------------------------------------------------------------
-    // Hero
-    // ----------------------------------------------------------------
-
-    private void populateHero(Student student) {
-        String initial = String.valueOf(student.getName().charAt(0)).toUpperCase();
-        heroAvatarLabel.setText(initial);
-        heroNameLabel.setText(student.getName() + " " + student.getSurname());
-        heroUsernameLabel.setText("@" + student.getUsername());
-        heroRoleLabel.setText("STUDENT");
-        heroStatusLabel.setText(student.isActive() ? "Active" : "Inactive");
-        heroStatusLabel.setStyle(student.isActive()
-                ? "-fx-background-color: #27AE60; -fx-text-fill: white;"
-                : "-fx-background-color: #E74C3C; -fx-text-fill: white;");
-        heroMemberSinceLabel.setText(
-                student.getCreatedAt() != null
-                        ? student.getCreatedAt().format(DATE_FMT)
-                        : "—");
-    }
-
-    // ----------------------------------------------------------------
-    // About
-    // ----------------------------------------------------------------
-
-    private void populateAbout(Student student) {
-        String desc = student.getDescription();
-        aboutLabel.setText(desc != null && !desc.isBlank()
-                ? desc
-                : "No description added yet. Tell the world about yourself and what you want to learn!");
-    }
-
-    // ----------------------------------------------------------------
-    // Interessi
-    // ----------------------------------------------------------------
-
     private void populateInterests(Student student) {
         if (student.getInterests().isEmpty()) {
             interestsPills.setManaged(false);
@@ -181,10 +92,6 @@ public class StudentProfileGfxController {
             }
         }
     }
-
-    // ----------------------------------------------------------------
-    // Tutor preferiti
-    // ----------------------------------------------------------------
 
     private void populatePreferredTutors(Student student) {
         List<Tutor> preferred = student.getPreferredTutors();
@@ -203,22 +110,6 @@ public class StudentProfileGfxController {
         }
     }
 
-    // ----------------------------------------------------------------
-    // Contatto
-    // ----------------------------------------------------------------
-
-    private void populateContact(Student student) {
-        emailLabel.setText(student.getEmail());
-        joinedLabel.setText(student.getCreatedAt() != null
-                ? student.getCreatedAt().format(DATE_FMT)
-                : "—");
-        accountStatusLabel.setText(student.isActive() ? "Verified & Active" : "Inactive");
-    }
-
-    // ----------------------------------------------------------------
-    // Stats – budget (sincrono, dal model)
-    // ----------------------------------------------------------------
-
     private void populateBudgetStat(Student student) {
         double budget = student.getBudget() != null
                 ? student.getBudget().doubleValue() : 0.0;
@@ -228,10 +119,6 @@ public class StudentProfileGfxController {
                 : "—");
         ratingValueLabel.setText("—");
     }
-
-    // ----------------------------------------------------------------
-    // Stats – lessons e tutors (asincrono, da BookingDao)
-    // ----------------------------------------------------------------
 
     private void loadBookingStats(Student student) {
         String uname = student.getUsername();
@@ -246,7 +133,6 @@ public class StudentProfileGfxController {
                         .filter(b -> b.getPaymentStatus() == PaymentStatus.PAID)
                         .count();
 
-                // Tutor distinti (via expertise chain — funziona in demo mode)
                 Set<String> tutorSet = bookings.stream()
                         .filter(b -> b.getPaymentStatus() == PaymentStatus.PAID)
                         .map(b -> {
@@ -277,147 +163,5 @@ public class StudentProfileGfxController {
         Thread t = new Thread(task, "profile-stats");
         t.setDaemon(true);
         t.start();
-    }
-
-    // ----------------------------------------------------------------
-    // Avatar — caricamento e interazione
-    // ----------------------------------------------------------------
-
-    /** Applica l'avatar salvato in AvatarManager (se presente). */
-    private void applyStoredAvatar() {
-        if (AvatarManager.hasAvatar(username)) {
-            displayAvatar(AvatarManager.getAvatarPath(username));
-        }
-    }
-
-    /** Mostra l'immagine nell'avatar circle e nasconde la lettera. */
-    private void displayAvatar(String filePath) {
-        String uri = new File(filePath).toURI().toString();
-        Image img = new Image(uri, 88, 88, false, true);
-        heroAvatarImage.setImage(img);
-        Circle clip = new Circle(44, 44, 44);
-        heroAvatarImage.setClip(clip);
-        heroAvatarImage.setVisible(true);
-        heroAvatarImage.setManaged(true);
-        heroAvatarLabel.setVisible(false);
-        heroAvatarLabel.setManaged(false);
-    }
-
-    /**
-     * Configura hover (mostra overlay camera) e click (apre FileChooser)
-     * sull'avatar StackPane.
-     */
-    private void setupAvatarInteraction() {
-        heroAvatarPane.setCursor(Cursor.HAND);
-
-        // Fade-in overlay on hover
-        heroAvatarPane.setOnMouseEntered(e -> {
-            FadeTransition ft = new FadeTransition(Duration.millis(150), avatarOverlay);
-            ft.setToValue(1.0);
-            ft.play();
-        });
-
-        // Fade-out overlay on exit
-        heroAvatarPane.setOnMouseExited(e -> {
-            FadeTransition ft = new FadeTransition(Duration.millis(150), avatarOverlay);
-            ft.setToValue(0.0);
-            ft.play();
-        });
-
-        // Click → FileChooser
-        heroAvatarPane.setOnMouseClicked(e -> handleChangeAvatar());
-    }
-
-    /** Apre il FileChooser e aggiorna l'avatar se l'utente sceglie un file. */
-    private void handleChangeAvatar() {
-        FileChooser chooser = new FileChooser();
-        chooser.setTitle("Scegli immagine profilo");
-        chooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter(
-                        "Immagini", "*.jpg", "*.jpeg", "*.png", "*.gif", "*.bmp", "*.webp"));
-
-        File file = chooser.showOpenDialog(heroAvatarPane.getScene().getWindow());
-        if (file != null) {
-            String path = file.getAbsolutePath();
-            // Salva in AvatarManager (notifica automaticamente HomeGfxController)
-            AvatarManager.setAvatarPath(username, path);
-            // Aggiorna visualmente l'avatar nella pagina profilo
-            displayAvatar(path);
-        }
-    }
-
-    // ----------------------------------------------------------------
-    // Animazioni
-    // ----------------------------------------------------------------
-
-    private void animateStat(Label label, double target, String format) {
-        DoubleProperty prop = new SimpleDoubleProperty(0);
-        prop.addListener((obs, o, n) ->
-                label.setText(String.format(format, n.doubleValue())));
-        new Timeline(new KeyFrame(Duration.millis(900),
-                new KeyValue(prop, target, Interpolator.EASE_OUT))).play();
-    }
-
-    private void addHoverLift(VBox card) {
-        ScaleTransition up   = new ScaleTransition(Duration.millis(140), card);
-        up.setToX(1.025); up.setToY(1.025);
-        ScaleTransition down = new ScaleTransition(Duration.millis(140), card);
-        down.setToX(1.0);  down.setToY(1.0);
-        card.setOnMouseEntered(e -> { down.stop(); up.playFromStart(); });
-        card.setOnMouseExited (e -> { up.stop();   down.playFromStart(); });
-    }
-
-    // ----------------------------------------------------------------
-    // FXML handlers
-    // ----------------------------------------------------------------
-
-    /** Entra in modalità modifica descrizione. */
-    @FXML
-    public void handleEditDescription() {
-        aboutTextArea.setText(currentStudent.getDescription() != null
-                ? currentStudent.getDescription() : "");
-        aboutLabel.setVisible(false);
-        aboutLabel.setManaged(false);
-        aboutTextArea.setVisible(true);
-        aboutTextArea.setManaged(true);
-        descEditButtons.setVisible(true);
-        descEditButtons.setManaged(true);
-        editDescBtn.setVisible(false);
-        editDescBtn.setManaged(false);
-    }
-
-    /** Salva la descrizione modificata. */
-    @FXML
-    public void handleSaveDescription() {
-        String newDesc = aboutTextArea.getText().trim();
-        currentStudent.setDescription(newDesc.isBlank() ? null : newDesc);
-        aboutLabel.setText(newDesc.isBlank()
-                ? "No description added yet. Tell the world about yourself and what you want to learn!"
-                : newDesc);
-        exitEditMode();
-    }
-
-    /** Annulla la modifica senza salvare. */
-    @FXML
-    public void handleCancelDescription() {
-        exitEditMode();
-    }
-
-    private void exitEditMode() {
-        aboutTextArea.setVisible(false);
-        aboutTextArea.setManaged(false);
-        descEditButtons.setVisible(false);
-        descEditButtons.setManaged(false);
-        aboutLabel.setVisible(true);
-        aboutLabel.setManaged(true);
-        editDescBtn.setVisible(true);
-        editDescBtn.setManaged(true);
-    }
-
-    @FXML
-    public void handleClose() {
-        if (onBackCallback != null) {
-            onBackCallback.run();
-        }
     }
 }

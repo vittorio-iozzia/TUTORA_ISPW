@@ -12,8 +12,6 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -25,7 +23,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 
-public class BookTutorGfxController {
+public class BookTutorGfxController extends DialogGfxController {
 
     private static final String APP_FIELD_DESC = "app-field-desc";
     private static final DateTimeFormatter DATE_FMT =
@@ -33,25 +31,13 @@ public class BookTutorGfxController {
     private static final DateTimeFormatter TIME_FMT =
             DateTimeFormatter.ofPattern("HH:mm");
 
-    @FXML private VBox      dialogRoot;
     @FXML private Label     titleLabel;
     @FXML private Label     subtitleLabel;
     @FXML private Label     bookingBannerLabel;
-    @FXML private VBox      formContainer;
-    @FXML private VBox      successPane;
-    @FXML private VBox      footer;
     @FXML private Button    bookBtn;
     @FXML private Button    backBtn;
-    @FXML private Label     errorLabel;
     @FXML private CheckBox  confirmCheckBox;
     @FXML private Button    closeBtn;
-
-    @FXML private StackPane headerIconWrap;
-    @FXML private ImageView headerIconView;
-    @FXML private StackPane bannerIconWrap;
-    @FXML private ImageView bannerIconView;
-    @FXML private StackPane successIconWrap;
-    @FXML private ImageView successIconView;
 
     private Tutor       tutor;
     private Lesson      selectedLesson;
@@ -64,10 +50,6 @@ public class BookTutorGfxController {
 
     private final BookTutorController bookTutorController = new BookTutorController();
 
-    // ----------------------------------------------------------------
-    // Lifecycle
-    // ----------------------------------------------------------------
-
     @FXML
     private void initialize() {
         setupIconBox(headerIconWrap, headerIconView, "1f4c5", 22);
@@ -75,40 +57,6 @@ public class BookTutorGfxController {
         setupIconBox(successIconWrap, successIconView, "2705", 34);
         applyRoundedClip(dialogRoot);
     }
-
-    private void applyRoundedClip(VBox root) {
-        if (root == null) return;
-        javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle();
-        clip.setArcWidth(32);
-        clip.setArcHeight(32);
-        root.layoutBoundsProperty().addListener((obs, o, n) -> {
-            if (n.getWidth() > 0 && root.getClip() == null) {
-                clip.setWidth(n.getWidth());
-                clip.setHeight(n.getHeight());
-                root.widthProperty().addListener((o2, ov, nv)  -> clip.setWidth(nv.doubleValue()));
-                root.heightProperty().addListener((o2, ov, nv) -> clip.setHeight(nv.doubleValue()));
-                root.setClip(clip);
-            }
-        });
-    }
-
-    private void setupIconBox(StackPane wrap, ImageView iv, String codepoint, double size) {
-        if (wrap == null) return;
-        wrap.setEffect(new DropShadow(10, 0, 4, Color.web("#00000026")));
-        if (iv != null) {
-            iv.setFitWidth(size);
-            iv.setFitHeight(size);
-            String url = "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/" + codepoint + ".png";
-            Image img = new Image(url, size * 2, size * 2, true, true, true);
-            img.progressProperty().addListener((obs, o, n) -> {
-                if (n.doubleValue() >= 1.0 && !img.isError()) iv.setImage(img);
-            });
-        }
-    }
-
-    // ----------------------------------------------------------------
-    // Entry point
-    // ----------------------------------------------------------------
 
     public void initTutor(Tutor tutor) {
         this.tutor = tutor;
@@ -118,10 +66,6 @@ public class BookTutorGfxController {
         confirmCheckBox.selectedProperty().addListener((obs, o, n) -> updateBookState());
         loadLessons();
     }
-
-    // ----------------------------------------------------------------
-    // Load lessons (background thread)
-    // ----------------------------------------------------------------
 
     private void loadLessons() {
         formContainer.getChildren().clear();
@@ -152,10 +96,6 @@ public class BookTutorGfxController {
         t.setDaemon(true);
         t.start();
     }
-
-    // ----------------------------------------------------------------
-    // Lesson section builder
-    // ----------------------------------------------------------------
 
     private void buildLessonSection(List<Lesson> lessons) {
         formContainer.getChildren().clear();
@@ -201,7 +141,6 @@ public class BookTutorGfxController {
 
         formContainer.getChildren().add(sectionBox);
 
-        // Duration section (hidden until lesson is selected)
         durationSection = buildDurationSection();
         durationSection.setVisible(false);
         durationSection.setManaged(false);
@@ -218,13 +157,11 @@ public class BookTutorGfxController {
         String modeStr  = lesson.isRemote() ? "Online" : "In-Person";
         String priceStr = "€" + lesson.getListedPrice().stripTrailingZeros().toPlainString();
 
-        // Icon
         StackPane iconWrap = new StackPane();
         iconWrap.getStyleClass().addAll("stat-icon-wrap", "stat-blue");
         iconWrap.setEffect(new DropShadow(10, 0, 3, Color.web("#00000020")));
-        iconWrap.getChildren().add(loadTwemoji("1f4c5", 20)); // 📅 calendar
+        iconWrap.getChildren().add(loadTwemoji("1f4c5", 20));
 
-        // Info
         VBox info = new VBox(5);
         HBox.setHgrow(info, Priority.ALWAYS);
 
@@ -236,7 +173,6 @@ public class BookTutorGfxController {
         Label modeLbl = buildMetaRow(modeStr);
         info.getChildren().addAll(subjectLbl, dateLbl, timeLbl, modeLbl);
 
-        // Price
         VBox priceBox = new VBox(2);
         priceBox.setAlignment(Pos.CENTER_RIGHT);
         Label fromLbl = new Label("from");
@@ -265,10 +201,6 @@ public class BookTutorGfxController {
         lbl.getStyleClass().add("lesson-meta");
         return lbl;
     }
-
-    // ----------------------------------------------------------------
-    // Duration section
-    // ----------------------------------------------------------------
 
     private VBox buildDurationSection() {
         VBox section = new VBox(12);
@@ -344,10 +276,6 @@ public class BookTutorGfxController {
         return box;
     }
 
-    // ----------------------------------------------------------------
-    // State refresh
-    // ----------------------------------------------------------------
-
     private void refreshDurationSection() {
         if (selectedLesson == null) {
             durationSection.setVisible(false);
@@ -369,7 +297,6 @@ public class BookTutorGfxController {
             else if (firstEnabled < 0) firstEnabled = i;
         }
 
-        // Auto-select first available duration
         if (firstEnabled >= 0) {
             ToggleButton first = (ToggleButton) durationBtnsRow.getChildren().get(firstEnabled);
             first.setSelected(true);
@@ -398,10 +325,6 @@ public class BookTutorGfxController {
     private void updateBookState() {
         bookBtn.setDisable(selectedLesson == null || !confirmCheckBox.isSelected());
     }
-
-    // ----------------------------------------------------------------
-    // FXML handlers
-    // ----------------------------------------------------------------
 
     @FXML
     private void handleBook() {
@@ -453,46 +376,8 @@ public class BookTutorGfxController {
         ((Stage) bookBtn.getScene().getWindow()).close();
     }
 
-    // ----------------------------------------------------------------
-    // UI helpers
-    // ----------------------------------------------------------------
-
-    private void showSuccess() {
-        formContainer.setVisible(false);
-        formContainer.setManaged(false);
-        footer.setVisible(false);
-        footer.setManaged(false);
-        successPane.setVisible(true);
-        successPane.setManaged(true);
-    }
-
-    private void showError(String msg) {
-        if (msg == null || msg.isBlank()) {
-            errorLabel.setVisible(false);
-            errorLabel.setManaged(false);
-        } else {
-            errorLabel.setText(msg);
-            errorLabel.setVisible(true);
-            errorLabel.setManaged(true);
-        }
-    }
-
     private String formatDuration(long minutes) {
         if (minutes % 60 == 0) return (minutes / 60) + "h";
         return (minutes / 60) + "h " + (minutes % 60) + "m";
-    }
-
-    private ImageView loadTwemoji(String codepoint, double size) {
-        ImageView iv = new ImageView();
-        iv.setFitWidth(size);
-        iv.setFitHeight(size);
-        iv.setSmooth(true);
-        iv.setPreserveRatio(true);
-        String url = "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/" + codepoint + ".png";
-        Image img = new Image(url, size * 2, size * 2, true, true, true);
-        img.progressProperty().addListener((obs, o, n) -> {
-            if (n.doubleValue() >= 1.0 && !img.isError()) iv.setImage(img);
-        });
-        return iv;
     }
 }
