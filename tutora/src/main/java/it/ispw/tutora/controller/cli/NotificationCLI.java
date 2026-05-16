@@ -89,8 +89,7 @@ public class NotificationCLI {
                     handleAction(sc, token, all.get(idx), session);
                 }
                 case 2 -> {
-                    NotificationBean mb = new NotificationBean();
-                    notifCtrl.markAllAsRead(mb, token);
+                    notifCtrl.markAllAsRead(token);
                     success("Tutte le notifiche segnate come lette.");
                     pressEnter(sc);
                 }
