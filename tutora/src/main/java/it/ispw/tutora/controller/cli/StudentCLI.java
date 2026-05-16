@@ -23,7 +23,7 @@ import static it.ispw.tutora.controller.cli.CLIUtils.*;
  */
 public class StudentCLI {
 
-    private final FindTutorCLI              findTutorCLI = new FindTutorCLI();
+    private final BookTutorCLI              BookTutorCLI = new BookTutorCLI();
     private final MyLessonsCLI              myLessonsCLI = new MyLessonsCLI();
     private final NotificationCLI           notifCLI     = new NotificationCLI();
     private final ApplyToBecomeATutorCLI    applyTutorCLI = new ApplyToBecomeATutorCLI();
@@ -61,7 +61,7 @@ public class StudentCLI {
 
             int scelta = readInt(sc, "Scelta", 0, 5);
             switch (scelta) {
-                case 1 -> findTutorCLI.show(sc, token);
+                case 1 -> BookTutorCLI.show(sc, token);
                 case 2 -> myLessonsCLI.show(sc, token);
                 case 3 -> notifCLI.show(sc, token);
                 case 4 -> applyTutorCLI.show(sc, token);

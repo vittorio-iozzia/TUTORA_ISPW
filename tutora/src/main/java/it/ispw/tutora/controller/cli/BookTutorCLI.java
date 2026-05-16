@@ -28,7 +28,7 @@ import static it.ispw.tutora.controller.cli.CLIUtils.*;
  *  3. Vedere le lezioni disponibili
  *  4. Richiedere una prenotazione
  */
-public class FindTutorCLI {
+public class BookTutorCLI {
 
     private static final DateTimeFormatter DT_FMT =
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
