@@ -209,11 +209,9 @@ public class BookTutorController {
 
     /**
      * Lo student effettua il pagamento dopo che il tutor ha accettato.
-     *
      * Il metodo e' strutturato in tre fasi distinte per evitare di tenere
      * aperta la connessione DB durante la chiamata al gateway esterno
      * (che puo' impiegare fino a 10 minuti):
-     *
      *   Fase 1 - Riserva budget (write transaction, subito committata)
      *            Il budget viene scalato immediatamente come "hold": qualsiasi
      *            altra sessione concorrente trovera' il budget gia' ridotto e
