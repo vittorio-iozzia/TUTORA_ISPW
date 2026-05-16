@@ -53,6 +53,8 @@ public class ApplyToBecomeATutorGfxController {
 
     private static final Logger LOGGER = Logger.getLogger(
             ApplyToBecomeATutorGfxController.class.getName());
+    private static final String FIELD_PREFIX = "Field \"";
+    private static final String CHARACTERS   = " characters";
 
     // ----------------------------------------------------------------
     // FXML – Fase 1: selezione categoria
@@ -115,12 +117,11 @@ public class ApplyToBecomeATutorGfxController {
 
             // Mostra descrizione categoria al cambio selezione
             categoryListView.getSelectionModel().selectedItemProperty()
-                    .addListener((obs, oldVal, newName) -> {
+                    .addListener((obs, oldVal, newName) ->
                         categories.stream()
                                 .filter(c -> c.getName().equals(newName))
                                 .findFirst()
-                                .ifPresent(c -> categoryDescriptionLabel.setText(c.getDescription()));
-                    });
+                                .ifPresent(c -> categoryDescriptionLabel.setText(c.getDescription())));
 
         } catch (DatabaseException e) {
             LOGGER.warning("Cannot load categories: " + e.getMessage());
@@ -240,11 +241,11 @@ public class ApplyToBecomeATutorGfxController {
 
     private String buildTextPrompt(RequirementBean req) {
         if (req.getMinChar() > 0 && req.getMaxLength() > 0) {
-            return "Between " + req.getMinChar() + " and " + req.getMaxLength() + " characters";
+            return "Between " + req.getMinChar() + " and " + req.getMaxLength() + CHARACTERS;
         } else if (req.getMaxLength() > 0) {
-            return "Max " + req.getMaxLength() + " characters";
+            return "Max " + req.getMaxLength() + CHARACTERS;
         } else if (req.getMinChar() > 0) {
-            return "At least " + req.getMinChar() + " characters";
+            return "At least " + req.getMinChar() + CHARACTERS;
         }
         return "";
     }
@@ -343,23 +344,27 @@ public class ApplyToBecomeATutorGfxController {
      */
     private TutorApplicationBean collectBean() {
         List<ApplicationItemBean> items = new ArrayList<>();
-
         for (RequirementBean req : requirements) {
-            if (req.getItemType() == ItemType.TEXT) {
-                ApplicationItemBean item = collectTextItem(req);
-                if (item == null) return null;
-                if (!item.getTextContent().isEmpty()) items.add(item);
-            } else {
-                ApplicationItemBean item = collectDocumentItem(req);
-                if (item == null) return null;
-                if (item.getContent() != null) items.add(item);
-            }
+            ApplicationItemBean item = collectItem(req);
+            if (item == null) return null;
+            if (isItemNonEmpty(item)) items.add(item);
         }
-
         TutorApplicationBean bean = new TutorApplicationBean();
         bean.setCategoryName(selectedCategoryLabel.getText());
         bean.setItems(items);
         return bean;
+    }
+
+    private ApplicationItemBean collectItem(RequirementBean req) {
+        return req.getItemType() == ItemType.TEXT
+                ? collectTextItem(req)
+                : collectDocumentItem(req);
+    }
+
+    private boolean isItemNonEmpty(ApplicationItemBean item) {
+        return item.getItemType() == ItemType.TEXT
+                ? !item.getTextContent().isEmpty()
+                : item.getContent() != null;
     }
 
     private ApplicationItemBean collectTextItem(RequirementBean req) {
@@ -367,17 +372,17 @@ public class ApplyToBecomeATutorGfxController {
         String text = ta != null ? ta.getText().trim() : "";
 
         if (req.isRequired() && text.isEmpty()) {
-            showMessage("Field \"" + req.getLabel() + "\" is required.", true);
+            showMessage(FIELD_PREFIX + req.getLabel() + "\" is required.", true);
             return null;
         }
         if (req.getMinChar() > 0 && !text.isEmpty() && text.length() < req.getMinChar()) {
-            showMessage("Field \"" + req.getLabel() + "\" needs at least "
-                    + req.getMinChar() + " characters.", true);
+            showMessage(FIELD_PREFIX + req.getLabel() + "\" needs at least "
+                    + req.getMinChar() + CHARACTERS + ".", true);
             return null;
         }
         if (req.getMaxLength() > 0 && text.length() > req.getMaxLength()) {
-            showMessage("Field \"" + req.getLabel() + "\" must not exceed "
-                    + req.getMaxLength() + " characters.", true);
+            showMessage(FIELD_PREFIX + req.getLabel() + "\" must not exceed "
+                    + req.getMaxLength() + CHARACTERS + ".", true);
             return null;
         }
 

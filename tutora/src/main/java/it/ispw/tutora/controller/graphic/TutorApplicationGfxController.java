@@ -10,7 +10,6 @@ import it.ispw.tutora.view.SceneManager;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
@@ -350,8 +349,8 @@ public class TutorApplicationGfxController {
                 GridPane.setVgrow(cell, Priority.ALWAYS);
 
                 cell.selectedProperty().addListener((obs, was, on) -> {
-                    if (on) selectedSlots.add(key);
-                    else    selectedSlots.remove(key);
+                    if (Boolean.TRUE.equals(on)) selectedSlots.add(key);
+                    else                         selectedSlots.remove(key);
                     updateSubmitState();
                 });
 
@@ -367,31 +366,21 @@ public class TutorApplicationGfxController {
     // ----------------------------------------------------------------
 
     private void updateSubmitState() {
+        submitBtn.setDisable(!isFormComplete());
+    }
+
+    private boolean isFormComplete() {
         for (RequirementBean req : requirements) {
             if (!req.isRequired()) continue;
             if (req.getItemType() == ItemType.TEXT) {
                 TextArea ta = textFields.get(req.getName());
-                if (ta == null || ta.getText().isBlank()) {
-                    submitBtn.setDisable(true);
-                    return;
-                }
+                if (ta == null || ta.getText().isBlank()) return false;
             } else {
                 File[] holder = documentFiles.get(req.getName());
-                if (holder == null || holder[0] == null) {
-                    submitBtn.setDisable(true);
-                    return;
-                }
+                if (holder == null || holder[0] == null) return false;
             }
         }
-        if (selectedSlots.isEmpty()) {
-            submitBtn.setDisable(true);
-            return;
-        }
-        if (!agreeCheckBox.isSelected()) {
-            submitBtn.setDisable(true);
-            return;
-        }
-        submitBtn.setDisable(false);
+        return !selectedSlots.isEmpty() && agreeCheckBox.isSelected();
     }
 
     // ----------------------------------------------------------------
@@ -461,19 +450,7 @@ public class TutorApplicationGfxController {
                 TextArea ta = textFields.get(req.getName());
                 item.setTextContent(ta != null ? ta.getText().trim() : "");
             } else {
-                File[] holder = documentFiles.get(req.getName());
-                File f = holder != null ? holder[0] : null;
-                if (f != null) {
-                    item.setOriginalFilename(f.getName());
-                    item.setDocumentPath(f.getAbsolutePath());
-                    item.setSizeBytes(f.length());
-                    try {
-                        item.setContent(Files.readAllBytes(f.toPath()));
-                        item.setMimeType(Files.probeContentType(f.toPath()));
-                    } catch (IOException ex) {
-                        LOGGER.warning("Cannot read file: " + ex.getMessage());
-                    }
-                }
+                populateDocumentItem(item, req.getName());
             }
             items.add(item);
         }
@@ -489,6 +466,21 @@ public class TutorApplicationGfxController {
         }
 
         return bean;
+    }
+
+    private void populateDocumentItem(ApplicationItemBean item, String reqName) {
+        File[] holder = documentFiles.get(reqName);
+        File f = holder != null ? holder[0] : null;
+        if (f == null) return;
+        item.setOriginalFilename(f.getName());
+        item.setDocumentPath(f.getAbsolutePath());
+        item.setSizeBytes(f.length());
+        try {
+            item.setContent(Files.readAllBytes(f.toPath()));
+            item.setMimeType(Files.probeContentType(f.toPath()));
+        } catch (IOException ex) {
+            LOGGER.warning("Cannot read file: " + ex.getMessage());
+        }
     }
 
     // ----------------------------------------------------------------

@@ -89,7 +89,6 @@ public class ChatGfxController {
     private String selectedContactUsername;
 
     private Button activeContactBtn;
-    private Timeline pollTimeline;
 
     // Maps contact username → Unsplash pool index (stable per session)
     private final Map<String, Integer> contactIndexMap = new LinkedHashMap<>();
@@ -270,7 +269,7 @@ public class ChatGfxController {
         return avatar;
     }
 
-    private String resolvePhotoUrl(String username, double size) {
+    private String resolvePhotoUrl(String username) {
         if (PHOTO_URLS.containsKey(username)) return PHOTO_URLS.get(username);
         int idx = contactIndexMap.getOrDefault(username, 0) % PORTRAIT_POOL.size();
         return PORTRAIT_POOL.get(idx);
@@ -294,7 +293,7 @@ public class ChatGfxController {
 
         // Reload header avatar photo (use same URL logic as the contact list)
         chatHeaderImageView.setVisible(false);
-        String url = resolvePhotoUrl(username, 44);
+        String url = resolvePhotoUrl(username);
         Image img = new Image(url, 44, 44, false, true, true);
         img.progressProperty().addListener((obs, oldV, newV) -> {
             if (newV.doubleValue() >= 1.0 && !img.isError()) {
@@ -368,42 +367,22 @@ public class ChatGfxController {
     private HBox buildMessageBubble(Message msg, boolean isFirst, boolean isLast) {
         boolean isMine = msg.getSenderUsername().equals(currentUsername);
 
-        // Content label
         Label contentLabel = new Label(msg.getContent());
         contentLabel.setWrapText(true);
         contentLabel.setMaxWidth(420);
         contentLabel.getStyleClass().add(isMine ? "chat-bubble-text-sent" : "chat-bubble-text-recv");
 
-        // Timestamp
         Label timeLabel = new Label(formatTime(msg.getSentAt()));
         timeLabel.getStyleClass().add(isMine ? "chat-time-sent" : "chat-time-recv");
 
-        // Bubble VBox
         VBox bubble = new VBox(5);
         bubble.getChildren().addAll(contentLabel, timeLabel);
         bubble.setMaxWidth(460);
-
-        // Radius: first in a group has the "tail" corner; last shows time; inner is fully rounded
-        if (isMine) {
-            bubble.getStyleClass().add("chat-bubble-sent");
-            if (isFirst && isLast)     bubble.getStyleClass().add("chat-bubble-sent-solo");
-            else if (isFirst)          bubble.getStyleClass().add("chat-bubble-sent-first");
-            else if (isLast)           bubble.getStyleClass().add("chat-bubble-sent-last");
-            else                       bubble.getStyleClass().add("chat-bubble-sent-mid");
-        } else {
-            bubble.getStyleClass().add("chat-bubble-recv");
-            if (isFirst && isLast)     bubble.getStyleClass().add("chat-bubble-recv-solo");
-            else if (isFirst)          bubble.getStyleClass().add("chat-bubble-recv-first");
-            else if (isLast)           bubble.getStyleClass().add("chat-bubble-recv-last");
-            else                       bubble.getStyleClass().add("chat-bubble-recv-mid");
-        }
+        applyBubbleStyle(bubble, isMine, isFirst, isLast);
 
         HBox row = new HBox();
         row.setMaxWidth(Double.MAX_VALUE);
-
-        VBox.setMargin(bubble, isMine
-                ? new Insets(isFirst ? 6 : 2, 0, 0, 0)
-                : new Insets(isFirst ? 6 : 2, 0, 0, 0));
+        VBox.setMargin(bubble, new Insets(isFirst ? 6 : 2, 0, 0, 0));
 
         if (isMine) {
             row.setAlignment(Pos.CENTER_RIGHT);
@@ -414,6 +393,21 @@ public class ChatGfxController {
         }
         row.getChildren().add(bubble);
         return row;
+    }
+
+    private void applyBubbleStyle(VBox bubble, boolean isMine, boolean isFirst, boolean isLast) {
+        String base    = isMine ? "chat-bubble-sent"  : "chat-bubble-recv";
+        String variant = resolveBubbleVariant(isMine, isFirst, isLast);
+        bubble.getStyleClass().add(base);
+        bubble.getStyleClass().add(variant);
+    }
+
+    private String resolveBubbleVariant(boolean isMine, boolean isFirst, boolean isLast) {
+        String prefix = isMine ? "chat-bubble-sent" : "chat-bubble-recv";
+        if (isFirst && isLast) return prefix + "-solo";
+        if (isFirst)           return prefix + "-first";
+        if (isLast)            return prefix + "-last";
+        return prefix + "-mid";
     }
 
     // ----------------------------------------------------------------
@@ -452,19 +446,19 @@ public class ChatGfxController {
     @FXML
     private void handleCall() {
         // Placeholder — voice call not yet implemented
-        LOGGER.info("Voice call requested for: " + selectedContactUsername);
+        LOGGER.info("Voice call requested for: %s".formatted(selectedContactUsername));
     }
 
     @FXML
     private void handleVideo() {
         // Placeholder — video call not yet implemented
-        LOGGER.info("Video call requested for: " + selectedContactUsername);
+        LOGGER.info("Video call requested for: %s".formatted(selectedContactUsername));
     }
 
     @FXML
     private void handleMore() {
         // Placeholder — context menu (mute, block, clear) not yet implemented
-        LOGGER.info("More options requested for: " + selectedContactUsername);
+        LOGGER.info("More options requested for: %s".formatted(selectedContactUsername));
     }
 
     // ----------------------------------------------------------------
@@ -487,13 +481,13 @@ public class ChatGfxController {
     // ----------------------------------------------------------------
 
     private void startPolling() {
-        pollTimeline = new Timeline(new KeyFrame(Duration.seconds(3), e -> {
+        Timeline pollTimeline = new Timeline(new KeyFrame(Duration.seconds(3), e -> {
             if (selectedContactUsername == null) return;
             refreshMessagesIfNeeded();
             markMessagesRead();
             refreshAllContactItems();
         }));
-        pollTimeline.setCycleCount(Timeline.INDEFINITE);
+        pollTimeline.setCycleCount(javafx.animation.Animation.INDEFINITE);
         pollTimeline.play();
     }
 
@@ -504,7 +498,7 @@ public class ChatGfxController {
                     DaoFactory.getInstance().getConnection(),
                     currentUsername, selectedContactUsername);
             long rendered = messagesContainer.getChildren().stream()
-                    .filter(n -> n instanceof HBox).count();
+                    .filter(HBox.class::isInstance).count();
             if (messages.size() != rendered) loadMessages();
         } catch (DatabaseException e) {
             LOGGER.warning("Poll error: " + e.getMessage());
@@ -525,28 +519,36 @@ public class ChatGfxController {
 
     private void refreshContactItem(Button btn, String username) {
         if (btn == null || !(btn.getGraphic() instanceof HBox row)) return;
-
         for (var child : row.getChildren()) {
             if (child instanceof VBox textBox && textBox.getChildren().size() >= 2) {
-                // nameRow → update time label
-                if (textBox.getChildren().get(0) instanceof HBox nameRow) {
-                    for (var nr : nameRow.getChildren()) {
-                        if (nr instanceof Label lbl && lbl.getStyleClass().contains("chat-contact-time")) {
-                            lbl.setText(getLastMessageTime(username));
-                        }
-                    }
-                }
-                // preview
-                if (textBox.getChildren().get(1) instanceof Label previewLabel) {
-                    previewLabel.setText(getLastMessagePreview(username));
-                }
-            }
-            if (child instanceof Region dot && dot.getStyleClass().contains("chat-unread-dot")) {
-                long unread = countUnread(username);
-                dot.setVisible(unread > 0);
-                dot.setManaged(unread > 0);
+                refreshTextBox(textBox, username);
+            } else if (child instanceof Region dot && dot.getStyleClass().contains("chat-unread-dot")) {
+                refreshUnreadDot(dot, username);
             }
         }
+    }
+
+    private void refreshTextBox(VBox textBox, String username) {
+        if (textBox.getChildren().get(0) instanceof HBox nameRow) {
+            refreshTimeLabel(nameRow, username);
+        }
+        if (textBox.getChildren().get(1) instanceof Label previewLabel) {
+            previewLabel.setText(getLastMessagePreview(username));
+        }
+    }
+
+    private void refreshTimeLabel(HBox nameRow, String username) {
+        for (var nr : nameRow.getChildren()) {
+            if (nr instanceof Label lbl && lbl.getStyleClass().contains("chat-contact-time")) {
+                lbl.setText(getLastMessageTime(username));
+            }
+        }
+    }
+
+    private void refreshUnreadDot(Region dot, String username) {
+        long unread = countUnread(username);
+        dot.setVisible(unread > 0);
+        dot.setManaged(unread > 0);
     }
 
     // ----------------------------------------------------------------

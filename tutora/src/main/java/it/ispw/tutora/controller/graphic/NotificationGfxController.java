@@ -154,13 +154,9 @@ public class NotificationGfxController {
      * Queste notifiche vengono escluse dal "Mark all as read".
      */
     private boolean isActionable(Notification n) {
-        // Tutor: LESSON_BOOKED è sempre actionable (deve ancora accettare/rifiutare)
-        if (session.isTutor()   && n.getType() == NotificationType.LESSON_BOOKED)     return true;
-        // Student: LESSON_ACCEPTED è SEMPRE actionable finché non viene pagata
-        if (session.isStudent() && n.getType() == NotificationType.LESSON_ACCEPTED)   return true;
-        // Admin: APPLICATION_UPDATE è actionable finché non approva/rifiuta
-        if (session.isAdmin()   && n.getType() == NotificationType.APPLICATION_UPDATE) return true;
-        return false;
+        return (session.isTutor()   && n.getType() == NotificationType.LESSON_BOOKED)
+            || (session.isStudent() && n.getType() == NotificationType.LESSON_ACCEPTED)
+            || (session.isAdmin()   && n.getType() == NotificationType.APPLICATION_UPDATE);
     }
 
     // ----------------------------------------------------------------

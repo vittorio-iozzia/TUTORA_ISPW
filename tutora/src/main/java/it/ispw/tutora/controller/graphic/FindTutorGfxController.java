@@ -297,7 +297,7 @@ public class FindTutorGfxController {
             FadeTransition fade = new FadeTransition(Duration.millis(320), card);
             fade.setFromValue(0);
             fade.setToValue(1);
-            fade.setDelay(Duration.millis(idx * 55L));
+            fade.setDelay(Duration.millis((double) idx * 55));
             fade.play();
             tutorGrid.getChildren().add(card);
             idx++;
@@ -306,8 +306,12 @@ public class FindTutorGfxController {
     }
 
     private void updateResultsLabel(int count) {
-        resultsLabel.setText(count == 0 ? "No tutors match your search"
-                : count + (count == 1 ? " tutor found" : " tutors found"));
+        if (count == 0) {
+            resultsLabel.setText("No tutors match your search");
+        } else {
+            String suffix = count == 1 ? " tutor found" : " tutors found";
+            resultsLabel.setText(count + suffix);
+        }
     }
 
     // ----------------------------------------------------------------
@@ -538,7 +542,7 @@ public class FindTutorGfxController {
         StackPane.setMargin(featured, new Insets(10, 0, 0, 10));
 
         // Mode badge — top-right
-        boolean isRemote = (poolIndex % 2 == 0);
+        boolean isRemote = poolIndex % 2 == 0;
         Label mode = new Label(isRemote ? "Online" : "In-Person");
         mode.getStyleClass().add(isRemote ? "tutor-card-online-badge" : "tutor-card-inperson-badge");
         StackPane.setAlignment(mode, Pos.TOP_RIGHT);

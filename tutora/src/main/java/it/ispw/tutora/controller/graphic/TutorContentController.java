@@ -31,6 +31,7 @@ public class TutorContentController {
 
     private static final Logger LOGGER =
             Logger.getLogger(TutorContentController.class.getName());
+    private static final String TIME_SLOT_UNAVAILABLE = TIME_SLOT_UNAVAILABLE;
 
     private static final DateTimeFormatter CARD_FMT =
             DateTimeFormatter.ofPattern("EEE d MMM · HH:mm", java.util.Locale.ENGLISH);
@@ -200,8 +201,7 @@ public class TutorContentController {
         card.setOpacity(0);
         overlay.setOpacity(0);
 
-        // Stored in fields to prevent GC mid-play
-        popupEntryAnim = new Timeline(
+        Timeline popupEntryAnim = new Timeline(
             new KeyFrame(Duration.ZERO,
                 new KeyValue(card.scaleXProperty(),     0.0),
                 new KeyValue(card.scaleYProperty(),     0.0),
@@ -230,10 +230,6 @@ public class TutorContentController {
         );
         popupEntryAnim.play();
     }
-
-    /** Kept as a field to prevent garbage collection of the animation. */
-    private Timeline popupEntryAnim;
-    private Timeline popupExitAnim;
 
     private HBox featureRow(String emojiCodepoint, String heading, String detail) {
         HBox row = new HBox(14);
@@ -275,7 +271,7 @@ public class TutorContentController {
     }
 
     private void dismissOverlay(Pane root, StackPane overlay, VBox card) {
-        popupExitAnim = new Timeline(
+        Timeline popupExitAnim = new Timeline(
             new KeyFrame(Duration.ZERO,
                 new KeyValue(card.scaleXProperty(),  1.0),
                 new KeyValue(card.scaleYProperty(),  1.0),
@@ -323,10 +319,10 @@ public class TutorContentController {
             ToggleButton btn  = new ToggleButton(time);
             btn.setSelected(available);
             btn.getStyleClass().add("time-slot-btn");
-            if (!available) btn.getStyleClass().add("time-slot-unavailable");
+            if (!available) btn.getStyleClass().add(TIME_SLOT_UNAVAILABLE);
             btn.selectedProperty().addListener((obs, was, on) -> {
-                if (on) btn.getStyleClass().remove("time-slot-unavailable");
-                else    { if (!btn.getStyleClass().contains("time-slot-unavailable")) btn.getStyleClass().add("time-slot-unavailable"); }
+                if (Boolean.TRUE.equals(on)) btn.getStyleClass().remove(TIME_SLOT_UNAVAILABLE);
+                else if (!btn.getStyleClass().contains(TIME_SLOT_UNAVAILABLE)) btn.getStyleClass().add(TIME_SLOT_UNAVAILABLE);
             });
             timeSlotGrid.getChildren().add(btn);
         }

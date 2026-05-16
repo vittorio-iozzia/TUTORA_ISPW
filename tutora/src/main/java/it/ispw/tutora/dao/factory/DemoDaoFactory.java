@@ -57,11 +57,11 @@ public class DemoDaoFactory extends DaoFactory {
     private static final String USER_STUDENT    = "student_luigi";
     private static final String USER_TUTOR      = "tutor_vitto";
     private static final String DEMO_HASH_SEED  = "Demo1234"; // dato di esempio in-memory, non credenziale reale
+    private static final String PRICE_35        = "35.00";
+    private static final String PRICE_30        = "30.00";
 
-    // References to Category objects so populateExpertises() can link SubCategories
+    // Reference to Category object so populateExpertises() can link SubCategories
     private Category musicCategory;
-    private Category photographyCategory;
-    private Category sportCategory;
 
     // ----------------------------------------------------------------
     // Istanze condivise dei DAO demo
@@ -130,7 +130,7 @@ public class DemoDaoFactory extends DaoFactory {
         categoryDao.add(music);
 
         // Photography
-        photographyCategory = new Category(CAT_PHOTOGRAPHY,
+        Category photographyCategory = new Category(CAT_PHOTOGRAPHY,
                 "Photography technique and post-production");
         Category photography = photographyCategory;
         photography.addRequirement(new TextRequirement(
@@ -144,7 +144,7 @@ public class DemoDaoFactory extends DaoFactory {
         categoryDao.add(photography);
 
         // Sport
-        sportCategory = new Category(CAT_SPORT,
+        Category sportCategory = new Category(CAT_SPORT,
                 "Athletic training and sports coaching");
         Category sport = sportCategory;
         sport.addRequirement(new TextRequirement(
@@ -191,7 +191,7 @@ public class DemoDaoFactory extends DaoFactory {
 
         // Tutor: in userDao (per il login) + tutorDao (per operazioni tutor-specific)
         Tutor tutor = new Tutor.Builder()
-                .username("tutor_vitto")
+                .username(USER_TUTOR)
                 .email("vitto.iozzia@tutora.it")
                 .name("Vittorio")
                 .surname("Iozzia")
@@ -222,13 +222,13 @@ public class DemoDaoFactory extends DaoFactory {
         SubCategory saxophone = new SubCategory(
                 "Saxophone", musicCategory, "Saxophone lessons for all levels");
         tutorExpertiseDao.insertExpertise(null, new TutorExpertise(
-                vitto, saxophone, new BigDecimal("35.00"), Status.APPROVED, now));
+                vitto, saxophone, new BigDecimal(PRICE_35), Status.APPROVED, now));
 
         // Guitar – Music (APPROVED)
         SubCategory guitar = new SubCategory(
                 "Guitar", musicCategory, "Classical and electric guitar");
         tutorExpertiseDao.insertExpertise(null, new TutorExpertise(
-                vitto, guitar, new BigDecimal("30.00"), Status.APPROVED, now));
+                vitto, guitar, new BigDecimal(PRICE_30), Status.APPROVED, now));
 
         // Blues Piano – Music (APPROVED)
         SubCategory piano = new SubCategory(
@@ -275,10 +275,8 @@ public class DemoDaoFactory extends DaoFactory {
      */
     private int[] populateLessonsAndBookings() throws DatabaseException, DuplicateLessonException {
 
-        Tutor vitto;
         Student luigi;
         try {
-            vitto = tutorDao.selectTutor(null, USER_TUTOR);
             luigi = studentDao.selectStudent(null, USER_STUDENT);
         } catch (Exception e) {
             return new int[0];
@@ -301,7 +299,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .startTime(now.plusDays(2).withHour(10).withMinute(0).withSecond(0).withNano(0))
                 .endTime(now.plusDays(2).withHour(11).withMinute(0).withSecond(0).withNano(0))
                 .remote(true)
-                .listedPrice(new BigDecimal("30.00"))
+                .listedPrice(new BigDecimal(PRICE_30))
                 .lessonStatus(LessonStatus.BOOKED)
                 .createdAt(now.minusDays(3))
                 .build();
@@ -311,7 +309,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .lesson(guitarLesson)
                 .student(luigi)
                 .bookedAt(now.minusDays(3))
-                .pricePaid(new BigDecimal("30.00"))
+                .pricePaid(new BigDecimal(PRICE_30))
                 .paymentStatus(PaymentStatus.PAID)
                 .paymentRef("TXN-GUITAR-001")
                 .build());
@@ -322,7 +320,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .startTime(now.plusDays(5).withHour(15).withMinute(0).withSecond(0).withNano(0))
                 .endTime(now.plusDays(5).withHour(16).withMinute(0).withSecond(0).withNano(0))
                 .remote(false)
-                .listedPrice(new BigDecimal("35.00"))
+                .listedPrice(new BigDecimal(PRICE_35))
                 .lessonStatus(LessonStatus.BOOKED)
                 .createdAt(now.minusDays(1))
                 .build();
@@ -332,7 +330,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .lesson(saxLesson)
                 .student(luigi)
                 .bookedAt(now.minusDays(1))
-                .pricePaid(new BigDecimal("35.00"))
+                .pricePaid(new BigDecimal(PRICE_35))
                 .paymentStatus(PaymentStatus.PAID)
                 .paymentRef("TXN-SAX-002")
                 .build());
@@ -364,7 +362,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .startTime(now.minusDays(21).withHour(11).withMinute(0).withSecond(0).withNano(0))
                 .endTime(now.minusDays(21).withHour(12).withMinute(0).withSecond(0).withNano(0))
                 .remote(true)
-                .listedPrice(new BigDecimal("30.00"))
+                .listedPrice(new BigDecimal(PRICE_30))
                 .lessonStatus(LessonStatus.COMPLETED)
                 .createdAt(now.minusDays(24))
                 .build();
@@ -374,7 +372,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .lesson(guitarLesson2)
                 .student(luigi)
                 .bookedAt(now.minusDays(24))
-                .pricePaid(new BigDecimal("30.00"))
+                .pricePaid(new BigDecimal(PRICE_30))
                 .paymentStatus(PaymentStatus.PAID)
                 .paymentRef("TXN-GUITAR-004")
                 .build());

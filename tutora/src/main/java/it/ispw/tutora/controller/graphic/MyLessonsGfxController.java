@@ -21,8 +21,11 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class MyLessonsGfxController {
+
+    private static final Logger LOGGER = Logger.getLogger(MyLessonsGfxController.class.getName());
 
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("EEE, dd MMM");
@@ -50,8 +53,7 @@ public class MyLessonsGfxController {
             List<Booking> bookings = appController.loadBookings(new BookingBean(), token);
             populate(bookings);
         } catch (Exception e) {
-            System.err.println("[MyLessons] initialize error: " + e);
-            e.printStackTrace(System.err);
+            LOGGER.warning("[MyLessons] initialize error: " + e.getMessage());
             showEmptyState();
         }
     }

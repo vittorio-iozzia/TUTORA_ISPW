@@ -27,7 +27,6 @@ import javafx.scene.transform.Scale;
 import javafx.util.Duration;
 
 import java.util.concurrent.Callable;
-import java.util.logging.Logger;
 
 /**
  * Controller grafico per Login
@@ -59,8 +58,6 @@ import java.util.logging.Logger;
  *   Se non c'è connessione il gradient overlay assicura leggibilità.
  */
 public class LoginGfxController {
-
-    private static final Logger LOGGER = Logger.getLogger(LoginGfxController.class.getName());
 
     private static final String HERO_IMAGE_URL =
             "https://images.unsplash.com/photo-1766117651759-640cbc09369c" +
@@ -251,12 +248,12 @@ public class LoginGfxController {
 
     @FXML
     public void handleGoogleLogin() {
-        runSocialLoginAsync("Google", () -> socialLoginController.loginWithGoogle());
+        runSocialLoginAsync("Google", socialLoginController::loginWithGoogle);
     }
 
     @FXML
     public void handleMetaLogin() {
-        runSocialLoginAsync("Meta", () -> socialLoginController.loginWithMeta());
+        runSocialLoginAsync("Meta", socialLoginController::loginWithMeta);
     }
 
     /**

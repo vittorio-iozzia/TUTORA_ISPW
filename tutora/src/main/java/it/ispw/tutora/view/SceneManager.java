@@ -22,6 +22,7 @@ public class SceneManager {
 
     private static final Logger LOGGER = Logger.getLogger(SceneManager.class.getName());
     private static final String FXML_BASE = "/fxml/";
+    private static final String HOME_FXML = "home.fxml";
 
     private Stage primaryStage;
     private String sessionToken;
@@ -70,15 +71,15 @@ public class SceneManager {
     }
 
     public void showStudentHome() {
-        loadScene("home.fxml", 1100, 700);
+        loadScene(HOME_FXML, 1100, 700);
     }
 
     public void showTutorHome() {
-        loadScene("home.fxml", 1100, 700);
+        loadScene(HOME_FXML, 1100, 700);
     }
 
     public void showAdminHome() {
-        loadScene("home.fxml", 1100, 700);
+        loadScene(HOME_FXML, 1100, 700);
     }
 
     public void showSearchTutor() {

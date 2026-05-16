@@ -58,6 +58,14 @@ public class HomeGfxController {
     private static final Logger LOGGER =
             Logger.getLogger(HomeGfxController.class.getName());
 
+    private static final String NAV_DASHBOARD   = "Dashboard";
+    private static final String NAV_SETTINGS    = "Settings";
+    private static final String NAV_MESSAGES    = "Messages";
+    private static final String NAV_MY_LESSONS  = "My Lessons";
+    private static final String ICON_HOME       = "fas-home";
+    private static final String ICON_COG        = "fas-cog";
+    private static final String FXML_MESSAGES   = "/fxml/messages_content.fxml";
+
     // ----------------------------------------------------------------
     // FXML fields
     // ----------------------------------------------------------------
@@ -90,7 +98,6 @@ public class HomeGfxController {
     /** Snapshot dell'area destra quando mostriamo il profilo a schermo intero. */
     private List<Node> defaultMainAreaChildren;
 
-    private ContextMenu avatarMenu;
     private final GetNotificationsController notifController = new GetNotificationsController();
 
     /** Username dell'utente corrente — serve per AvatarManager listener. */
@@ -108,10 +115,10 @@ public class HomeGfxController {
         currentUsername = session.getUser().getUsername();
         String initial  = String.valueOf(currentUsername.charAt(0)).toUpperCase();
 
-        String roleLabel_ = resolveRoleLabel(session);
+        String roleLabelText = resolveRoleLabel(session);
         usernameLabel.setText(currentUsername);
-        roleLabel.setText(roleLabel_);
-        roleBadgeLabel.setText(roleLabel_.toUpperCase());
+        roleLabel.setText(roleLabelText);
+        roleBadgeLabel.setText(roleLabelText.toUpperCase());
         avatarLabel.setText(initial);
 
         setupAvatarMenu(session);
@@ -137,7 +144,7 @@ public class HomeGfxController {
     // ----------------------------------------------------------------
 
     private void setupAvatarMenu(Session session) {
-        avatarMenu = buildAvatarMenu(session);
+        ContextMenu avatarMenu = buildAvatarMenu(session);
 
         headerProfileBtn.setOnAction(e -> {
             if (avatarMenu.isShowing()) {
@@ -167,7 +174,7 @@ public class HomeGfxController {
             menu.getItems().add(new SeparatorMenuItem());
         }
 
-        MenuItem settingsItem = menuItem("Settings", "fas-cog");
+        MenuItem settingsItem = menuItem(NAV_SETTINGS, ICON_COG);
         settingsItem.setOnAction(e -> {}); // noop — future use
         menu.getItems().add(settingsItem);
 
@@ -319,7 +326,7 @@ public class HomeGfxController {
         btn.setMaxWidth(Double.MAX_VALUE);
         btn.getStyleClass().add("nav-item");
 
-        if ("Messages".equals(entry.label())) {
+        if (NAV_MESSAGES.equals(entry.label())) {
             msgNavBadge = new Label();
             msgNavBadge.getStyleClass().add("nav-msg-badge");
             msgNavBadge.setVisible(false);
@@ -356,28 +363,28 @@ public class HomeGfxController {
     private List<NavEntry> resolveNavItems(Session session) {
         if (session.isStudent()) {
             return List.of(
-                new NavEntry("Dashboard",  "fas-home",        "Dashboard",   () -> swapContent("/fxml/student_content.fxml")),
-                new NavEntry("Find Tutors","fas-search",      "Find Tutors", () -> swapContent("/fxml/find_tutors_content.fxml")),
-                new NavEntry("My Lessons", "fas-calendar-alt","My Lessons",  () -> swapContent("/fxml/my_lessons_content.fxml")),
-                new NavEntry("Messages",   "fas-comments",    "Messages",    () -> swapContent("/fxml/messages_content.fxml")),
-                new NavEntry("Payments",   "fas-credit-card", "Payments",    this::noop),
-                new NavEntry("Favorites",  "fas-heart",       "Favorites",   this::noop),
-                new NavEntry("Settings",   "fas-cog",         "Settings",    this::noop)
+                new NavEntry(NAV_DASHBOARD,  ICON_HOME,         NAV_DASHBOARD,   () -> swapContent("/fxml/student_content.fxml")),
+                new NavEntry("Find Tutors",  "fas-search",      "Find Tutors",   () -> swapContent("/fxml/find_tutors_content.fxml")),
+                new NavEntry(NAV_MY_LESSONS, "fas-calendar-alt",NAV_MY_LESSONS,  () -> swapContent("/fxml/my_lessons_content.fxml")),
+                new NavEntry(NAV_MESSAGES,   "fas-comments",    NAV_MESSAGES,    () -> swapContent(FXML_MESSAGES)),
+                new NavEntry("Payments",     "fas-credit-card", "Payments",      this::noop),
+                new NavEntry("Favorites",    "fas-heart",       "Favorites",     this::noop),
+                new NavEntry(NAV_SETTINGS,   ICON_COG,          NAV_SETTINGS,    this::noop)
             );
         }
         if (session.isTutor()) {
             return List.of(
-                new NavEntry("Dashboard",    "fas-home",        "Dashboard",    () -> swapContent("/fxml/tutor_content.fxml")),
-                new NavEntry("My Lessons",   "fas-calendar-alt","My Lessons",   () -> SceneManager.getInstance().showTutorLessons()),
-                new NavEntry("My Expertise", "fas-star",        "My Expertise", () -> SceneManager.getInstance().showTutorExpertise()),
-                new NavEntry("Messages",     "fas-comments",    "Messages",     () -> swapContent("/fxml/messages_content.fxml")),
-                new NavEntry("Settings",     "fas-cog",         "Settings",     this::noop)
+                new NavEntry(NAV_DASHBOARD,    ICON_HOME,         NAV_DASHBOARD,    () -> swapContent("/fxml/tutor_content.fxml")),
+                new NavEntry(NAV_MY_LESSONS,   "fas-calendar-alt",NAV_MY_LESSONS,   () -> SceneManager.getInstance().showTutorLessons()),
+                new NavEntry("My Expertise",   "fas-star",        "My Expertise",   () -> SceneManager.getInstance().showTutorExpertise()),
+                new NavEntry(NAV_MESSAGES,     "fas-comments",    NAV_MESSAGES,     () -> swapContent(FXML_MESSAGES)),
+                new NavEntry(NAV_SETTINGS,     ICON_COG,          NAV_SETTINGS,     this::noop)
             );
         }
         // Admin
         return List.of(
-            new NavEntry("Dashboard", "fas-home", "Dashboard", this::noop),
-            new NavEntry("Settings",  "fas-cog",  "Settings",  this::noop)
+            new NavEntry(NAV_DASHBOARD, ICON_HOME, NAV_DASHBOARD, this::noop),
+            new NavEntry(NAV_SETTINGS,  ICON_COG,  NAV_SETTINGS,  this::noop)
         );
     }
 
@@ -472,7 +479,7 @@ public class HomeGfxController {
             Node content = loader.load();
             VBox.setVgrow(content, Priority.ALWAYS);
             contentArea.getChildren().setAll(content);
-            boolean isChat = "/fxml/messages_content.fxml".equals(fxmlPath);
+            boolean isChat = FXML_MESSAGES.equals(fxmlPath);
             // Chat fills edge-to-edge; other pages keep standard padding
             contentArea.setPadding(isChat ? new Insets(0) : new Insets(28, 36, 28, 36));
             // Force the wrapping ScrollPane to fill height in chat mode so the
@@ -489,7 +496,7 @@ public class HomeGfxController {
     private void startMsgBadgePoller(Session session) {
         Timeline tl = new Timeline(new KeyFrame(Duration.seconds(5),
                 e -> refreshMsgBadge(session)));
-        tl.setCycleCount(Timeline.INDEFINITE);
+        tl.setCycleCount(javafx.animation.Animation.INDEFINITE);
         tl.play();
         refreshMsgBadge(session); // initial check
     }
@@ -523,7 +530,7 @@ public class HomeGfxController {
         t.start();
     }
 
-    private void noop() {}
+    private void noop() { /* intentional no-op — nav item reserved for future use */ }
 
     private record NavEntry(String label, String iconLiteral, String headerTitle, Runnable action) {}
 }

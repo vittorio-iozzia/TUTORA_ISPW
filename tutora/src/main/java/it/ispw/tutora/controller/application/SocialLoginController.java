@@ -95,7 +95,7 @@ public class SocialLoginController {
         String state    = UUID.randomUUID().toString();
         String authUrl  = boundary.getAuthorizationUrl(state);
 
-        return performFlow(authUrl, code -> boundary.fetchUserProfile(code));
+        return performFlow(authUrl, boundary::fetchUserProfile);
     }
 
     /**
@@ -115,7 +115,7 @@ public class SocialLoginController {
         String state   = UUID.randomUUID().toString();
         String authUrl = boundary.getAuthorizationUrl(state);
 
-        return performFlow(authUrl, code -> boundary.fetchUserProfile(code));
+        return performFlow(authUrl, boundary::fetchUserProfile);
     }
 
     // ----------------------------------------------------------------

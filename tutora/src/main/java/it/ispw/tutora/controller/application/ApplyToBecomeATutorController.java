@@ -247,15 +247,20 @@ public class ApplyToBecomeATutorController {
             UserDao userDao = factory.createUserDao();
             TutorDao tutorDao = factory.createTutorDao();
             Tutor promoted = userDao.promoteToTutor(conn, studentUsername);
-            try {
-                tutorDao.insert(conn, promoted);
-            } catch (DuplicateUserException ignored) {
-                // DB mode: the tutor row was already created inside promoteToTutor()
-            }
+            insertTutorIfNeeded(conn, tutorDao, promoted);
             SessionManager.getInstance().markAsNewlyPromotedTutor(studentUsername);
             SessionManager.getInstance().invalidateSessionsForUser(studentUsername);
         } catch (UserNotFoundException e) {
             LOGGER.log(Level.WARNING, "Cannot promote to tutor, student not found: {0}", studentUsername);
+        }
+    }
+
+    private void insertTutorIfNeeded(Connection conn, TutorDao tutorDao, Tutor promoted)
+            throws DatabaseException {
+        try {
+            tutorDao.insert(conn, promoted);
+        } catch (DuplicateUserException ignored) {
+            // DB mode: the tutor row was already created inside promoteToTutor()
         }
     }
 

@@ -134,8 +134,10 @@ public class MetaAuthBoundary {
             }
             return tokenNode.asText();
 
-        } catch (IOException | InterruptedException e) {
-            if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new OAuthException("Errore durante il token exchange Meta.", e);
+        } catch (IOException e) {
             throw new OAuthException("Errore durante il token exchange Meta.", e);
         }
     }
@@ -169,11 +171,13 @@ public class MetaAuthBoundary {
                         "Verifica che il permesso 'email' sia abilitato nell'app Meta.");
             }
 
-            LOGGER.info("Meta OAuth: profilo ricevuto per " + email);
+            LOGGER.info("Meta OAuth: profilo ricevuto per %s".formatted(email));
             return new SocialLoginBean(PROVIDER, oauthId, email, name, surname);
 
-        } catch (IOException | InterruptedException e) {
-            if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new OAuthException("Errore nel recupero del profilo Meta.", e);
+        } catch (IOException e) {
             throw new OAuthException("Errore nel recupero del profilo Meta.", e);
         }
     }

@@ -71,7 +71,7 @@ public class OAuthCallbackServer {
                 if (requestLine == null || requestLine.isBlank()) {
                     throw new OAuthException("Empty OAuth callback.");
                 }
-                LOGGER.fine("OAuth callback request: " + requestLine);
+                LOGGER.fine("OAuth callback request: %s".formatted(requestLine));
 
                 String code  = extractParam(requestLine, "code");
                 String error = extractParam(requestLine, "error");

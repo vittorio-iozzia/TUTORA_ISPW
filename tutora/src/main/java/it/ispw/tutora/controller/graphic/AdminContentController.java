@@ -22,14 +22,13 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
-import org.kordamp.ikonli.javafx.FontIcon;
-
 import java.util.List;
 import java.util.logging.Logger;
 
 public class AdminContentController {
 
     private static final Logger LOGGER = Logger.getLogger(AdminContentController.class.getName());
+    private static final String EMPTY_LABEL_STYLE = "-fx-text-fill: #8FAF9A; -fx-font-size: 13px;";
 
     private final ApplyToBecomeATutorController appController = new ApplyToBecomeATutorController();
 
@@ -138,7 +137,7 @@ public class AdminContentController {
         pendingCountLabel.setText(pendingApplications.size() + " pending");
         if (pendingApplications.isEmpty()) {
             Label empty = new Label("No pending applications.");
-            empty.setStyle("-fx-text-fill: #8FAF9A; -fx-font-size: 13px;");
+            empty.setStyle(EMPTY_LABEL_STYLE);
             applicationsList.getChildren().add(empty);
             return;
         }
@@ -206,7 +205,7 @@ public class AdminContentController {
             pendingCountLabel.setText(remaining + " pending");
             if (remaining == 0) {
                 Label empty = new Label("No pending applications.");
-                empty.setStyle("-fx-text-fill: #8FAF9A; -fx-font-size: 13px;");
+                empty.setStyle(EMPTY_LABEL_STYLE);
                 applicationsList.getChildren().add(empty);
             }
         }));
@@ -230,7 +229,7 @@ public class AdminContentController {
         usersList.getChildren().clear();
         if (tutors.isEmpty()) {
             Label empty = new Label("No tutors found.");
-            empty.setStyle("-fx-text-fill: #8FAF9A; -fx-font-size: 13px;");
+            empty.setStyle(EMPTY_LABEL_STYLE);
             usersList.getChildren().add(empty);
             return;
         }

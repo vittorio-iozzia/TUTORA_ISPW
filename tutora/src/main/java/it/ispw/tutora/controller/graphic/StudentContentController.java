@@ -51,6 +51,7 @@ public class StudentContentController {
 
     private static final Logger LOGGER =
             Logger.getLogger(StudentContentController.class.getName());
+    private static final String EMPTY_LESSON_STYLE = "-fx-text-fill:#9CA3AF;-fx-font-size:15px;";
 
     // ----------------------------------------------------------------
     // FXML – Welcome
@@ -386,7 +387,7 @@ public class StudentContentController {
         StackPane.setMargin(featured, new Insets(10, 0, 0, 10));
 
         // Mode badge — top-right (alternate per pool index)
-        boolean isRemote = (poolIndex % 2 == 0);
+        boolean isRemote = poolIndex % 2 == 0;
         Label mode = new Label(isRemote ? "Online" : "In-Person");
         mode.getStyleClass().add(isRemote ? "tutor-card-online-badge" : "tutor-card-inperson-badge");
         StackPane.setAlignment(mode, Pos.TOP_RIGHT);
@@ -459,7 +460,7 @@ public class StudentContentController {
                     .toList();
             if (upcoming.isEmpty()) {
                 Label empty = new Label("No upcoming lessons.");
-                empty.setStyle("-fx-text-fill:#9CA3AF;-fx-font-size:15px;");
+                empty.setStyle(EMPTY_LESSON_STYLE);
                 upcomingList.getChildren().add(empty);
             } else {
                 for (Booking b : upcoming) upcomingList.getChildren().add(buildLessonCard(b, true));
@@ -495,7 +496,7 @@ public class StudentContentController {
             upcomingList.getChildren().clear();
             if (upcoming.isEmpty()) {
                 Label empty = new Label("No upcoming lessons.");
-                empty.setStyle("-fx-text-fill:#9CA3AF;-fx-font-size:15px;");
+                empty.setStyle(EMPTY_LESSON_STYLE);
                 upcomingList.getChildren().add(empty);
             } else {
                 for (Booking b : upcoming) upcomingList.getChildren().add(buildLessonCard(b, true));
@@ -524,7 +525,7 @@ public class StudentContentController {
                     .toList();
             if (history.isEmpty()) {
                 Label empty = new Label("No past lessons.");
-                empty.setStyle("-fx-text-fill:#9CA3AF;-fx-font-size:15px;");
+                empty.setStyle(EMPTY_LESSON_STYLE);
                 historyList.getChildren().add(empty);
             } else {
                 for (Booking b : history) historyList.getChildren().add(buildLessonCard(b, false));
