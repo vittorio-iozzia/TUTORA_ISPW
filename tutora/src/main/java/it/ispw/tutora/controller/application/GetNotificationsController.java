@@ -45,7 +45,7 @@ public class GetNotificationsController {
         }
     }
 
-    public void markAllAsRead(NotificationBean bean, String token) {
+    public void markAllAsRead(String token) {
         SessionManager sm = SessionManager.getInstance();
         if (!sm.isSessionValid(token)) return;
         String username = sm.getCurrentUser(token).getUsername();

@@ -17,8 +17,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
-
 /**
  * Implementazione JSON di BookingDao.
  *
@@ -50,7 +48,6 @@ import java.util.logging.Logger;
  */
 public class BookingDaoJson implements BookingDao {
 
-    private static final Logger LOGGER = Logger.getLogger(BookingDaoJson.class.getName());
     private static final String JSON_PATH = "../tutora_data/bookings.json";
     private final ObjectMapper mapper = new ObjectMapper();
 

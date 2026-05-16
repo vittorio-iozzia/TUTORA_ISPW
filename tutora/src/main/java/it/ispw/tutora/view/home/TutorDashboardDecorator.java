@@ -31,6 +31,10 @@ public class TutorDashboardDecorator extends DashboardDecorator {
         if (lastController != null) lastController.refreshUpcomingLessons();
     }
 
+    private static void setLastController(TutorContentController ctrl) {
+        lastController = ctrl;
+    }
+
     public TutorDashboardDecorator(DashboardComponent wrapped) {
         super(wrapped);
     }
@@ -42,7 +46,7 @@ public class TutorDashboardDecorator extends DashboardDecorator {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/fxml/tutor_content.fxml"));
             Node content = loader.load();
-            lastController = loader.getController();
+            setLastController(loader.getController());
             VBox.setVgrow(content, Priority.ALWAYS);
             contentArea.getChildren().add(content);
         } catch (IOException e) {

@@ -203,7 +203,7 @@ public class FindTutorGfxController {
         pill.getStyleClass().add("category-pill");
         pill.setSelected(selected);
         pill.selectedProperty().addListener((obs, was, on) -> {
-            if (on) {
+            if (Boolean.TRUE.equals(on)) {
                 applyCategory(label);
                 selectedCategory = "All".equals(label) ? null : label;
                 updateApplyButton();

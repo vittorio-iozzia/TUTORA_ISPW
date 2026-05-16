@@ -57,6 +57,7 @@ public class DemoDaoFactory extends DaoFactory {
     private static final String USER_STUDENT    = "student_luigi";
     private static final String USER_TUTOR      = "tutor_vitto";
     private static final String DEMO_HASH_SEED  = "Demo1234"; // dato di esempio in-memory, non credenziale reale
+    private static final String PRICE_40        = "40.00";
     private static final String PRICE_35        = "35.00";
     private static final String PRICE_30        = "30.00";
 
@@ -234,7 +235,7 @@ public class DemoDaoFactory extends DaoFactory {
         SubCategory piano = new SubCategory(
                 "Piano", musicCategory, "Piano from beginner to advanced");
         tutorExpertiseDao.insertExpertise(null, new TutorExpertise(
-                vitto, piano, new BigDecimal("40.00"), Status.APPROVED, now));
+                vitto, piano, new BigDecimal(PRICE_40), Status.APPROVED, now));
     }
 
     private void populateApplications() throws DatabaseException, DuplicateApplicationException {
@@ -341,7 +342,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .startTime(now.minusDays(10).withHour(14).withMinute(0).withSecond(0).withNano(0))
                 .endTime(now.minusDays(10).withHour(15).withMinute(0).withSecond(0).withNano(0))
                 .remote(true)
-                .listedPrice(new BigDecimal("40.00"))
+                .listedPrice(new BigDecimal(PRICE_40))
                 .lessonStatus(LessonStatus.COMPLETED)
                 .createdAt(now.minusDays(14))
                 .build();
@@ -351,7 +352,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .lesson(pianoLesson)
                 .student(luigi)
                 .bookedAt(now.minusDays(14))
-                .pricePaid(new BigDecimal("40.00"))
+                .pricePaid(new BigDecimal(PRICE_40))
                 .paymentStatus(PaymentStatus.PAID)
                 .paymentRef("TXN-PIANO-003")
                 .build());
@@ -407,7 +408,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .startTime(now.plusDays(14).withHour(9).withMinute(0).withSecond(0).withNano(0))
                 .endTime(now.plusDays(14).withHour(10).withMinute(0).withSecond(0).withNano(0))
                 .remote(true)
-                .listedPrice(new BigDecimal("40.00"))
+                .listedPrice(new BigDecimal(PRICE_40))
                 .lessonStatus(LessonStatus.AVAILABLE)
                 .createdAt(now)
                 .build();

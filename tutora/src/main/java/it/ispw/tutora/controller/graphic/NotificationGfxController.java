@@ -57,6 +57,7 @@ public class NotificationGfxController {
      * Viene invocato (sul thread JavaFX) subito dopo che un pagamento è andato a buon fine,
      * per aggiornare la sezione "Upcoming Lessons" del dashboard senza ricaricare la pagina.
      */
+    private static final String PAY_NOW_LABEL = "💳  Pay Now";
     private static Runnable paymentConfirmedCallback = null;
 
     public static void setPaymentConfirmedCallback(Runnable callback) {
@@ -308,7 +309,7 @@ public class NotificationGfxController {
                 showCardError(card, prevErr);
             }
 
-            Button payBtn = new Button("💳  Pay Now");
+            Button payBtn = new Button(PAY_NOW_LABEL);
             payBtn.getStyleClass().add("notif-pay-btn");
             payBtn.setMaxWidth(Double.MAX_VALUE);
             VBox.setMargin(payBtn, new Insets(8, 0, 0, 0));
@@ -501,7 +502,7 @@ public class NotificationGfxController {
                 PAYMENT_ERRORS.put(notif.getTargetId(), bean.getErrorMessage());
                 showCardError(card, bean.getErrorMessage());
                 payBtn.setDisable(false);
-                payBtn.setText("💳  Pay Now");
+                payBtn.setText(PAY_NOW_LABEL);
                 // Ripristina markAllReadBtn se non ci sono altri pagamenti in corso
                 long stillUnread = currentNotifications.stream().filter(n -> !n.isRead()).count();
                 markAllReadBtn.setDisable(!IN_PROGRESS_PAYMENTS.isEmpty() || stillUnread == 0);
@@ -522,7 +523,7 @@ public class NotificationGfxController {
             PAYMENT_ERRORS.put(notif.getTargetId(), errMsg);
             showCardError(card, errMsg);
             payBtn.setDisable(false);
-            payBtn.setText("💳  Pay Now");
+            payBtn.setText(PAY_NOW_LABEL);
             long stillUnread = currentNotifications.stream().filter(n -> !n.isRead()).count();
             markAllReadBtn.setDisable(!IN_PROGRESS_PAYMENTS.isEmpty() || stillUnread == 0);
         }));

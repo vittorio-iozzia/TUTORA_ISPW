@@ -54,7 +54,7 @@ public class PayPalClient {
      */
     public String charge(BigDecimal amount) throws InterruptedException {
 
-        long responseTime = (long) (random.nextDouble() * MAX_SIMULATED_RESPONSE_MS);
+        long responseTime = random.nextLong(MAX_SIMULATED_RESPONSE_MS);
 
         LOGGER.log(Level.INFO,
                 "Calling PayPal API... (simulated delay: {0}ms)", responseTime);
@@ -62,9 +62,9 @@ public class PayPalClient {
         // Simula l'attesa della risposta del gateway
         Thread.sleep(responseTime);
 
-        // Errore di sistema (5% dei casi) — lancia RuntimeException (non le nostre eccezioni)
+        // Errore di sistema (5% dei casi) — lancia IllegalStateException (non le nostre eccezioni)
         if (random.nextDouble() < ERROR_PROBABILITY) {
-            throw new RuntimeException("PayPal service internal error.");
+            throw new IllegalStateException("PayPal service internal error.");
         }
 
         // Pagamento rifiutato (10% dei casi) — restituisce null invece di lanciare eccezione
@@ -92,7 +92,7 @@ public class PayPalClient {
      */
     public String refund(String transactionId, BigDecimal amount) throws InterruptedException {
 
-        long responseTime = (long) (random.nextDouble() * MAX_SIMULATED_RESPONSE_MS);
+        long responseTime = random.nextLong(MAX_SIMULATED_RESPONSE_MS);
 
         LOGGER.log(Level.INFO,
                 "Calling PayPal Refund API for {0}... (simulated delay: {1}ms)",
@@ -101,7 +101,7 @@ public class PayPalClient {
         Thread.sleep(responseTime);
 
         if (random.nextDouble() < ERROR_PROBABILITY) {
-            throw new RuntimeException("PayPal refund service internal error.");
+            throw new IllegalStateException("PayPal refund service internal error.");
         }
 
         if (random.nextDouble() < DECLINED_PROBABILITY) {

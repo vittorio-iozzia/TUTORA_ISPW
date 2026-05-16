@@ -253,7 +253,7 @@ public class StudentContentController {
         pill.getStyleClass().add("category-pill");
         pill.setSelected(selected);
         pill.selectedProperty().addListener((obs, was, on) -> {
-            if (on) applyCategory(label);
+            if (Boolean.TRUE.equals(on)) applyCategory(label);
         });
         categoryPills.getChildren().add(pill);
     }

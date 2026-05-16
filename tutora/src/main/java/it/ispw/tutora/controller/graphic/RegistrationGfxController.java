@@ -325,12 +325,12 @@ public class RegistrationGfxController {
 
     @FXML
     public void handleTermsLink() {
-        // TODO: aprire dialog o browser con Terms of Service
+        // Not yet implemented in this release
     }
 
     @FXML
     public void handlePrivacyLink() {
-        // TODO: aprire dialog o browser con Privacy Policy
+        // Not yet implemented in this release
     }
 
     @FXML
