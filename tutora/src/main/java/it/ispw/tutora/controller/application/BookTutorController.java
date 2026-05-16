@@ -148,62 +148,57 @@ public class BookTutorController {
         }
         String tutorUsername = sm.getCurrentUser(token).getUsername();
         try (Connection conn = DaoFactory.getInstance().getConnection()) {
-            // null-check: in modalita' Demo/Json getConnection() restituisce null
             if (conn != null) conn.setAutoCommit(false);
-            try {
-                // Carica la lezione prima del branch: serve in entrambi i casi
-                // (rifiuto e accettazione) per costruire messaggi espliciti.
-                Lesson less = lesson.selectLesson(conn, bean.getLessonId());
-                String subject = less.getExpertise().getSubcategory().getName();
-                String lessonDate = less.getStartTime().format(MSG_FMT);
+            handleRespondToRequest(conn, bean, tutorUsername);
+        } catch (DatabaseException | SQLException e) {
+            bean.setErrorMessage(ERR_SYSTEM);
+        }
+    }
 
-                Notification.Builder builder = new Notification.Builder();
-                if (!bean.isAccepted()) {
-                    // Rifiuto: notifica lo student e committa
-                    Notification n = builder
-                            .recipientUsername(bean.getStudentUsername())
-                            .senderUsername(tutorUsername)
-                            .message("Your request for the lesson on " + lessonDate
-                                    + " (" + subject + ") has been declined by "
-                                    + tutorUsername + ". You can browse other available tutors.")
-                            .type(NotificationType.LESSON_REJECTED)
-                            .targetId(bean.getLessonId())
-                            .timestamp(LocalDateTime.now())
-                            .build();
-                    notification.insert(conn, n);
-                    if (conn != null) conn.commit();
-                    return;
-                }
-                // Accettazione: aggiorna status lezione poi notifica lo student
-                // updateLessonStatus applica la FSM del model: lancia IllegalArgumentException
-                // se la lezione non e' in stato AVAILABLE (es. gia' cancellata o prenotata)
-                less.updateLessonStatus(LessonStatus.BOOKED);
-                lesson.updateStatus(conn, bean.getLessonId(), LessonStatus.BOOKED);
-                Notification notification1 = builder
+    private void handleRespondToRequest(Connection conn, BookingTutorBean bean, String tutorUsername) {
+        try {
+            Lesson less = lesson.selectLesson(conn, bean.getLessonId());
+            String subject = less.getExpertise().getSubcategory().getName();
+            String lessonDate = less.getStartTime().format(MSG_FMT);
+
+            Notification.Builder builder = new Notification.Builder();
+            if (!bean.isAccepted()) {
+                Notification n = builder
                         .recipientUsername(bean.getStudentUsername())
                         .senderUsername(tutorUsername)
                         .message("Your request for the lesson on " + lessonDate
-                                + " (" + subject + ") has been accepted by "
-                                + tutorUsername + ". Please proceed with payment to confirm your booking.")
-                        .type(NotificationType.LESSON_ACCEPTED)
+                                + " (" + subject + ") has been declined by "
+                                + tutorUsername + ". You can browse other available tutors.")
+                        .type(NotificationType.LESSON_REJECTED)
                         .targetId(bean.getLessonId())
                         .timestamp(LocalDateTime.now())
                         .build();
-                notification.insert(conn, notification1);
+                notification.insert(conn, n);
                 if (conn != null) conn.commit();
-            } catch (LessonNotFoundException e) {
-                safeRollback(conn);
-                bean.setErrorMessage(ERR_LESSON_NOT_FOUND);
-            } catch (IllegalArgumentException e) {
-                // FSM violation: la lezione non e' piu' in stato AVAILABLE
-                safeRollback(conn);
-                bean.setErrorMessage(ERR_INVALID_ARGUMENT);
-            } catch (DatabaseException | SQLException e) {
-                // safeRollback evita che una SQLException dal rollback inghiotta l'eccezione originale
-                safeRollback(conn);
-                bean.setErrorMessage(ERR_SYSTEM);
+                return;
             }
+            less.updateLessonStatus(LessonStatus.BOOKED);
+            lesson.updateStatus(conn, bean.getLessonId(), LessonStatus.BOOKED);
+            Notification notification1 = builder
+                    .recipientUsername(bean.getStudentUsername())
+                    .senderUsername(tutorUsername)
+                    .message("Your request for the lesson on " + lessonDate
+                            + " (" + subject + ") has been accepted by "
+                            + tutorUsername + ". Please proceed with payment to confirm your booking.")
+                    .type(NotificationType.LESSON_ACCEPTED)
+                    .targetId(bean.getLessonId())
+                    .timestamp(LocalDateTime.now())
+                    .build();
+            notification.insert(conn, notification1);
+            if (conn != null) conn.commit();
+        } catch (LessonNotFoundException e) {
+            safeRollback(conn);
+            bean.setErrorMessage(ERR_LESSON_NOT_FOUND);
+        } catch (IllegalArgumentException e) {
+            safeRollback(conn);
+            bean.setErrorMessage(ERR_INVALID_ARGUMENT);
         } catch (DatabaseException | SQLException e) {
+            safeRollback(conn);
             bean.setErrorMessage(ERR_SYSTEM);
         }
     }
@@ -240,138 +235,133 @@ public class BookTutorController {
         String username = sm.getCurrentUser(token).getUsername();
 
         // Fase 1: riserva del budget (write transaction)
-        // Il budget viene scalato e committato subito: le sessioni concorrenti
-        // vedranno il nuovo saldo e non potranno procedere se insufficiente.
         BigDecimal price;
         try (Connection conn = DaoFactory.getInstance().getConnection()) {
             if (conn != null) conn.setAutoCommit(false);
-            try {
-                Lesson less = lesson.selectLesson(conn, bean.getLessonId());
-                Student stu = student.selectStudent(conn, username);
-                if (!stu.hasSufficientBudget(less.getListedPrice())) {
-                    bean.setErrorMessage(ERR_INSUFFICIENT_BUDGET);
-                    return;
-                }
-                price = less.getListedPrice();
-                stu.deductBudget(price);
-                student.updateStudentBudget(conn, stu.getUsername(), stu.getBudget());
-                if (conn != null) conn.commit();
-            } catch (LessonNotFoundException e) {
-                safeRollback(conn);
-                bean.setErrorMessage(ERR_LESSON_NOT_FOUND);
-                return;
-            } catch (UserNotFoundException e) {
-                safeRollback(conn);
-                bean.setErrorMessage(ERR_ACCOUNT_NOT_FOUND);
-                return;
-            } catch (IllegalArgumentException e) {
-                safeRollback(conn);
-                bean.setErrorMessage(ERR_INVALID_ARGUMENT);
-                return;
-            } catch (DatabaseException | SQLException e) {
-                safeRollback(conn);
-                bean.setErrorMessage(ERR_SYSTEM);
-                return;
-            }
+            price = performPhase1(conn, bean, username);
         } catch (DatabaseException | SQLException e) {
             bean.setErrorMessage(ERR_SYSTEM);
             return;
         }
+        if (price == null) return;
 
         // Fase 2: chiama il gateway PayPal fuori da qualsiasi connessione DB.
-        // Tenere aperta la connessione durante questa attesa esaurirebbe il pool.
-        // Se PayPal fallisce il budget viene ripristinato: lo student non ha perso nulla.
         String paymentRef;
         try {
             paymentRef = paymentGateway.processPayment(price);
             bean.setPaymentRef(paymentRef);
-        } catch (PaymentException e) {
-            // Propaga il messaggio del gateway (es. "Payment declined"): e' informazione utile all'utente
-            restoreBudget(username, price);
-            bean.setErrorMessage(e.getMessage());
-            return;
-        } catch (PaymentTimeoutException e) {
+        } catch (PaymentException | PaymentTimeoutException e) {
             restoreBudget(username, price);
             bean.setErrorMessage(e.getMessage());
             return;
         }
 
         // Fase 3: transazione DB atomica.
-        // Il budget e' gia' stato scalato in Fase 1: qui si inserisce solo il booking.
-        // Se qualcosa va storto, restoreBudget() ripristina il saldo.
         try (Connection conn = DaoFactory.getInstance().getConnection()) {
             if (conn != null) conn.setAutoCommit(false);
-            try {
-                Student stu = student.selectStudent(conn, username);
-                Lesson less = lesson.selectLesson(conn, bean.getLessonId());
-                Booking booking1 = new Booking.Builder()
-                        .lesson(less)
-                        .student(stu)
-                        .bookedAt(LocalDateTime.now())
-                        .pricePaid(less.getListedPrice())
-                        .paymentStatus(PaymentStatus.PENDING)
-                        .paymentRef(paymentRef)
-                        .build();
-                bean.setId(booking.insertBooking(conn, booking1));
-                // updatePaymentStatus applica la FSM del model: lancia IllegalArgumentException
-                // se la transizione PENDING -> PAID non e' valida
-                booking1.updatePaymentStatus(PaymentStatus.PAID);
-                booking.updateStatus(conn, bean.getId(), PaymentStatus.PAID);
-                // Notifica al tutor: il pagamento è stato ricevuto
-                Notification tutorNotif = new Notification.Builder()
-                        .recipientUsername(less.getExpertise().getTutor().getUsername())
-                        .senderUsername(username)
-                        .message(username + " has completed the payment for the lesson on "
-                                + less.getStartTime().format(MSG_FMT)
-                                + " (" + less.getExpertise().getSubcategory().getName() + ")"
-                                + ". Amount: €" + price.toPlainString()
-                                + ". The booking is now confirmed.")
-                        .type(NotificationType.PAYMENT_CONFIRMED)
-                        .targetId(bean.getId())
-                        .timestamp(LocalDateTime.now())
-                        .build();
-                notification.insert(conn, tutorNotif);
-                // Notifica allo student: conferma di sistema del pagamento
-                Notification studentNotif = new Notification.Builder()
-                        .recipientUsername(username)
-                        .message("Your payment of €" + price.toPlainString()
-                                + " for the lesson on " + less.getStartTime().format(MSG_FMT)
-                                + " (" + less.getExpertise().getSubcategory().getName() + ")"
-                                + " was successful. Transaction ref: " + paymentRef + ".")
-                        .type(NotificationType.PAYMENT_CONFIRMED)
-                        .targetId(bean.getId())
-                        .timestamp(LocalDateTime.now())
-                        .build();
-                notification.insert(conn, studentNotif);
-                if (conn != null) conn.commit();
-            } catch (LessonNotFoundException e) {
-                safeRollback(conn);
-                safeRefund(paymentRef, price);
-                restoreBudget(username, price);
-                bean.setErrorMessage(ERR_LESSON_NOT_FOUND);
-            } catch (UserNotFoundException e) {
-                safeRollback(conn);
-                safeRefund(paymentRef, price);
-                restoreBudget(username, price);
-                bean.setErrorMessage(ERR_ACCOUNT_NOT_FOUND);
-            } catch (BookingNotFoundException e) {
-                safeRollback(conn);
-                safeRefund(paymentRef, price);
-                restoreBudget(username, price);
-                bean.setErrorMessage("Booking not found.");
-            } catch (IllegalArgumentException e) {
-                // FSM violation: stato della booking non valido
-                safeRollback(conn);
-                safeRefund(paymentRef, price);
-                restoreBudget(username, price);
-                bean.setErrorMessage(ERR_INVALID_ARGUMENT);
-            } catch (DatabaseException | SQLException e) {
-                safeRollback(conn);
-                safeRefund(paymentRef, price);
-                restoreBudget(username, price);
-                bean.setErrorMessage(ERR_SYSTEM);
-            }
+            performPhase3Inner(conn, bean, username, price, paymentRef);
         } catch (DatabaseException | SQLException e) {
+            safeRefund(paymentRef, price);
+            restoreBudget(username, price);
+            bean.setErrorMessage(ERR_SYSTEM);
+        }
+    }
+
+    private BigDecimal performPhase1(Connection conn, BookingBean bean, String username) {
+        try {
+            Lesson less = lesson.selectLesson(conn, bean.getLessonId());
+            Student stu = student.selectStudent(conn, username);
+            if (!stu.hasSufficientBudget(less.getListedPrice())) {
+                bean.setErrorMessage(ERR_INSUFFICIENT_BUDGET);
+                return null;
+            }
+            BigDecimal price = less.getListedPrice();
+            stu.deductBudget(price);
+            student.updateStudentBudget(conn, stu.getUsername(), stu.getBudget());
+            if (conn != null) conn.commit();
+            return price;
+        } catch (LessonNotFoundException e) {
+            safeRollback(conn);
+            bean.setErrorMessage(ERR_LESSON_NOT_FOUND);
+            return null;
+        } catch (UserNotFoundException e) {
+            safeRollback(conn);
+            bean.setErrorMessage(ERR_ACCOUNT_NOT_FOUND);
+            return null;
+        } catch (IllegalArgumentException e) {
+            safeRollback(conn);
+            bean.setErrorMessage(ERR_INVALID_ARGUMENT);
+            return null;
+        } catch (DatabaseException | SQLException e) {
+            safeRollback(conn);
+            bean.setErrorMessage(ERR_SYSTEM);
+            return null;
+        }
+    }
+
+    private void performPhase3Inner(Connection conn, BookingBean bean,
+                                    String username, BigDecimal price, String paymentRef) {
+        try {
+            Student stu = student.selectStudent(conn, username);
+            Lesson less = lesson.selectLesson(conn, bean.getLessonId());
+            Booking booking1 = new Booking.Builder()
+                    .lesson(less)
+                    .student(stu)
+                    .bookedAt(LocalDateTime.now())
+                    .pricePaid(less.getListedPrice())
+                    .paymentStatus(PaymentStatus.PENDING)
+                    .paymentRef(paymentRef)
+                    .build();
+            bean.setId(booking.insertBooking(conn, booking1));
+            booking1.updatePaymentStatus(PaymentStatus.PAID);
+            booking.updateStatus(conn, bean.getId(), PaymentStatus.PAID);
+            Notification tutorNotif = new Notification.Builder()
+                    .recipientUsername(less.getExpertise().getTutor().getUsername())
+                    .senderUsername(username)
+                    .message(username + " has completed the payment for the lesson on "
+                            + less.getStartTime().format(MSG_FMT)
+                            + " (" + less.getExpertise().getSubcategory().getName() + ")"
+                            + ". Amount: €" + price.toPlainString()
+                            + ". The booking is now confirmed.")
+                    .type(NotificationType.PAYMENT_CONFIRMED)
+                    .targetId(bean.getId())
+                    .timestamp(LocalDateTime.now())
+                    .build();
+            notification.insert(conn, tutorNotif);
+            Notification studentNotif = new Notification.Builder()
+                    .recipientUsername(username)
+                    .message("Your payment of €" + price.toPlainString()
+                            + " for the lesson on " + less.getStartTime().format(MSG_FMT)
+                            + " (" + less.getExpertise().getSubcategory().getName() + ")"
+                            + " was successful. Transaction ref: " + paymentRef + ".")
+                    .type(NotificationType.PAYMENT_CONFIRMED)
+                    .targetId(bean.getId())
+                    .timestamp(LocalDateTime.now())
+                    .build();
+            notification.insert(conn, studentNotif);
+            if (conn != null) conn.commit();
+        } catch (LessonNotFoundException e) {
+            safeRollback(conn);
+            safeRefund(paymentRef, price);
+            restoreBudget(username, price);
+            bean.setErrorMessage(ERR_LESSON_NOT_FOUND);
+        } catch (UserNotFoundException e) {
+            safeRollback(conn);
+            safeRefund(paymentRef, price);
+            restoreBudget(username, price);
+            bean.setErrorMessage(ERR_ACCOUNT_NOT_FOUND);
+        } catch (BookingNotFoundException e) {
+            safeRollback(conn);
+            safeRefund(paymentRef, price);
+            restoreBudget(username, price);
+            bean.setErrorMessage("Booking not found.");
+        } catch (IllegalArgumentException e) {
+            safeRollback(conn);
+            safeRefund(paymentRef, price);
+            restoreBudget(username, price);
+            bean.setErrorMessage(ERR_INVALID_ARGUMENT);
+        } catch (DatabaseException | SQLException e) {
+            safeRollback(conn);
             safeRefund(paymentRef, price);
             restoreBudget(username, price);
             bean.setErrorMessage(ERR_SYSTEM);
@@ -406,17 +396,21 @@ public class BookTutorController {
     private void restoreBudget(String username, BigDecimal amount) {
         try (Connection conn = DaoFactory.getInstance().getConnection()) {
             if (conn != null) conn.setAutoCommit(false);
-            try {
-                Student stu = student.selectStudent(conn, username);
-                stu.addBudget(amount);
-                student.updateStudentBudget(conn, stu.getUsername(), stu.getBudget());
-                if (conn != null) conn.commit();
-            } catch (Exception e) {
-                safeRollback(conn);
-                LOGGER.warning("Budget restore failed for " + username + ": " + e.getMessage());
-            }
+            doRestoreBudget(conn, username, amount);
         } catch (Exception e) {
             LOGGER.warning("Budget restore connection failed for " + username + ": " + e.getMessage());
+        }
+    }
+
+    private void doRestoreBudget(Connection conn, String username, BigDecimal amount) {
+        try {
+            Student stu = student.selectStudent(conn, username);
+            stu.addBudget(amount);
+            student.updateStudentBudget(conn, stu.getUsername(), stu.getBudget());
+            if (conn != null) conn.commit();
+        } catch (Exception e) {
+            safeRollback(conn);
+            LOGGER.warning("Budget restore failed for " + username + ": " + e.getMessage());
         }
     }
 

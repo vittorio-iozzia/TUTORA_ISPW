@@ -64,7 +64,8 @@ public class HomeGfxController {
     private static final String NAV_MY_LESSONS  = "My Lessons";
     private static final String ICON_HOME       = "fas-home";
     private static final String ICON_COG        = "fas-cog";
-    private static final String FXML_MESSAGES   = "/fxml/messages_content.fxml";
+    private static final String FXML_MESSAGES    = "/fxml/messages_content.fxml";
+    private static final String ICON_USER_CIRCLE = "fas-user-circle";
 
     // ----------------------------------------------------------------
     // FXML fields
@@ -100,9 +101,6 @@ public class HomeGfxController {
 
     private final GetNotificationsController notifController = new GetNotificationsController();
 
-    /** Username dell'utente corrente — serve per AvatarManager listener. */
-    private String currentUsername;
-
     // ----------------------------------------------------------------
     // Inizializzazione
     // ----------------------------------------------------------------
@@ -112,8 +110,8 @@ public class HomeGfxController {
         String token = SceneManager.getInstance().getSessionToken();
         Session session = SessionManager.getInstance().getSession(token);
 
-        currentUsername = session.getUser().getUsername();
-        String initial  = String.valueOf(currentUsername.charAt(0)).toUpperCase();
+        String currentUsername = session.getUser().getUsername();
+        String initial         = String.valueOf(currentUsername.charAt(0)).toUpperCase();
 
         String roleLabelText = resolveRoleLabel(session);
         usernameLabel.setText(currentUsername);
@@ -135,8 +133,12 @@ public class HomeGfxController {
         AvatarManager.addListener(() -> updateAvatarDisplay(currentUsername));
         updateAvatarDisplay(currentUsername);
 
-        instance = this;
+        setInstance(this);
         startMsgBadgePoller(session);
+    }
+
+    private static void setInstance(HomeGfxController ctrl) {
+        instance = ctrl;
     }
 
     // ----------------------------------------------------------------
@@ -151,7 +153,7 @@ public class HomeGfxController {
                 avatarMenu.hide();
             } else {
                 avatarMenu.show(headerProfileBtn,
-                        javafx.geometry.Side.BOTTOM, 0, 4);
+                        Side.BOTTOM, 0, 4);
             }
         });
     }
@@ -161,14 +163,14 @@ public class HomeGfxController {
         menu.getStyleClass().add("avatar-menu");
 
         if (session.isStudent()) {
-            MenuItem profileItem = menuItem("My Profile", "fas-user-circle");
+            MenuItem profileItem = menuItem("My Profile", ICON_USER_CIRCLE);
             profileItem.setOnAction(e -> openStudentProfilePage());
             menu.getItems().add(profileItem);
             menu.getItems().add(new SeparatorMenuItem());
         }
 
         if (session.isTutor()) {
-            MenuItem profileItem = menuItem("My Profile", "fas-user-circle");
+            MenuItem profileItem = menuItem("My Profile", ICON_USER_CIRCLE);
             profileItem.setOnAction(e -> openTutorProfilePage());
             menu.getItems().add(profileItem);
             menu.getItems().add(new SeparatorMenuItem());
@@ -240,7 +242,7 @@ public class HomeGfxController {
             avatarLabel.setVisible(true);
             avatarLabel.setManaged(true);
 
-            FontIcon icon = new FontIcon("fas-user-circle");
+            FontIcon icon = new FontIcon(ICON_USER_CIRCLE);
             icon.setIconSize(40);
             icon.getStyleClass().add("header-profile-icon");
             headerProfileBtn.setGraphic(icon);
@@ -276,7 +278,7 @@ public class HomeGfxController {
         if (defaultMainAreaChildren != null) {
             mainArea.getChildren().setAll(defaultMainAreaChildren);
         }
-        headerTitle.setText("Dashboard");
+        headerTitle.setText(NAV_DASHBOARD);
         if (!navButtons.isEmpty()) setActive(navButtons.get(0));
     }
 
@@ -428,7 +430,7 @@ public class HomeGfxController {
             dialog.setMinWidth(460);
             dialog.setMinHeight(400);
 
-            Parent sceneRoot = (Parent) notifBtn.getScene().getRoot();
+            Parent sceneRoot = notifBtn.getScene().getRoot();
             sceneRoot.setEffect(new GaussianBlur(8));
             dialog.setOnHiding(e -> {
                 notifCtrl.markVisibleAsRead();

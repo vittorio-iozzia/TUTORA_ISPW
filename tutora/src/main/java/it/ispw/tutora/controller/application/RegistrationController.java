@@ -100,18 +100,22 @@ public class RegistrationController {
         // null-check su conn: in modalita' Demo/Json getConnection() restituisce null
         try (Connection conn = DaoFactory.getInstance().getConnection()) {
             if (conn != null) conn.setAutoCommit(false);
-            try {
-                studentDao.insert(conn, student);
-                if (conn != null) conn.commit();
-                bean.setSuccess(true);
-            } catch (DuplicateUserException e) {
-                safeRollback(conn);
-                bean.setErrorMessage("Username or email already present.");
-            } catch (DatabaseException | SQLException e) {
-                safeRollback(conn);
-                bean.setErrorMessage("System Error. Try later.");
-            }
+            executeInsert(conn, student, bean);
         } catch (DatabaseException | SQLException e) {
+            bean.setErrorMessage("System Error. Try later.");
+        }
+    }
+
+    private void executeInsert(Connection conn, Student student, RegistrationBean bean) {
+        try {
+            studentDao.insert(conn, student);
+            if (conn != null) conn.commit();
+            bean.setSuccess(true);
+        } catch (DuplicateUserException e) {
+            safeRollback(conn);
+            bean.setErrorMessage("Username or email already present.");
+        } catch (DatabaseException | SQLException e) {
+            safeRollback(conn);
             bean.setErrorMessage("System Error. Try later.");
         }
     }

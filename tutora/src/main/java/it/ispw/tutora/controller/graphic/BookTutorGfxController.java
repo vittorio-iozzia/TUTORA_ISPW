@@ -9,9 +9,7 @@ import it.ispw.tutora.view.SceneManager;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
@@ -26,11 +24,10 @@ import java.time.Duration;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
-import java.util.logging.Logger;
 
 public class BookTutorGfxController {
 
-    private static final Logger LOGGER = Logger.getLogger(BookTutorGfxController.class.getName());
+    private static final String APP_FIELD_DESC = "app-field-desc";
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("EEE, d MMM yyyy", Locale.ENGLISH);
     private static final DateTimeFormatter TIME_FMT =
@@ -64,7 +61,6 @@ public class BookTutorGfxController {
     private HBox        durationBtnsRow;
     private Label       priceValueLabel;
     private ToggleGroup lessonGroup;
-    private ToggleGroup durationGroup;
 
     private final BookTutorController bookTutorController = new BookTutorController();
 
@@ -178,7 +174,7 @@ public class BookTutorGfxController {
         labelRow.getChildren().addAll(stepBadge, sectionTitle, star);
 
         Label desc = new Label("Choose the slot that best fits your schedule.");
-        desc.getStyleClass().add("app-field-desc");
+        desc.getStyleClass().add(APP_FIELD_DESC);
         desc.setWrapText(true);
 
         sectionBox.getChildren().addAll(labelRow, desc);
@@ -235,9 +231,9 @@ public class BookTutorGfxController {
         Label subjectLbl = new Label(subject);
         subjectLbl.setStyle("-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #1C2621; -fx-font-family: 'Segoe UI';");
 
-        Label dateLbl = buildMetaRow("fas-calendar", dateStr);
-        Label timeLbl = buildMetaRow("fas-clock", timeStr);
-        Label modeLbl = buildMetaRow(lesson.isRemote() ? "fas-wifi" : "fas-map-marker-alt", modeStr);
+        Label dateLbl = buildMetaRow(dateStr);
+        Label timeLbl = buildMetaRow(timeStr);
+        Label modeLbl = buildMetaRow(modeStr);
         info.getChildren().addAll(subjectLbl, dateLbl, timeLbl, modeLbl);
 
         // Price
@@ -264,10 +260,7 @@ public class BookTutorGfxController {
         return card;
     }
 
-    private Label buildMetaRow(String iconLiteral, String text) {
-        // Returns a Label with icon prefix rendered as text (FontIcon not embeddable in Label)
-        // Use HBox approach but return as standalone element via wrapper trick:
-        // Actually just return plain label; we style via CSS
+    private Label buildMetaRow(String text) {
         Label lbl = new Label(text);
         lbl.getStyleClass().add("lesson-meta");
         return lbl;
@@ -292,7 +285,7 @@ public class BookTutorGfxController {
         labelRow.getChildren().addAll(stepBadge, sectionTitle, star);
 
         Label desc = new Label("Choose how long your lesson will be. Options depend on the available slot.");
-        desc.getStyleClass().add("app-field-desc");
+        desc.getStyleClass().add(APP_FIELD_DESC);
         desc.setWrapText(true);
 
         durationBtnsRow = buildDurationBtnsRow();
@@ -305,7 +298,7 @@ public class BookTutorGfxController {
     private HBox buildDurationBtnsRow() {
         HBox box = new HBox(10);
         box.setAlignment(Pos.CENTER_LEFT);
-        durationGroup = new ToggleGroup();
+        ToggleGroup durationGroup = new ToggleGroup();
 
         double[] durations = {1.0, 1.5, 2.0};
         String[] labels    = {"1 hour", "1h 30m", "2 hours"};
@@ -317,7 +310,7 @@ public class BookTutorGfxController {
             btn.setToggleGroup(durationGroup);
             btn.setUserData(dur);
             btn.selectedProperty().addListener((obs, o, n) -> {
-                if (n) { selectedDurationHours = dur; updatePriceDisplay(); }
+                if (Boolean.TRUE.equals(n)) { selectedDurationHours = dur; updatePriceDisplay(); }
             });
             box.getChildren().add(btn);
         }
@@ -344,7 +337,7 @@ public class BookTutorGfxController {
         row.getChildren().addAll(label, priceValueLabel);
 
         Label note = new Label("Final price confirmed by the tutor upon acceptance.");
-        note.getStyleClass().add("app-field-desc");
+        note.getStyleClass().add(APP_FIELD_DESC);
         note.setWrapText(true);
 
         box.getChildren().addAll(row, note);
