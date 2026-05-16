@@ -74,9 +74,9 @@ public class BookTutorGfxController {
 
     @FXML
     private void initialize() {
-        setupIconBox(headerIconWrap, headerIconView, "1f4c5", 22); // 📅 calendar
-        setupIconBox(bannerIconWrap, bannerIconView, "1f9d1", 13); // 🧑 person (warm skin tone)
-        setupIconBox(successIconWrap, successIconView, "2705", 34); // ✅ check
+        setupIconBox(headerIconWrap, headerIconView, "1f4c5", 22);
+        setupIconBox(bannerIconWrap, bannerIconView, "1f9d1", 13);
+        setupIconBox(successIconWrap, successIconView, "2705", 34);
         applyRoundedClip(dialogRoot);
     }
 

@@ -40,6 +40,11 @@
         <HBox styleClass="sidebar-user-footer" alignment="CENTER_LEFT" spacing="10">
             <StackPane fx:id="sidebarAvatarPane" styleClass="avatar-circle">
                 <Label fx:id="avatarLabel" text="U" styleClass="avatar-letter"/>
+                <!-- Foto profilo (mostrata al posto della lettera quando impostata) -->
+                <ImageView fx:id="sidebarAvatarImage"
+                           fitWidth="40" fitHeight="40"
+                           preserveRatio="false"
+                           visible="false" managed="false"/>
             </StackPane>
             <VBox spacing="2">
                 <Label fx:id="usernameLabel" text="" styleClass="sidebar-username"/>
@@ -65,7 +70,7 @@
     <!-- ============================================================ -->
     <!-- RIGHT – Main area                                            -->
     <!-- ============================================================ -->
-    <VBox HBox.hgrow="ALWAYS" styleClass="main-area" spacing="0">
+    <VBox fx:id="mainArea" HBox.hgrow="ALWAYS" styleClass="main-area" spacing="0">
 
         <!-- Header (white bar) -->
         <HBox styleClass="main-header" alignment="CENTER_LEFT" spacing="16">

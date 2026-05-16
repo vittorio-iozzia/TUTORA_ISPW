@@ -1,11 +1,13 @@
 package it.ispw.tutora.controller.graphic;
 
 import it.ispw.tutora.dao.BookingDao;
+import it.ispw.tutora.dao.TutorExpertiseDao;
 import it.ispw.tutora.dao.factory.DaoFactory;
 import it.ispw.tutora.enums.PaymentStatus;
+import it.ispw.tutora.enums.Status;
 import it.ispw.tutora.model.Booking;
-import it.ispw.tutora.model.Student;
 import it.ispw.tutora.model.Tutor;
+import it.ispw.tutora.model.TutorExpertise;
 import it.ispw.tutora.model.session.Session;
 import it.ispw.tutora.model.session.SessionManager;
 import it.ispw.tutora.view.AvatarManager;
@@ -33,29 +35,31 @@ import javafx.util.Duration;
 import java.io.File;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
- * Graphic controller per la vista student_profile.fxml.
+ * Graphic controller per la vista tutor_profile.fxml.
  *
- * Popola hero, stats, about, interessi, contatto e preferiti
- * dai dati reali del model. Gestisce foto profilo con FileChooser
- * e sincronizza il cambio via {@link AvatarManager}.
+ * Popola hero, stats, about, expertise e contatto dai dati reali
+ * del model. Gestisce foto profilo con FileChooser e sincronizza
+ * il cambio via {@link AvatarManager}.
  */
-public class StudentProfileGfxController {
+public class TutorProfileGfxController {
 
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("MMMM yyyy");
 
     // ----------------------------------------------------------------
-    // Callback di navigazione (pattern statico)
+    // Callback di navigazione
     // ----------------------------------------------------------------
 
     private static Runnable onBackCallback;
 
     public static void setOnBackCallback(Runnable r) {
         onBackCallback = r;
+    }
+
+    public static Runnable getOnBackCallback() {
+        return onBackCallback;
     }
 
     // ----------------------------------------------------------------
@@ -73,35 +77,31 @@ public class StudentProfileGfxController {
     @FXML private Label heroStatusLabel;
     @FXML private Label heroMemberSinceLabel;
 
-    @FXML private VBox  budgetCard;
-    @FXML private VBox  lessonsCard;
-    @FXML private VBox  tutorsCard;
     @FXML private VBox  ratingCard;
+    @FXML private VBox  reviewsCard;
+    @FXML private VBox  expertisesCard;
+    @FXML private VBox  lessonsCard;
 
-    @FXML private Label budgetValueLabel;
-    @FXML private Label lessonsValueLabel;
-    @FXML private Label tutorsValueLabel;
     @FXML private Label ratingValueLabel;
+    @FXML private Label reviewsValueLabel;
+    @FXML private Label expertisesValueLabel;
+    @FXML private Label lessonsValueLabel;
 
     @FXML private Label    aboutLabel;
     @FXML private TextArea aboutTextArea;
     @FXML private HBox     descEditButtons;
     @FXML private Button   editDescBtn;
 
-    @FXML private FlowPane interestsPills;
-    @FXML private Label interestsEmptyLabel;
-
-    @FXML private VBox  preferredTutorsBox;
-    @FXML private Label preferredTutorsEmptyLabel;
+    @FXML private FlowPane expertisePills;
+    @FXML private Label expertisesEmptyLabel;
 
     @FXML private Label emailLabel;
     @FXML private Label joinedLabel;
     @FXML private Label accountStatusLabel;
-    @FXML private Label budgetDetailLabel;
+    @FXML private Label ratingDetailLabel;
 
-    // username corrente (usato per AvatarManager)
-    private String  username;
-    private Student currentStudent;
+    private String username;
+    private Tutor  currentTutor;
 
     // ----------------------------------------------------------------
     // Inizializzazione
@@ -111,186 +111,160 @@ public class StudentProfileGfxController {
     public void initialize() {
         String token = SceneManager.getInstance().getSessionToken();
         Session session = SessionManager.getInstance().getSession(token);
-        Student student = (Student) session.getUser();
-        this.username = student.getUsername();
-        this.currentStudent = student;
+        Tutor tutor = (Tutor) session.getUser();
+        this.username = tutor.getUsername();
+        this.currentTutor = tutor;
 
-        populateHero(student);
-        populateAbout(student);
-        populateInterests(student);
-        populatePreferredTutors(student);
-        populateContact(student);
-        populateBudgetStat(student);
-        loadBookingStats(student);
+        populateHero(tutor);
+        populateRatingStat(tutor);
+        populateAbout(tutor);
+        populateContact(tutor);
+        loadExpertisesAndLessons(tutor);
 
         setupAvatarInteraction();
         applyStoredAvatar();
 
-        addHoverLift(budgetCard);
-        addHoverLift(lessonsCard);
-        addHoverLift(tutorsCard);
         addHoverLift(ratingCard);
+        addHoverLift(reviewsCard);
+        addHoverLift(expertisesCard);
+        addHoverLift(lessonsCard);
     }
 
     // ----------------------------------------------------------------
     // Hero
     // ----------------------------------------------------------------
 
-    private void populateHero(Student student) {
-        String initial = String.valueOf(student.getName().charAt(0)).toUpperCase();
+    private void populateHero(Tutor tutor) {
+        String initial = String.valueOf(tutor.getName().charAt(0)).toUpperCase();
         heroAvatarLabel.setText(initial);
-        heroNameLabel.setText(student.getName() + " " + student.getSurname());
-        heroUsernameLabel.setText("@" + student.getUsername());
-        heroRoleLabel.setText("STUDENT");
-        heroStatusLabel.setText(student.isActive() ? "Active" : "Inactive");
-        heroStatusLabel.setStyle(student.isActive()
+        heroNameLabel.setText(tutor.getName() + " " + tutor.getSurname());
+        heroUsernameLabel.setText("@" + tutor.getUsername());
+        heroRoleLabel.setText("TUTOR");
+        heroStatusLabel.setText(tutor.isActive() ? "Active" : "Inactive");
+        heroStatusLabel.setStyle(tutor.isActive()
                 ? "-fx-background-color: #27AE60; -fx-text-fill: white;"
                 : "-fx-background-color: #E74C3C; -fx-text-fill: white;");
         heroMemberSinceLabel.setText(
-                student.getCreatedAt() != null
-                        ? student.getCreatedAt().format(DATE_FMT)
+                tutor.getCreatedAt() != null
+                        ? tutor.getCreatedAt().format(DATE_FMT)
                         : "—");
+    }
+
+    // ----------------------------------------------------------------
+    // Rating (sincrono dal model)
+    // ----------------------------------------------------------------
+
+    private void populateRatingStat(Tutor tutor) {
+        if (tutor.getRating() != null && tutor.getRating().doubleValue() > 0) {
+            String ratingStr = String.format("%.1f ★", tutor.getRating().doubleValue());
+            ratingValueLabel.setText(ratingStr);
+            ratingDetailLabel.setText(ratingStr + "  (" + tutor.getRatingCount() + " reviews)");
+        } else {
+            ratingValueLabel.setText("—");
+            ratingDetailLabel.setText("No reviews yet");
+        }
+        animateStat(reviewsValueLabel, tutor.getRatingCount(), "%.0f");
     }
 
     // ----------------------------------------------------------------
     // About
     // ----------------------------------------------------------------
 
-    private void populateAbout(Student student) {
-        String desc = student.getDescription();
+    private void populateAbout(Tutor tutor) {
+        String desc = tutor.getDescription();
         aboutLabel.setText(desc != null && !desc.isBlank()
                 ? desc
-                : "No description added yet. Tell the world about yourself and what you want to learn!");
-    }
-
-    // ----------------------------------------------------------------
-    // Interessi
-    // ----------------------------------------------------------------
-
-    private void populateInterests(Student student) {
-        if (student.getInterests().isEmpty()) {
-            interestsPills.setManaged(false);
-            interestsPills.setVisible(false);
-            interestsEmptyLabel.setManaged(true);
-            interestsEmptyLabel.setVisible(true);
-        } else {
-            for (var cat : student.getInterests()) {
-                Label pill = new Label(cat.getName());
-                pill.getStyleClass().add("interest-pill");
-                interestsPills.getChildren().add(pill);
-            }
-        }
-    }
-
-    // ----------------------------------------------------------------
-    // Tutor preferiti
-    // ----------------------------------------------------------------
-
-    private void populatePreferredTutors(Student student) {
-        List<Tutor> preferred = student.getPreferredTutors();
-        if (preferred.isEmpty()) {
-            preferredTutorsBox.setManaged(false);
-            preferredTutorsBox.setVisible(false);
-            preferredTutorsEmptyLabel.setManaged(true);
-            preferredTutorsEmptyLabel.setVisible(true);
-        } else {
-            for (Tutor t : preferred) {
-                Label row = new Label("⭐ " + t.getName() + " " + t.getSurname()
-                        + " (@" + t.getUsername() + ")");
-                row.getStyleClass().add("profile-field-value");
-                preferredTutorsBox.getChildren().add(row);
-            }
-        }
+                : "No description added yet. Tell students about yourself, your teaching style, and your areas of expertise!");
     }
 
     // ----------------------------------------------------------------
     // Contatto
     // ----------------------------------------------------------------
 
-    private void populateContact(Student student) {
-        emailLabel.setText(student.getEmail());
-        joinedLabel.setText(student.getCreatedAt() != null
-                ? student.getCreatedAt().format(DATE_FMT)
+    private void populateContact(Tutor tutor) {
+        emailLabel.setText(tutor.getEmail());
+        joinedLabel.setText(tutor.getCreatedAt() != null
+                ? tutor.getCreatedAt().format(DATE_FMT)
                 : "—");
-        accountStatusLabel.setText(student.isActive() ? "Verified & Active" : "Inactive");
+        accountStatusLabel.setText(tutor.isActive() ? "Verified & Active" : "Inactive");
     }
 
     // ----------------------------------------------------------------
-    // Stats – budget (sincrono, dal model)
+    // Expertise + Lessons insegnate (asincrono, da DAO)
     // ----------------------------------------------------------------
 
-    private void populateBudgetStat(Student student) {
-        double budget = student.getBudget() != null
-                ? student.getBudget().doubleValue() : 0.0;
-        animateStat(budgetValueLabel, budget, "€%.2f");
-        budgetDetailLabel.setText(student.getBudget() != null
-                ? "€" + student.getBudget().toPlainString()
-                : "—");
-        ratingValueLabel.setText("—");
-    }
+    private void loadExpertisesAndLessons(Tutor tutor) {
+        String uname = tutor.getUsername();
 
-    // ----------------------------------------------------------------
-    // Stats – lessons e tutors (asincrono, da BookingDao)
-    // ----------------------------------------------------------------
-
-    private void loadBookingStats(Student student) {
-        String uname = student.getUsername();
         Task<long[]> task = new Task<>() {
             @Override
             protected long[] call() throws Exception {
-                BookingDao dao = DaoFactory.getInstance().createBookingDao();
-                List<Booking> bookings = dao.findByStudent(
-                        DaoFactory.getInstance().getConnection(), uname);
+                // Expertise approvate
+                TutorExpertiseDao expDao = DaoFactory.getInstance().createTutorExpertiseDao();
+                List<TutorExpertise> expertises = expDao.findByTutor(null, uname);
+                List<TutorExpertise> approved = expertises.stream()
+                        .filter(e -> e.getStatus() == Status.APPROVED)
+                        .toList();
 
-                long paidCount = bookings.stream()
+                // Lezioni insegnate (booking PAID)
+                BookingDao bookingDao = DaoFactory.getInstance().createBookingDao();
+                List<Booking> bookings = bookingDao.findByTutor(
+                        DaoFactory.getInstance().getConnection(), uname);
+                long paidLessons = bookings.stream()
                         .filter(b -> b.getPaymentStatus() == PaymentStatus.PAID)
                         .count();
 
-                // Tutor distinti (via expertise chain — funziona in demo mode)
-                Set<String> tutorSet = bookings.stream()
-                        .filter(b -> b.getPaymentStatus() == PaymentStatus.PAID)
-                        .map(b -> {
-                            try {
-                                return b.getLesson().getExpertise().getTutor().getUsername();
-                            } catch (Exception ex) {
-                                return null;
-                            }
-                        })
-                        .filter(t -> t != null)
-                        .collect(Collectors.toSet());
+                // Comunica la lista approvate al FX thread tramite side channel
+                Platform.runLater(() -> populateExpertisePills(approved));
 
-                return new long[]{ paidCount, tutorSet.size() };
+                return new long[]{ approved.size(), paidLessons };
             }
         };
 
         task.setOnSucceeded(e -> Platform.runLater(() -> {
             long[] res = task.getValue();
-            animateStat(lessonsValueLabel, res[0], "%.0f");
-            animateStat(tutorsValueLabel,  res[1], "%.0f");
+            animateStat(expertisesValueLabel, res[0], "%.0f");
+            animateStat(lessonsValueLabel,    res[1], "%.0f");
         }));
 
         task.setOnFailed(e -> Platform.runLater(() -> {
+            expertisesValueLabel.setText("—");
             lessonsValueLabel.setText("—");
-            tutorsValueLabel.setText("—");
         }));
 
-        Thread t = new Thread(task, "profile-stats");
+        Thread t = new Thread(task, "tutor-profile-stats");
         t.setDaemon(true);
         t.start();
     }
 
+    /** Popola le pill delle expertise approvate nella sezione About. */
+    private void populateExpertisePills(List<TutorExpertise> approved) {
+        if (approved.isEmpty()) {
+            expertisePills.setManaged(false);
+            expertisePills.setVisible(false);
+            expertisesEmptyLabel.setManaged(true);
+            expertisesEmptyLabel.setVisible(true);
+        } else {
+            for (TutorExpertise exp : approved) {
+                String name = exp.getSubcategory() != null
+                        ? exp.getSubcategory().getName() : "—";
+                Label pill = new Label(name);
+                pill.getStyleClass().add("interest-pill");
+                expertisePills.getChildren().add(pill);
+            }
+        }
+    }
+
     // ----------------------------------------------------------------
-    // Avatar — caricamento e interazione
+    // Avatar
     // ----------------------------------------------------------------
 
-    /** Applica l'avatar salvato in AvatarManager (se presente). */
     private void applyStoredAvatar() {
         if (AvatarManager.hasAvatar(username)) {
             displayAvatar(AvatarManager.getAvatarPath(username));
         }
     }
 
-    /** Mostra l'immagine nell'avatar circle e nasconde la lettera. */
     private void displayAvatar(String filePath) {
         String uri = new File(filePath).toURI().toString();
         Image img = new Image(uri, 88, 88, false, true);
@@ -303,32 +277,24 @@ public class StudentProfileGfxController {
         heroAvatarLabel.setManaged(false);
     }
 
-    /**
-     * Configura hover (mostra overlay camera) e click (apre FileChooser)
-     * sull'avatar StackPane.
-     */
     private void setupAvatarInteraction() {
         heroAvatarPane.setCursor(Cursor.HAND);
 
-        // Fade-in overlay on hover
         heroAvatarPane.setOnMouseEntered(e -> {
             FadeTransition ft = new FadeTransition(Duration.millis(150), avatarOverlay);
             ft.setToValue(1.0);
             ft.play();
         });
 
-        // Fade-out overlay on exit
         heroAvatarPane.setOnMouseExited(e -> {
             FadeTransition ft = new FadeTransition(Duration.millis(150), avatarOverlay);
             ft.setToValue(0.0);
             ft.play();
         });
 
-        // Click → FileChooser
         heroAvatarPane.setOnMouseClicked(e -> handleChangeAvatar());
     }
 
-    /** Apre il FileChooser e aggiorna l'avatar se l'utente sceglie un file. */
     private void handleChangeAvatar() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Scegli immagine profilo");
@@ -339,9 +305,7 @@ public class StudentProfileGfxController {
         File file = chooser.showOpenDialog(heroAvatarPane.getScene().getWindow());
         if (file != null) {
             String path = file.getAbsolutePath();
-            // Salva in AvatarManager (notifica automaticamente HomeGfxController)
             AvatarManager.setAvatarPath(username, path);
-            // Aggiorna visualmente l'avatar nella pagina profilo
             displayAvatar(path);
         }
     }
@@ -374,8 +338,8 @@ public class StudentProfileGfxController {
     /** Entra in modalità modifica descrizione. */
     @FXML
     public void handleEditDescription() {
-        aboutTextArea.setText(currentStudent.getDescription() != null
-                ? currentStudent.getDescription() : "");
+        aboutTextArea.setText(currentTutor.getDescription() != null
+                ? currentTutor.getDescription() : "");
         aboutLabel.setVisible(false);
         aboutLabel.setManaged(false);
         aboutTextArea.setVisible(true);
@@ -390,9 +354,9 @@ public class StudentProfileGfxController {
     @FXML
     public void handleSaveDescription() {
         String newDesc = aboutTextArea.getText().trim();
-        currentStudent.setDescription(newDesc.isBlank() ? null : newDesc);
+        currentTutor.setDescription(newDesc.isBlank() ? null : newDesc);
         aboutLabel.setText(newDesc.isBlank()
-                ? "No description added yet. Tell the world about yourself and what you want to learn!"
+                ? "No description added yet. Tell students about yourself, your teaching style, and your areas of expertise!"
                 : newDesc);
         exitEditMode();
     }

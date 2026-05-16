@@ -809,7 +809,7 @@
 }
 
 .profile-topbar-title {
-    -fx-font-size: 17px;
+    -fx-font-size: 19px;
     -fx-font-weight: bold;
     -fx-text-fill: #1C2621;
     -fx-font-family: "Segoe UI";
@@ -867,14 +867,14 @@
 }
 
 .profile-hero-name {
-    -fx-font-size: 24px;
+    -fx-font-size: 28px;
     -fx-font-weight: bold;
     -fx-text-fill: white;
     -fx-font-family: "Segoe UI";
 }
 
 .profile-hero-username {
-    -fx-font-size: 14px;
+    -fx-font-size: 15px;
     -fx-text-fill: rgba(255,255,255,0.70);
     -fx-font-family: "Segoe UI";
 }
@@ -890,7 +890,6 @@
 }
 
 .profile-hero-status-badge {
-    -fx-background-color: #27AE60;
     -fx-background-radius: 20;
     -fx-text-fill: white;
     -fx-font-size: 11px;
@@ -924,7 +923,7 @@
 }
 
 .profile-stat-value {
-    -fx-font-size: 20px;
+    -fx-font-size: 22px;
     -fx-font-weight: bold;
     -fx-text-fill: #1C2621;
     -fx-font-family: "Segoe UI";
@@ -941,7 +940,7 @@
 }
 
 .profile-section-title {
-    -fx-font-size: 15px;
+    -fx-font-size: 16px;
     -fx-font-weight: 600;
     -fx-text-fill: #1C2621;
     -fx-font-family: "Segoe UI";
@@ -952,10 +951,10 @@
 }
 
 .profile-section-body {
-    -fx-font-size: 13px;
+    -fx-font-size: 14px;
     -fx-text-fill: #5C6661;
     -fx-font-family: "Segoe UI";
-    -fx-line-spacing: 2;
+    -fx-line-spacing: 3;
 }
 
 .profile-section-empty {
@@ -965,14 +964,14 @@
 }
 
 .profile-field-label {
-    -fx-font-size: 11px;
+    -fx-font-size: 12px;
     -fx-font-weight: 600;
     -fx-text-fill: #8FAF9A;
     -fx-font-family: "Segoe UI";
 }
 
 .profile-field-value {
-    -fx-font-size: 13px;
+    -fx-font-size: 14px;
     -fx-text-fill: #1C2621;
     -fx-font-family: "Segoe UI";
 }
@@ -1000,6 +999,106 @@
     -fx-font-size: 12px;
     -fx-font-family: "Segoe UI";
     -fx-padding: 4 12;
+}
+
+/* ── Profile avatar – overlay per cambio foto ──────────────────── */
+
+/*
+ * Overlay scuro circolare che appare sull'hover dell'avatar.
+ * La dimensione replica esattamente profile-hero-avatar (88×88, radius 44).
+ */
+.profile-avatar-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.48);
+    -fx-background-radius: 44;
+    -fx-min-width: 88px;
+    -fx-min-height: 88px;
+    -fx-max-width: 88px;
+    -fx-max-height: 88px;
+    -fx-cursor: hand;
+}
+
+.profile-avatar-camera-icon {
+    -fx-icon-color: white;
+}
+
+.profile-avatar-change-label {
+    -fx-font-size: 10px;
+    -fx-font-weight: 700;
+    -fx-text-fill: rgba(255, 255, 255, 0.92);
+    -fx-font-family: "Segoe UI";
+}
+
+/* ── Profile description editor ──────────────────────────────── */
+
+/* Piccolo pulsante matita accanto al titolo "About Me" */
+.profile-edit-btn {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+    -fx-padding: 4 8;
+    -fx-cursor: hand;
+}
+
+.profile-edit-btn:hover {
+    -fx-background-color: #EAF3EC;
+}
+
+/* TextArea di modifica descrizione */
+.profile-desc-editor {
+    -fx-font-size: 14px;
+    -fx-font-family: "Segoe UI";
+    -fx-text-fill: #1C2621;
+    -fx-background-color: #F7FAF8;
+    -fx-background-radius: 8;
+    -fx-border-color: #C6DDD0;
+    -fx-border-radius: 8;
+    -fx-border-width: 1.5;
+    -fx-padding: 10 12;
+}
+
+.profile-desc-editor:focused {
+    -fx-border-color: #2A5C45;
+    -fx-background-color: white;
+}
+
+/* Pulsante "Save" verde */
+.profile-save-btn {
+    -fx-background-color: #2A5C45;
+    -fx-background-radius: 8;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI";
+    -fx-padding: 7 20;
+    -fx-cursor: hand;
+}
+
+.profile-save-btn:hover {
+    -fx-background-color: #1E4433;
+}
+
+/* Pulsante "Cancel" grigio chiaro */
+.profile-cancel-btn {
+    -fx-background-color: #F0F4F1;
+    -fx-background-radius: 8;
+    -fx-text-fill: #5C6661;
+    -fx-font-size: 13px;
+    -fx-font-family: "Segoe UI";
+    -fx-padding: 7 20;
+    -fx-cursor: hand;
+}
+
+.profile-cancel-btn:hover {
+    -fx-background-color: #E2EBE6;
+}
+
+/* Sidebar avatar quando mostra l'immagine (clip circolare applicato via Java) */
+.avatar-circle-img {
+    -fx-background-color: transparent;
+    -fx-background-radius: 20;
+    -fx-min-width: 40px;
+    -fx-min-height: 40px;
+    -fx-max-width: 40px;
+    -fx-max-height: 40px;
 }
 
 /* ================================================================

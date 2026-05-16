@@ -335,6 +335,7 @@ public class StudentContentController {
         profileBtn.getStyleClass().add("profile-btn");
         HBox.setHgrow(profileBtn, Priority.ALWAYS);
         profileBtn.setMaxWidth(Double.MAX_VALUE);
+        profileBtn.setOnAction(e -> HomeGfxController.navigateToTutorPublicProfile(tutor));
         Button bookBtn = new Button("Book");
         bookBtn.getStyleClass().add("book-btn");
         HBox.setHgrow(bookBtn, Priority.ALWAYS);

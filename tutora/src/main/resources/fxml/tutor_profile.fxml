@@ -8,7 +8,7 @@
 
 <VBox xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="it.ispw.tutora.controller.graphic.StudentProfileGfxController"
+      fx:controller="it.ispw.tutora.controller.graphic.TutorProfileGfxController"
       styleClass="profile-root"
       stylesheets="@../css/home.css"
       spacing="0">
@@ -36,14 +36,11 @@
 
                 <!-- Avatar con overlay per cambio foto -->
                 <StackPane fx:id="heroAvatarPane" styleClass="profile-hero-avatar">
-                    <!-- Lettera iniziale (default) -->
-                    <Label fx:id="heroAvatarLabel" text="S" styleClass="profile-hero-avatar-letter"/>
-                    <!-- Foto profilo (visibile dopo il caricamento) -->
+                    <Label fx:id="heroAvatarLabel" text="T" styleClass="profile-hero-avatar-letter"/>
                     <ImageView fx:id="heroAvatarImage"
                                fitWidth="88" fitHeight="88"
                                preserveRatio="false"
                                visible="false" managed="false"/>
-                    <!-- Overlay scuro con icona camera — appare sull'hover -->
                     <StackPane fx:id="avatarOverlay" styleClass="profile-avatar-overlay" opacity="0">
                         <VBox spacing="4" alignment="CENTER">
                             <FontIcon iconLiteral="fas-camera" iconSize="18" styleClass="profile-avatar-camera-icon"/>
@@ -57,8 +54,8 @@
                     <Label fx:id="heroNameLabel"     text="" styleClass="profile-hero-name"/>
                     <Label fx:id="heroUsernameLabel" text="" styleClass="profile-hero-username"/>
                     <HBox spacing="10" alignment="CENTER_LEFT">
-                        <Label fx:id="heroRoleLabel"   text="STUDENT" styleClass="profile-hero-role-badge"/>
-                        <Label fx:id="heroStatusLabel" text="Active"  styleClass="profile-hero-status-badge"/>
+                        <Label fx:id="heroRoleLabel"   text="TUTOR"  styleClass="profile-hero-role-badge"/>
+                        <Label fx:id="heroStatusLabel" text="Active" styleClass="profile-hero-status-badge"/>
                     </HBox>
                 </VBox>
 
@@ -72,48 +69,6 @@
             <!-- ── Stats row ─────────────────────────────────────── -->
             <HBox spacing="16">
 
-                <VBox fx:id="budgetCard" styleClass="profile-stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
-                      spacing="8" alignment="CENTER_LEFT">
-                    <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
-                    <HBox spacing="12" alignment="CENTER_LEFT">
-                        <StackPane styleClass="stat-icon-wrap,stat-green">
-                            <FontIcon iconLiteral="fas-wallet" iconSize="15" styleClass="stat-icon"/>
-                        </StackPane>
-                        <VBox spacing="2">
-                            <Label fx:id="budgetValueLabel" text="€0.00" styleClass="profile-stat-value"/>
-                            <Label text="Available Budget" styleClass="stat-label"/>
-                        </VBox>
-                    </HBox>
-                </VBox>
-
-                <VBox fx:id="lessonsCard" styleClass="profile-stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
-                      spacing="8" alignment="CENTER_LEFT">
-                    <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
-                    <HBox spacing="12" alignment="CENTER_LEFT">
-                        <StackPane styleClass="stat-icon-wrap,stat-blue">
-                            <FontIcon iconLiteral="fas-book-open" iconSize="15" styleClass="stat-icon"/>
-                        </StackPane>
-                        <VBox spacing="2">
-                            <Label fx:id="lessonsValueLabel" text="…" styleClass="profile-stat-value"/>
-                            <Label text="Lessons Booked" styleClass="stat-label"/>
-                        </VBox>
-                    </HBox>
-                </VBox>
-
-                <VBox fx:id="tutorsCard" styleClass="profile-stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
-                      spacing="8" alignment="CENTER_LEFT">
-                    <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
-                    <HBox spacing="12" alignment="CENTER_LEFT">
-                        <StackPane styleClass="stat-icon-wrap,stat-purple">
-                            <FontIcon iconLiteral="fas-user-graduate" iconSize="15" styleClass="stat-icon"/>
-                        </StackPane>
-                        <VBox spacing="2">
-                            <Label fx:id="tutorsValueLabel" text="…" styleClass="profile-stat-value"/>
-                            <Label text="Tutors Worked With" styleClass="stat-label"/>
-                        </VBox>
-                    </HBox>
-                </VBox>
-
                 <VBox fx:id="ratingCard" styleClass="profile-stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
                       spacing="8" alignment="CENTER_LEFT">
                     <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
@@ -123,7 +78,49 @@
                         </StackPane>
                         <VBox spacing="2">
                             <Label fx:id="ratingValueLabel" text="—" styleClass="profile-stat-value"/>
-                            <Label text="Avg. Rating Given" styleClass="stat-label"/>
+                            <Label text="Avg. Rating" styleClass="stat-label"/>
+                        </VBox>
+                    </HBox>
+                </VBox>
+
+                <VBox fx:id="reviewsCard" styleClass="profile-stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                      spacing="8" alignment="CENTER_LEFT">
+                    <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+                    <HBox spacing="12" alignment="CENTER_LEFT">
+                        <StackPane styleClass="stat-icon-wrap,stat-blue">
+                            <FontIcon iconLiteral="fas-comments" iconSize="15" styleClass="stat-icon"/>
+                        </StackPane>
+                        <VBox spacing="2">
+                            <Label fx:id="reviewsValueLabel" text="0" styleClass="profile-stat-value"/>
+                            <Label text="Total Reviews" styleClass="stat-label"/>
+                        </VBox>
+                    </HBox>
+                </VBox>
+
+                <VBox fx:id="expertisesCard" styleClass="profile-stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                      spacing="8" alignment="CENTER_LEFT">
+                    <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+                    <HBox spacing="12" alignment="CENTER_LEFT">
+                        <StackPane styleClass="stat-icon-wrap,stat-green">
+                            <FontIcon iconLiteral="fas-graduation-cap" iconSize="15" styleClass="stat-icon"/>
+                        </StackPane>
+                        <VBox spacing="2">
+                            <Label fx:id="expertisesValueLabel" text="…" styleClass="profile-stat-value"/>
+                            <Label text="Expertise Areas" styleClass="stat-label"/>
+                        </VBox>
+                    </HBox>
+                </VBox>
+
+                <VBox fx:id="lessonsCard" styleClass="profile-stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                      spacing="8" alignment="CENTER_LEFT">
+                    <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+                    <HBox spacing="12" alignment="CENTER_LEFT">
+                        <StackPane styleClass="stat-icon-wrap,stat-purple">
+                            <FontIcon iconLiteral="fas-book-open" iconSize="15" styleClass="stat-icon"/>
+                        </StackPane>
+                        <VBox spacing="2">
+                            <Label fx:id="lessonsValueLabel" text="…" styleClass="profile-stat-value"/>
+                            <Label text="Lessons Taught" styleClass="stat-label"/>
                         </VBox>
                     </HBox>
                 </VBox>
@@ -157,27 +154,15 @@
                         </HBox>
                     </VBox>
 
-                    <!-- Interests card -->
+                    <!-- Expertise card (lista) -->
                     <VBox styleClass="profile-section-card" spacing="12">
                         <padding><Insets top="22" right="24" bottom="22" left="24"/></padding>
                         <HBox spacing="10" alignment="CENTER_LEFT">
-                            <FontIcon iconLiteral="fas-heart" iconSize="13" styleClass="profile-section-icon"/>
-                            <Label text="Learning Interests" styleClass="profile-section-title"/>
+                            <FontIcon iconLiteral="fas-graduation-cap" iconSize="13" styleClass="profile-section-icon"/>
+                            <Label text="Expertise Areas" styleClass="profile-section-title"/>
                         </HBox>
-                        <FlowPane fx:id="interestsPills" hgap="8" vgap="6" alignment="CENTER_LEFT"/>
-                        <Label fx:id="interestsEmptyLabel" text="No interests added yet."
-                               styleClass="profile-section-empty" managed="false" visible="false"/>
-                    </VBox>
-
-                    <!-- Preferred tutors card -->
-                    <VBox styleClass="profile-section-card" spacing="12">
-                        <padding><Insets top="22" right="24" bottom="22" left="24"/></padding>
-                        <HBox spacing="10" alignment="CENTER_LEFT">
-                            <FontIcon iconLiteral="fas-heart" iconSize="13" styleClass="profile-section-icon"/>
-                            <Label text="Preferred Tutors" styleClass="profile-section-title"/>
-                        </HBox>
-                        <VBox fx:id="preferredTutorsBox" spacing="6"/>
-                        <Label fx:id="preferredTutorsEmptyLabel" text="No preferred tutors yet."
+                        <FlowPane fx:id="expertisePills" hgap="8" vgap="6" alignment="CENTER_LEFT"/>
+                        <Label fx:id="expertisesEmptyLabel" text="No approved expertise yet."
                                styleClass="profile-section-empty" managed="false" visible="false"/>
                     </VBox>
 
@@ -219,10 +204,10 @@
                         </HBox>
 
                         <HBox spacing="10" alignment="CENTER_LEFT">
-                            <FontIcon iconLiteral="fas-wallet" iconSize="12" styleClass="profile-field-icon"/>
+                            <FontIcon iconLiteral="fas-star" iconSize="12" styleClass="profile-field-icon"/>
                             <VBox spacing="2">
-                                <Label text="Budget" styleClass="profile-field-label"/>
-                                <Label fx:id="budgetDetailLabel" text="" styleClass="profile-field-value"/>
+                                <Label text="Rating" styleClass="profile-field-label"/>
+                                <Label fx:id="ratingDetailLabel" text="" styleClass="profile-field-value"/>
                             </VBox>
                         </HBox>
                     </VBox>

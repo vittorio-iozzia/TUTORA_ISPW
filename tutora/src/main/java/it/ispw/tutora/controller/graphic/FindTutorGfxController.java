@@ -396,11 +396,15 @@ public class FindTutorGfxController {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
+        Button profileBtn = new Button("Profile");
+        profileBtn.getStyleClass().add("profile-btn");
+        profileBtn.setOnAction(e -> HomeGfxController.navigateToTutorPublicProfile(tutor));
+
         Button bookBtn = new Button("Book");
         bookBtn.getStyleClass().add("book-btn");
         bookBtn.setOnAction(e -> openBookingDialog(tutor));
 
-        footer.getChildren().addAll(spacer, bookBtn);
+        footer.getChildren().addAll(spacer, profileBtn, bookBtn);
         return footer;
     }
 

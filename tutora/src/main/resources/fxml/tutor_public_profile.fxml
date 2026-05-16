@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="it.ispw.tutora.controller.graphic.TutorPublicProfileGfxController"
+      styleClass="profile-root"
+      stylesheets="@../css/home.css"
+      spacing="0">
+
+    <!-- Top bar -->
+    <HBox styleClass="profile-topbar" alignment="CENTER_LEFT" spacing="12">
+        <Button onAction="#handleClose" styleClass="profile-back-btn">
+            <graphic><FontIcon iconLiteral="fas-arrow-left" iconSize="13" styleClass="profile-back-icon"/></graphic>
+        </Button>
+        <Label text="Tutor Profile" styleClass="profile-topbar-title"/>
+    </HBox>
+
+    <ScrollPane fitToWidth="true" styleClass="profile-scroll" VBox.vgrow="ALWAYS">
+        <VBox styleClass="profile-content" spacing="24">
+            <padding><Insets top="36" right="48" bottom="36" left="48"/></padding>
+
+            <!-- Hero card -->
+            <HBox styleClass="profile-hero-card" spacing="28" alignment="CENTER_LEFT">
+                <padding><Insets top="32" right="36" bottom="32" left="36"/></padding>
+
+                <StackPane fx:id="heroAvatarPane" styleClass="profile-hero-avatar">
+                    <Label fx:id="heroAvatarLabel" text="T" styleClass="profile-hero-avatar-letter"/>
+                    <ImageView fx:id="heroAvatarImage"
+                               fitWidth="88" fitHeight="88"
+                               preserveRatio="false"
+                               visible="false" managed="false"/>
+                </StackPane>
+
+                <VBox spacing="8" HBox.hgrow="ALWAYS">
+                    <Label fx:id="heroNameLabel"     text="" styleClass="profile-hero-name"/>
+                    <Label fx:id="heroUsernameLabel" text="" styleClass="profile-hero-username"/>
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label fx:id="heroRoleLabel"   text="TUTOR"  styleClass="profile-hero-role-badge"/>
+                        <Label fx:id="heroStatusLabel" text="Active" styleClass="profile-hero-status-badge"/>
+                    </HBox>
+                </VBox>
+
+                <VBox spacing="4" alignment="CENTER_RIGHT">
+                    <Label text="Member since" styleClass="profile-hero-since-label"/>
+                    <Label fx:id="heroMemberSinceLabel" text="" styleClass="profile-hero-since-value"/>
+                </VBox>
+            </HBox>
+
+            <!-- Stats row -->
+            <HBox spacing="16">
+
+                <VBox fx:id="ratingCard" styleClass="profile-stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                      spacing="8" alignment="CENTER_LEFT">
+                    <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+                    <HBox spacing="12" alignment="CENTER_LEFT">
+                        <StackPane styleClass="stat-icon-wrap,stat-orange">
+                            <FontIcon iconLiteral="fas-star" iconSize="15" styleClass="stat-icon"/>
+                        </StackPane>
+                        <VBox spacing="2">
+                            <Label fx:id="ratingValueLabel" text="—" styleClass="profile-stat-value"/>
+                            <Label text="Avg. Rating" styleClass="stat-label"/>
+                        </VBox>
+                    </HBox>
+                </VBox>
+
+                <VBox fx:id="reviewsCard" styleClass="profile-stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                      spacing="8" alignment="CENTER_LEFT">
+                    <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+                    <HBox spacing="12" alignment="CENTER_LEFT">
+                        <StackPane styleClass="stat-icon-wrap,stat-blue">
+                            <FontIcon iconLiteral="fas-comments" iconSize="15" styleClass="stat-icon"/>
+                        </StackPane>
+                        <VBox spacing="2">
+                            <Label fx:id="reviewsValueLabel" text="0" styleClass="profile-stat-value"/>
+                            <Label text="Total Reviews" styleClass="stat-label"/>
+                        </VBox>
+                    </HBox>
+                </VBox>
+
+                <VBox fx:id="expertisesCard" styleClass="profile-stat-card" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                      spacing="8" alignment="CENTER_LEFT">
+                    <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+                    <HBox spacing="12" alignment="CENTER_LEFT">
+                        <StackPane styleClass="stat-icon-wrap,stat-green">
+                            <FontIcon iconLiteral="fas-graduation-cap" iconSize="15" styleClass="stat-icon"/>
+                        </StackPane>
+                        <VBox spacing="2">
+                            <Label fx:id="expertisesValueLabel" text="…" styleClass="profile-stat-value"/>
+                            <Label text="Expertise Areas" styleClass="stat-label"/>
+                        </VBox>
+                    </HBox>
+                </VBox>
+
+            </HBox>
+
+            <!-- Bottom two columns -->
+            <HBox spacing="16" alignment="TOP_LEFT">
+
+                <!-- Left column -->
+                <VBox spacing="16" HBox.hgrow="ALWAYS">
+
+                    <VBox styleClass="profile-section-card" spacing="12">
+                        <padding><Insets top="22" right="24" bottom="22" left="24"/></padding>
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <FontIcon iconLiteral="fas-user" iconSize="13" styleClass="profile-section-icon"/>
+                            <Label text="About Me" styleClass="profile-section-title"/>
+                        </HBox>
+                        <Label fx:id="aboutLabel" text="" styleClass="profile-section-body" wrapText="true"/>
+                    </VBox>
+
+                    <VBox styleClass="profile-section-card" spacing="12">
+                        <padding><Insets top="22" right="24" bottom="22" left="24"/></padding>
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <FontIcon iconLiteral="fas-graduation-cap" iconSize="13" styleClass="profile-section-icon"/>
+                            <Label text="Expertise Areas" styleClass="profile-section-title"/>
+                        </HBox>
+                        <FlowPane fx:id="expertisePills" hgap="8" vgap="6" alignment="CENTER_LEFT"/>
+                        <Label fx:id="expertisesEmptyLabel" text="No approved expertise yet."
+                               styleClass="profile-section-empty" managed="false" visible="false"/>
+                    </VBox>
+
+                </VBox>
+
+                <!-- Right column -->
+                <VBox spacing="16" prefWidth="300" minWidth="280">
+
+                    <VBox styleClass="profile-section-card" spacing="14">
+                        <padding><Insets top="22" right="24" bottom="22" left="24"/></padding>
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <FontIcon iconLiteral="fas-address-card" iconSize="13" styleClass="profile-section-icon"/>
+                            <Label text="Info" styleClass="profile-section-title"/>
+                        </HBox>
+
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <FontIcon iconLiteral="fas-calendar-alt" iconSize="12" styleClass="profile-field-icon"/>
+                            <VBox spacing="2">
+                                <Label text="Joined" styleClass="profile-field-label"/>
+                                <Label fx:id="joinedLabel" text="" styleClass="profile-field-value"/>
+                            </VBox>
+                        </HBox>
+
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <FontIcon iconLiteral="fas-shield-alt" iconSize="12" styleClass="profile-field-icon"/>
+                            <VBox spacing="2">
+                                <Label text="Account" styleClass="profile-field-label"/>
+                                <Label fx:id="accountStatusLabel" text="" styleClass="profile-field-value"/>
+                            </VBox>
+                        </HBox>
+
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <FontIcon iconLiteral="fas-star" iconSize="12" styleClass="profile-field-icon"/>
+                            <VBox spacing="2">
+                                <Label text="Rating" styleClass="profile-field-label"/>
+                                <Label fx:id="ratingDetailLabel" text="" styleClass="profile-field-value"/>
+                            </VBox>
+                        </HBox>
+                    </VBox>
+
+                </VBox>
+            </HBox>
+
+        </VBox>
+    </ScrollPane>
+
+</VBox>

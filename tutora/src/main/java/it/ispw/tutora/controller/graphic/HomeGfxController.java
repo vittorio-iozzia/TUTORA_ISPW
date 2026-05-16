@@ -1,9 +1,9 @@
 package it.ispw.tutora.controller.graphic;
 
-import it.ispw.tutora.bean.NotificationBean;
 import it.ispw.tutora.controller.application.GetNotificationsController;
 import it.ispw.tutora.model.session.Session;
 import it.ispw.tutora.model.session.SessionManager;
+import it.ispw.tutora.view.AvatarManager;
 import it.ispw.tutora.view.SceneManager;
 import it.ispw.tutora.view.home.DashboardComponent;
 import it.ispw.tutora.view.home.DashboardFactory;
@@ -13,10 +13,8 @@ import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.effect.GaussianBlur;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -24,11 +22,13 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.kordamp.ikonli.javafx.FontIcon;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,30 +42,51 @@ import java.util.logging.Logger;
  *   - aggiorna header (titolo sezione, avatar)
  *   - delega la costruzione del contenuto principale a {@link DashboardFactory}
  *   - gestisce il menu a tendina sull'avatar sidebar (Profile / Settings / Logout)
+ *   - carica il profilo in-place a livello di mainArea (fix nested ScrollPane)
+ *   - sincronizza l'immagine avatar con {@link AvatarManager}
  */
 public class HomeGfxController {
 
     private static final Logger LOGGER =
             Logger.getLogger(HomeGfxController.class.getName());
 
-    @FXML private VBox sidebarNav;
+    // ----------------------------------------------------------------
+    // FXML fields
+    // ----------------------------------------------------------------
+
+    @FXML private VBox      mainArea;          // tutta l'area destra (header + contenuto)
+    @FXML private VBox      sidebarNav;
     @FXML private StackPane sidebarAvatarPane;
-    @FXML private Label roleBadgeLabel;
-    @FXML private Label usernameLabel;
-    @FXML private Label roleLabel;
-    @FXML private Label avatarLabel;
-    @FXML private Label headerTitle;
-    @FXML private Button headerProfileBtn;
+    @FXML private Label     roleBadgeLabel;
+    @FXML private Label     usernameLabel;
+    @FXML private Label     roleLabel;
+    @FXML private Label     avatarLabel;
+    @FXML private ImageView sidebarAvatarImage;
+    @FXML private Label     headerTitle;
+    @FXML private Button    headerProfileBtn;
     @FXML private Button    notifBtn;
     @FXML private Label     notifBadge;
     @FXML private ImageView notifIconView;
-    @FXML private VBox contentArea;
+    @FXML private VBox      contentArea;
+
+    // ----------------------------------------------------------------
+    // Stato interno
+    // ----------------------------------------------------------------
+
+    /** Singleton dell'istanza corrente — usato per navigazione statica tra controller. */
+    private static HomeGfxController instance;
 
     private final List<Button> navButtons = new ArrayList<>();
     private Button activeNavBtn;
 
+    /** Snapshot dell'area destra quando mostriamo il profilo a schermo intero. */
+    private List<Node> defaultMainAreaChildren;
+
     private ContextMenu avatarMenu;
     private final GetNotificationsController notifController = new GetNotificationsController();
+
+    /** Username dell'utente corrente — serve per AvatarManager listener. */
+    private String currentUsername;
 
     // ----------------------------------------------------------------
     // Inizializzazione
@@ -76,11 +97,11 @@ public class HomeGfxController {
         String token = SceneManager.getInstance().getSessionToken();
         Session session = SessionManager.getInstance().getSession(token);
 
-        String username = session.getUser().getUsername();
-        String initial  = String.valueOf(username.charAt(0)).toUpperCase();
+        currentUsername = session.getUser().getUsername();
+        String initial  = String.valueOf(currentUsername.charAt(0)).toUpperCase();
 
         String roleLabel_ = resolveRoleLabel(session);
-        usernameLabel.setText(username);
+        usernameLabel.setText(currentUsername);
         roleLabel.setText(roleLabel_);
         roleBadgeLabel.setText(roleLabel_.toUpperCase());
         avatarLabel.setText(initial);
@@ -92,6 +113,15 @@ public class HomeGfxController {
         dashboard.decorateContent(contentArea);
         refreshNotifBadge();
         loadNotifBellEmoji();
+
+        // Salva i figli originali di mainArea per il restore dopo il profilo
+        defaultMainAreaChildren = new ArrayList<>(mainArea.getChildren());
+
+        // Sincronizza avatar all'avvio e ad ogni cambio successivo
+        AvatarManager.addListener(() -> updateAvatarDisplay(currentUsername));
+        updateAvatarDisplay(currentUsername);
+
+        instance = this;
     }
 
     // ----------------------------------------------------------------
@@ -101,7 +131,6 @@ public class HomeGfxController {
     private void setupAvatarMenu(Session session) {
         avatarMenu = buildAvatarMenu(session);
 
-        // Dropdown aperto dal pulsante profilo in alto a destra
         headerProfileBtn.setOnAction(e -> {
             if (avatarMenu.isShowing()) {
                 avatarMenu.hide();
@@ -117,8 +146,15 @@ public class HomeGfxController {
         menu.getStyleClass().add("avatar-menu");
 
         if (session.isStudent()) {
-            MenuItem profileItem = menuItem("My Profile",  "fas-user-circle");
-            profileItem.setOnAction(e -> openProfilePage());
+            MenuItem profileItem = menuItem("My Profile", "fas-user-circle");
+            profileItem.setOnAction(e -> openStudentProfilePage());
+            menu.getItems().add(profileItem);
+            menu.getItems().add(new SeparatorMenuItem());
+        }
+
+        if (session.isTutor()) {
+            MenuItem profileItem = menuItem("My Profile", "fas-user-circle");
+            profileItem.setOnAction(e -> openTutorProfilePage());
             menu.getItems().add(profileItem);
             menu.getItems().add(new SeparatorMenuItem());
         }
@@ -131,9 +167,10 @@ public class HomeGfxController {
 
         MenuItem logoutItem = menuItem("Log out", "fas-sign-out-alt");
         logoutItem.setOnAction(e -> SceneManager.getInstance().showLogin());
-        // Colour the logout icon red directly — CSS .graphic selectors are unreliable on MenuItem
+        // Stesso stile del pulsante logout in sidebar: size 16 + classe CSS rossa
         if (logoutItem.getGraphic() instanceof FontIcon icon) {
-            icon.setStyle("-fx-icon-color: #9C2121;");
+            icon.setIconSize(16);
+            icon.getStyleClass().add("logout-icon");
         }
         menu.getItems().add(logoutItem);
 
@@ -149,26 +186,104 @@ public class HomeGfxController {
     }
 
     // ----------------------------------------------------------------
-    // Profile page (full-size window)
+    // Sincronizzazione avatar (sidebar + header)
     // ----------------------------------------------------------------
 
-    private void openProfilePage() {
-        try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/fxml/student_profile.fxml"));
-            Parent root = loader.load();
+    /**
+     * Aggiorna sidebar avatar e header avatar in base all'immagine
+     * registrata in {@link AvatarManager} per l'utente corrente.
+     */
+    private void updateAvatarDisplay(String username) {
+        if (AvatarManager.hasAvatar(username)) {
+            String path = AvatarManager.getAvatarPath(username);
+            String uri  = new File(path).toURI().toString();
 
-            Stage profileStage = new Stage();
-            profileStage.initOwner(sidebarAvatarPane.getScene().getWindow());
-            profileStage.initModality(Modality.WINDOW_MODAL);
-            profileStage.setTitle("My Profile – TUTORA");
-            profileStage.setScene(new Scene(root, 1100, 700));
-            profileStage.setMinWidth(900);
-            profileStage.setMinHeight(620);
-            profileStage.show();
-        } catch (IOException e) {
-            LOGGER.warning("Cannot open profile page: " + e.getMessage());
+            // Sidebar: mostra ImageView con clip circolare, nasconde la lettera
+            Image img = new Image(uri, 40, 40, false, true);
+            sidebarAvatarImage.setImage(img);
+            Circle sidebarClip = new Circle(20, 20, 20);
+            sidebarAvatarImage.setClip(sidebarClip);
+            sidebarAvatarImage.setVisible(true);
+            sidebarAvatarImage.setManaged(true);
+            avatarLabel.setVisible(false);
+            avatarLabel.setManaged(false);
+
+            // Header: sostituisce il FontIcon con un ImageView circolare
+            Image headerImg = new Image(uri, 40, 40, false, true);
+            ImageView headerIv = new ImageView(headerImg);
+            headerIv.setFitWidth(40);
+            headerIv.setFitHeight(40);
+            headerIv.setPreserveRatio(false);
+            Circle headerClip = new Circle(20, 20, 20);
+            headerIv.setClip(headerClip);
+            headerProfileBtn.setGraphic(headerIv);
+
+        } else {
+            // Nessun avatar: ripristina lettera e FontIcon
+            sidebarAvatarImage.setVisible(false);
+            sidebarAvatarImage.setManaged(false);
+            avatarLabel.setVisible(true);
+            avatarLabel.setManaged(true);
+
+            FontIcon icon = new FontIcon("fas-user-circle");
+            icon.setIconSize(40);
+            icon.getStyleClass().add("header-profile-icon");
+            headerProfileBtn.setGraphic(icon);
         }
+    }
+
+    // ----------------------------------------------------------------
+    // Profilo utente — navigazione interna (swap mainArea)
+    // ----------------------------------------------------------------
+
+    /**
+     * Carica l'FXML del profilo direttamente in mainArea, sostituendo
+     * header + contentArea. Questo garantisce che la ScrollPane interna
+     * del profilo riceva un'altezza vincolata e funzioni correttamente.
+     */
+    private void swapMainArea(String fxmlPath) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+            Node content = loader.load();
+            VBox.setVgrow(content, Priority.ALWAYS);
+            mainArea.getChildren().setAll(content);
+        } catch (Exception e) {
+            LOGGER.severe("Cannot load main area fragment: " + fxmlPath + " — " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Ripristina l'area destra allo stato originale (header + contentArea).
+     * Chiamato dal callback "Back" dei controller di profilo.
+     */
+    public void restoreMainArea() {
+        if (defaultMainAreaChildren != null) {
+            mainArea.getChildren().setAll(defaultMainAreaChildren);
+        }
+        headerTitle.setText("Dashboard");
+        if (!navButtons.isEmpty()) setActive(navButtons.get(0));
+    }
+
+    /**
+     * Permette ad altri controller (es. FindTutorGfxController) di aprire
+     * il profilo pubblico di un tutor nella main area senza conoscere HomeGfxController.
+     */
+    public static void navigateToTutorPublicProfile(it.ispw.tutora.model.Tutor tutor) {
+        if (instance == null) return;
+        TutorPublicProfileGfxController.setTargetTutor(tutor);
+        TutorPublicProfileGfxController.setOnBackCallback(instance::restoreMainArea);
+        instance.swapMainArea("/fxml/tutor_public_profile.fxml");
+    }
+
+    private void openStudentProfilePage() {
+        StudentProfileGfxController.setOnBackCallback(this::restoreMainArea);
+        swapMainArea("/fxml/student_profile.fxml");
+    }
+
+    private void openTutorProfilePage() {
+        TutorProfileGfxController.setOnBackCallback(this::restoreMainArea);
+        swapMainArea("/fxml/tutor_profile.fxml");
     }
 
     // ----------------------------------------------------------------
@@ -197,6 +312,11 @@ public class HomeGfxController {
         btn.setMaxWidth(Double.MAX_VALUE);
         btn.getStyleClass().add("nav-item");
         btn.setOnAction(e -> {
+            // Se il profilo è aperto, ripristina prima la struttura normale
+            if (mainArea.getChildren().size() == 1
+                    && !(mainArea.getChildren().get(0) instanceof javafx.scene.layout.HBox)) {
+                mainArea.getChildren().setAll(defaultMainAreaChildren);
+            }
             setActive(btn);
             headerTitle.setText(entry.headerTitle());
             entry.action().run();
@@ -254,7 +374,7 @@ public class HomeGfxController {
             Parent root = loader.load();
             NotificationGfxController notifCtrl = loader.getController();
 
-            // Registra il callback che aggiorna "Upcoming Lessons" dopo il pagamento
+            // Callback che aggiorna "Upcoming Lessons" dopo il pagamento
             Session currentSession = SessionManager.getInstance().getSession(
                     SceneManager.getInstance().getSessionToken());
             if (currentSession.isStudent()) {
@@ -278,12 +398,9 @@ public class HomeGfxController {
             dialog.setMinWidth(460);
             dialog.setMinHeight(400);
 
-            // Sfuma lo sfondo mentre il dialog è aperto (come BookTutor)
             Parent sceneRoot = (Parent) notifBtn.getScene().getRoot();
             sceneRoot.setEffect(new GaussianBlur(8));
             dialog.setOnHiding(e -> {
-                // Marca come lette tutte le notifiche viste tranne le
-                // richieste di booking pendenti del tutor
                 notifCtrl.markVisibleAsRead();
                 sceneRoot.setEffect(null);
                 refreshNotifBadge();
