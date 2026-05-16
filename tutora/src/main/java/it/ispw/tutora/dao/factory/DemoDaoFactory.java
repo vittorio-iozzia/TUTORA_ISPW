@@ -79,6 +79,7 @@ public class DemoDaoFactory extends DaoFactory {
     private final BookingDaoDemo bookingDao = new BookingDaoDemo();
     private final TutorExpertiseDaoDemo tutorExpertiseDao = new TutorExpertiseDaoDemo();
     private final ReviewDaoDemo reviewDao = new ReviewDaoDemo();
+    private final MessageDaoDemo messageDao = new MessageDaoDemo();
 
     // Costruttore package-private: istanziata solo da DaoFactory.loadFactory()
     DemoDaoFactory() {
@@ -89,6 +90,7 @@ public class DemoDaoFactory extends DaoFactory {
             populateApplications();
             int[] availableIds = populateLessonsAndBookings(); // cattura gli id assegnati da nextId
             populateNotifications(availableIds);              // usa gli id reali, zero hardcoding
+            populateMessages();
         } catch (DatabaseException | DuplicateUserException | DuplicateApplicationException
                  | DuplicateTutorExpertiseException | DuplicateLessonException e) {
             throw new IllegalStateException("Failed to populate demo data", e);
@@ -453,6 +455,35 @@ public class DemoDaoFactory extends DaoFactory {
         notificationDao.insert(null, tutorNotif);
     }
 
+    private void populateMessages() throws DatabaseException {
+        LocalDateTime base = LocalDateTime.now().minusHours(2);
+
+        messageDao.insert(null, new Message.Builder()
+                .senderUsername(USER_STUDENT).recipientUsername(USER_TUTOR)
+                .content("Ciao! Non vedo l'ora della nostra lezione di Guitar della prossima settimana.")
+                .sentAt(base).build());
+
+        messageDao.insert(null, new Message.Builder()
+                .senderUsername(USER_TUTOR).recipientUsername(USER_STUDENT)
+                .content("Ciao Luigi! Inizieremo con la scala di Do maggiore e gli accordi di base. Prepara la chitarra!")
+                .sentAt(base.plusMinutes(6)).build());
+
+        messageDao.insert(null, new Message.Builder()
+                .senderUsername(USER_STUDENT).recipientUsername(USER_TUTOR)
+                .content("Perfetto! Devo portare qualcosa di specifico?")
+                .sentAt(base.plusMinutes(14)).build());
+
+        messageDao.insert(null, new Message.Builder()
+                .senderUsername(USER_TUTOR).recipientUsername(USER_STUDENT)
+                .content("Solo la chitarra e un quaderno. Io porto gli spartiti. A martedì!")
+                .sentAt(base.plusMinutes(22)).build());
+
+        messageDao.insert(null, new Message.Builder()
+                .senderUsername(USER_STUDENT).recipientUsername(USER_TUTOR)
+                .content("Ottimo, ci vediamo martedì allora. Grazie mille!")
+                .sentAt(base.plusMinutes(30)).build());
+    }
+
     // ----------------------------------------------------------------
     // Metodi factory
     // ----------------------------------------------------------------
@@ -492,4 +523,7 @@ public class DemoDaoFactory extends DaoFactory {
 
     @Override
     public ReviewDao createReviewDao() { return reviewDao; }
+
+    @Override
+    public MessageDao createMessageDao() { return messageDao; }
 }

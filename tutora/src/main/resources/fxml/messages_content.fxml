@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<HBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="it.ispw.tutora.controller.graphic.ChatGfxController"
+      stylesheets="@../css/home.css"
+      styleClass="chat-root"
+      spacing="0">
+
+    <!-- ── Left sidebar: contact list ── -->
+    <VBox styleClass="chat-sidebar" spacing="0" minWidth="270" prefWidth="270" maxWidth="270">
+
+        <HBox styleClass="chat-sidebar-header" alignment="CENTER_LEFT">
+            <padding><Insets top="18" right="16" bottom="18" left="20"/></padding>
+            <Label text="Conversations" styleClass="chat-sidebar-title"/>
+        </HBox>
+
+        <Separator/>
+
+        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="chat-contact-scroll">
+            <VBox fx:id="contactList" spacing="0"/>
+        </ScrollPane>
+
+    </VBox>
+
+    <!-- ── Vertical divider ── -->
+    <Region styleClass="chat-divider" minWidth="1" maxWidth="1" prefWidth="1" VBox.vgrow="ALWAYS"/>
+
+    <!-- ── Right: chat area ── -->
+    <VBox fx:id="chatMain" HBox.hgrow="ALWAYS" spacing="0">
+
+        <!-- Chat header — shown when a conversation is selected -->
+        <HBox fx:id="chatHeader" styleClass="chat-header" alignment="CENTER_LEFT"
+              spacing="14" managed="false" visible="false">
+            <padding><Insets top="14" right="20" bottom="14" left="20"/></padding>
+            <StackPane fx:id="chatHeaderAvatar" styleClass="chat-contact-avatar" minWidth="44" minHeight="44" maxWidth="44" maxHeight="44">
+                <Label fx:id="chatHeaderInitial" styleClass="chat-contact-initial"/>
+                <javafx.scene.image.ImageView fx:id="chatHeaderImageView" fitWidth="44" fitHeight="44" preserveRatio="false" smooth="true" visible="false"/>
+            </StackPane>
+            <VBox spacing="3" HBox.hgrow="ALWAYS">
+                <Label fx:id="chatHeaderName" styleClass="chat-header-name"/>
+                <Label fx:id="chatHeaderRole" styleClass="chat-header-role"/>
+            </VBox>
+        </HBox>
+
+        <!-- Empty state — shown when no conversation is selected -->
+        <VBox fx:id="emptyState" VBox.vgrow="ALWAYS" alignment="CENTER" spacing="12">
+            <Label text="💬" styleClass="chat-empty-icon"/>
+            <Label text="Select a conversation to start chatting" styleClass="chat-empty-text"/>
+            <Label text="Your messages with tutors will appear here."
+                   styleClass="chat-empty-sub" wrapText="true" textAlignment="CENTER" maxWidth="300"/>
+        </VBox>
+
+        <!-- Messages scroll area — shown when conversation is selected -->
+        <ScrollPane fx:id="messagesScroll" fitToWidth="true" VBox.vgrow="ALWAYS"
+                    styleClass="chat-messages-scroll" managed="false" visible="false">
+            <VBox fx:id="messagesContainer" styleClass="chat-messages-container" spacing="12">
+                <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+            </VBox>
+        </ScrollPane>
+
+        <!-- Input area — shown when conversation is selected -->
+        <HBox fx:id="inputArea" styleClass="chat-input-area" spacing="10"
+              alignment="CENTER" managed="false" visible="false">
+            <padding><Insets top="12" right="16" bottom="12" left="16"/></padding>
+            <TextField fx:id="messageInput" HBox.hgrow="ALWAYS"
+                       promptText="Type a message…"
+                       styleClass="chat-input"
+                       onAction="#handleSend"/>
+            <Button fx:id="sendBtn" text="Send" onAction="#handleSend"
+                    styleClass="chat-send-btn"/>
+        </HBox>
+
+    </VBox>
+
+</HBox>

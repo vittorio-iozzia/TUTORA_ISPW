@@ -109,6 +109,8 @@ public class SceneManager {
 
     public void setSessionToken(String token) { this.sessionToken = token; }
 
+    public Stage getStage() { return primaryStage; }
+
     // ----------------------------------------------------------------
     // Utility interna
     // ----------------------------------------------------------------

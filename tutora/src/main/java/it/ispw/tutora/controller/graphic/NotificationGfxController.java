@@ -1,10 +1,13 @@
 package it.ispw.tutora.controller.graphic;
 
+import it.ispw.tutora.bean.ApplicationReviewBean;
 import it.ispw.tutora.bean.BookingBean;
 import it.ispw.tutora.bean.BookingTutorBean;
 import it.ispw.tutora.bean.NotificationBean;
+import it.ispw.tutora.controller.application.ApplyToBecomeATutorController;
 import it.ispw.tutora.controller.application.BookTutorController;
 import it.ispw.tutora.controller.application.GetNotificationsController;
+import it.ispw.tutora.enums.ApplicationStatus;
 import it.ispw.tutora.enums.NotificationType;
 import it.ispw.tutora.model.Notification;
 import it.ispw.tutora.model.session.Session;
@@ -17,8 +20,12 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import org.kordamp.ikonli.javafx.FontIcon;
+import javafx.scene.paint.Color;
+import javafx.stage.Stage;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -56,9 +63,13 @@ public class NotificationGfxController {
         paymentConfirmedCallback = callback;
     }
 
-    @FXML private Label  subtitleLabel;
-    @FXML private VBox   contentContainer;
-    @FXML private Button markAllReadBtn;
+    @FXML private VBox      dialogRoot;
+    @FXML private Label     subtitleLabel;
+    @FXML private VBox      contentContainer;
+    @FXML private Button    markAllReadBtn;
+    @FXML private Button    closeBtn;
+    @FXML private StackPane headerIconWrap;
+    @FXML private ImageView headerIconView;
 
     private String  token;
     private Session session;
@@ -67,8 +78,9 @@ public class NotificationGfxController {
      *  sapere quali notifiche saltare (quelle che richiedono ancora un'azione). */
     private List<Notification> currentNotifications = List.of();
 
-    private final GetNotificationsController notifController    = new GetNotificationsController();
-    private final BookTutorController        bookTutorController = new BookTutorController();
+    private final GetNotificationsController    notifController    = new GetNotificationsController();
+    private final BookTutorController           bookTutorController = new BookTutorController();
+    private final ApplyToBecomeATutorController appController       = new ApplyToBecomeATutorController();
 
     // ----------------------------------------------------------------
     // FXML init — called automatically by FXMLLoader
@@ -78,7 +90,30 @@ public class NotificationGfxController {
     public void initialize() {
         token   = SceneManager.getInstance().getSessionToken();
         session = SessionManager.getInstance().getSession(token);
+        setupIconBox(headerIconWrap, headerIconView, "1f514", 22); // 🔔 bell
+        applyRoundedClip(dialogRoot);
         reload();
+    }
+
+    private void applyRoundedClip(VBox root) {
+        if (root == null) return;
+        javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle();
+        clip.setArcWidth(32);
+        clip.setArcHeight(32);
+        root.layoutBoundsProperty().addListener((obs, o, n) -> {
+            if (n.getWidth() > 0 && root.getClip() == null) {
+                clip.setWidth(n.getWidth());
+                clip.setHeight(n.getHeight());
+                root.widthProperty().addListener((o2, ov, nv)  -> clip.setWidth(nv.doubleValue()));
+                root.heightProperty().addListener((o2, ov, nv) -> clip.setHeight(nv.doubleValue()));
+                root.setClip(clip);
+            }
+        });
+    }
+
+    @FXML
+    private void handleClose() {
+        ((Stage) contentContainer.getScene().getWindow()).close();
     }
 
     // ----------------------------------------------------------------
@@ -120,10 +155,11 @@ public class NotificationGfxController {
      */
     private boolean isActionable(Notification n) {
         // Tutor: LESSON_BOOKED è sempre actionable (deve ancora accettare/rifiutare)
-        if (session.isTutor()   && n.getType() == NotificationType.LESSON_BOOKED) return true;
+        if (session.isTutor()   && n.getType() == NotificationType.LESSON_BOOKED)     return true;
         // Student: LESSON_ACCEPTED è SEMPRE actionable finché non viene pagata
-        // (indipendentemente dallo stato del pagamento in background)
-        if (session.isStudent() && n.getType() == NotificationType.LESSON_ACCEPTED) return true;
+        if (session.isStudent() && n.getType() == NotificationType.LESSON_ACCEPTED)   return true;
+        // Admin: APPLICATION_UPDATE è actionable finché non approva/rifiuta
+        if (session.isAdmin()   && n.getType() == NotificationType.APPLICATION_UPDATE) return true;
         return false;
     }
 
@@ -185,7 +221,7 @@ public class NotificationGfxController {
         } else {
             subtitleLabel.setText(unread + " unread notification" + (unread == 1 ? "" : "s"));
         }
-        markAllReadBtn.setDisable(unread == 0);
+        markAllReadBtn.setDisable(unread == 0 || !IN_PROGRESS_PAYMENTS.isEmpty());
 
         if (all.isEmpty()) {
             contentContainer.getChildren().add(buildEmptyState());
@@ -302,6 +338,35 @@ public class NotificationGfxController {
             confirmed.setMaxWidth(Double.MAX_VALUE);
             VBox.setMargin(confirmed, new Insets(10, 0, 0, 0));
             card.getChildren().add(confirmed);
+
+        } else if (session.isAdmin() && notif.getType() == NotificationType.APPLICATION_UPDATE) {
+            HBox actions = new HBox(8);
+            actions.setAlignment(Pos.CENTER_LEFT);
+            VBox.setMargin(actions, new Insets(8, 0, 0, 0));
+
+            Button approveBtn = new Button("✓  Approve");
+            approveBtn.getStyleClass().add("accept-btn");
+            approveBtn.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(approveBtn, Priority.ALWAYS);
+
+            Button rejectBtn = new Button("✗  Reject");
+            rejectBtn.getStyleClass().add("decline-btn");
+            rejectBtn.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(rejectBtn, Priority.ALWAYS);
+
+            approveBtn.setOnAction(e -> {
+                approveBtn.setDisable(true);
+                rejectBtn.setDisable(true);
+                doEvaluate(notif, true, card, approveBtn, rejectBtn);
+            });
+            rejectBtn.setOnAction(e -> {
+                approveBtn.setDisable(true);
+                rejectBtn.setDisable(true);
+                doEvaluate(notif, false, card, approveBtn, rejectBtn);
+            });
+
+            actions.getChildren().addAll(approveBtn, rejectBtn);
+            card.getChildren().add(actions);
         }
 
         return card;
@@ -328,9 +393,7 @@ public class NotificationGfxController {
         // Icon
         StackPane iconWrap = new StackPane();
         iconWrap.getStyleClass().addAll("notif-icon-wrap", iconColorClass(notif.getType()));
-        FontIcon icon = new FontIcon(iconLiteral(notif.getType()));
-        icon.setIconSize(15);
-        icon.setStyle("-fx-icon-color: " + iconColor(notif.getType()) + ";");
+        ImageView icon = loadTwemoji(emojiCodepoint(notif.getType()), 18);
         iconWrap.getChildren().add(icon);
 
         // Info
@@ -414,6 +477,7 @@ public class NotificationGfxController {
         // Il set è statico: sopravvive alla chiusura del dialog e consente
         // a buildPendingCard() di mostrare "Processing…" se il dialog viene riaperto.
         IN_PROGRESS_PAYMENTS.add(notif.getTargetId());
+        markAllReadBtn.setDisable(true);
 
         BookingBean bean = new BookingBean();
         bean.setLessonId(notif.getTargetId());
@@ -442,6 +506,9 @@ public class NotificationGfxController {
                 showCardError(card, bean.getErrorMessage());
                 payBtn.setDisable(false);
                 payBtn.setText("💳  Pay Now");
+                // Ripristina markAllReadBtn se non ci sono altri pagamenti in corso
+                long stillUnread = currentNotifications.stream().filter(n -> !n.isRead()).count();
+                markAllReadBtn.setDisable(!IN_PROGRESS_PAYMENTS.isEmpty() || stillUnread == 0);
             } else {
                 // Pagamento riuscito: rimuove eventuale errore residuo e ricarica
                 PAYMENT_ERRORS.remove(notif.getTargetId());
@@ -460,9 +527,42 @@ public class NotificationGfxController {
             showCardError(card, errMsg);
             payBtn.setDisable(false);
             payBtn.setText("💳  Pay Now");
+            long stillUnread = currentNotifications.stream().filter(n -> !n.isRead()).count();
+            markAllReadBtn.setDisable(!IN_PROGRESS_PAYMENTS.isEmpty() || stillUnread == 0);
         }));
 
         Thread t = new Thread(task, "notif-pay");
+        t.setDaemon(true);
+        t.start();
+    }
+
+    private void doEvaluate(Notification notif, boolean accepted,
+                            VBox card, Button approveBtn, Button rejectBtn) {
+        ApplicationReviewBean bean = new ApplicationReviewBean();
+        bean.setApplicationId(notif.getTargetId());
+        bean.setStatus(accepted ? ApplicationStatus.ACCEPTED : ApplicationStatus.REJECTED);
+        bean.setAdminNotes("");
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                appController.evaluateApplication(bean, token);
+                NotificationBean nb = new NotificationBean();
+                nb.setNotificationId(notif.getId());
+                notifController.markAsRead(nb, token);
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(e -> Platform.runLater(this::reload));
+        task.setOnFailed(e -> Platform.runLater(() -> {
+            Throwable ex = task.getException();
+            showCardError(card, ex != null ? ex.getMessage() : "Evaluation failed.");
+            approveBtn.setDisable(false);
+            rejectBtn.setDisable(false);
+        }));
+
+        Thread t = new Thread(task, accepted ? "notif-approve" : "notif-reject-app");
         t.setDaemon(true);
         t.start();
     }
@@ -505,15 +605,15 @@ public class NotificationGfxController {
     // Type helpers
     // ----------------------------------------------------------------
 
-    private String iconLiteral(NotificationType type) {
+    private String emojiCodepoint(NotificationType type) {
         return switch (type) {
-            case LESSON_BOOKED     -> "fas-calendar-plus";
-            case LESSON_ACCEPTED   -> "fas-check-circle";
-            case LESSON_REJECTED   -> "fas-times-circle";
-            case APPLICATION_UPDATE -> "fas-file-alt";
-            case EXPERTISE_OFFER   -> "fas-star";
-            case PAYMENT_CONFIRMED -> "fas-credit-card";
-            case NEW_REVIEW        -> "fas-star";
+            case LESSON_BOOKED      -> "1f4c5"; // 📅 calendar
+            case LESSON_ACCEPTED    -> "2705";  // ✅ check
+            case LESSON_REJECTED    -> "274c";  // ❌ cross
+            case APPLICATION_UPDATE -> "1f4cb"; // 📋 clipboard
+            case EXPERTISE_OFFER    -> "2b50";  // ⭐ star
+            case PAYMENT_CONFIRMED  -> "1f4b3"; // 💳 credit card
+            case NEW_REVIEW         -> "1f31f"; // 🌟 glowing star
         };
     }
 
@@ -529,28 +629,17 @@ public class NotificationGfxController {
         };
     }
 
-    private String iconColor(NotificationType type) {
-        return switch (type) {
-            case LESSON_BOOKED     -> "#3B82F6";
-            case LESSON_ACCEPTED   -> "#27AE60";
-            case LESSON_REJECTED   -> "#EF4444";
-            case APPLICATION_UPDATE -> "#F59E0B";
-            case EXPERTISE_OFFER   -> "#8B5CF6";
-            case PAYMENT_CONFIRMED -> "#27AE60";
-            case NEW_REVIEW        -> "#F59E0B";
-        };
-    }
-
     private String notifTitle(NotificationType type, boolean isArchived) {
-        if (isArchived && type == NotificationType.LESSON_BOOKED) return "Old Booking Request";
+        if (isArchived && type == NotificationType.LESSON_BOOKED)      return "Old Booking Request";
+        if (isArchived && type == NotificationType.APPLICATION_UPDATE && session.isAdmin()) return "Reviewed Application";
         return switch (type) {
-            case LESSON_BOOKED     -> "New Booking Request";
-            case LESSON_ACCEPTED   -> "Lesson Accepted";
-            case LESSON_REJECTED   -> "Lesson Declined";
-            case APPLICATION_UPDATE -> "Application Update";
-            case EXPERTISE_OFFER   -> "New Expertise Offer";
-            case PAYMENT_CONFIRMED -> "Payment Confirmed";
-            case NEW_REVIEW        -> "New Review";
+            case LESSON_BOOKED      -> "New Booking Request";
+            case LESSON_ACCEPTED    -> "Lesson Accepted";
+            case LESSON_REJECTED    -> "Lesson Declined";
+            case APPLICATION_UPDATE -> session.isAdmin() ? "New Tutor Application" : "Application Update";
+            case EXPERTISE_OFFER    -> "New Expertise Offer";
+            case PAYMENT_CONFIRMED  -> "Payment Confirmed";
+            case NEW_REVIEW         -> "New Review";
         };
     }
 
@@ -593,5 +682,37 @@ public class NotificationGfxController {
         long days = hours / 24;
         if (days < 7)   return days + "d ago";
         return ts.format(DateTimeFormatter.ofPattern("d MMM", Locale.ENGLISH));
+    }
+
+    // ----------------------------------------------------------------
+    // Icon helpers
+    // ----------------------------------------------------------------
+
+    private ImageView loadTwemoji(String codepoint, double size) {
+        ImageView iv = new ImageView();
+        iv.setFitWidth(size);
+        iv.setFitHeight(size);
+        iv.setSmooth(true);
+        iv.setPreserveRatio(true);
+        String url = "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/" + codepoint + ".png";
+        Image img = new Image(url, size * 2, size * 2, true, true, true);
+        img.progressProperty().addListener((obs, o, n) -> {
+            if (n.doubleValue() >= 1.0 && !img.isError()) iv.setImage(img);
+        });
+        return iv;
+    }
+
+    private void setupIconBox(StackPane wrap, ImageView iv, String codepoint, double size) {
+        if (wrap == null) return;
+        wrap.setEffect(new DropShadow(10, 0, 4, Color.web("#00000026")));
+        if (iv != null) {
+            iv.setFitWidth(size);
+            iv.setFitHeight(size);
+            String url = "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/" + codepoint + ".png";
+            Image img = new Image(url, size * 2, size * 2, true, true, true);
+            img.progressProperty().addListener((obs, o, n) -> {
+                if (n.doubleValue() >= 1.0 && !img.isError()) iv.setImage(img);
+            });
+        }
     }
 }

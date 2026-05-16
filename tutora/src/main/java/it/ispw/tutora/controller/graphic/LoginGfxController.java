@@ -2,6 +2,7 @@ package it.ispw.tutora.controller.graphic;
 
 import it.ispw.tutora.bean.LoginBean;
 import it.ispw.tutora.controller.application.LoginController;
+import it.ispw.tutora.controller.application.SocialLoginController;
 import it.ispw.tutora.exception.AuthenticationException;
 import it.ispw.tutora.exception.DatabaseException;
 import it.ispw.tutora.model.session.Session;
@@ -10,6 +11,7 @@ import it.ispw.tutora.view.SceneManager;
 import javafx.animation.FadeTransition;
 import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -24,6 +26,7 @@ import javafx.scene.shape.SVGPath;
 import javafx.scene.transform.Scale;
 import javafx.util.Duration;
 
+import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 
 /**
@@ -99,7 +102,8 @@ public class LoginGfxController {
     // Dipendenza applicativa
     // ----------------------------------------------------------------
 
-    private final LoginController loginController = new LoginController();
+    private final LoginController       loginController       = new LoginController();
+    private final SocialLoginController socialLoginController = new SocialLoginController();
 
     //  ----------------------------------------------------------------
     // Inizializzazione
@@ -247,12 +251,49 @@ public class LoginGfxController {
 
     @FXML
     public void handleGoogleLogin() {
-        showError("Social login is not available in this build.");
+        runSocialLoginAsync("Google", () -> socialLoginController.loginWithGoogle());
     }
 
     @FXML
     public void handleMetaLogin() {
-        showError("Social login is not available in this build.");
+        runSocialLoginAsync("Meta", () -> socialLoginController.loginWithMeta());
+    }
+
+    /**
+     * Esegue il flusso OAuth in un thread separato per non bloccare l'UI.
+     * Disabilita i bottoni social durante l'attesa e li riabilita in caso di errore.
+     */
+    private void runSocialLoginAsync(String provider, Callable<String> loginCallable) {
+        googleBtn.setDisable(true);
+        metaBtn.setDisable(true);
+        showInfo("Opening " + provider + " login in your browser…");
+
+        Task<String> task = new Task<>() {
+            @Override
+            protected String call() throws Exception {
+                return loginCallable.call();
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            String token = task.getValue();
+            SceneManager.getInstance().setSessionToken(token);
+            navigateByRole(token);
+        });
+
+        task.setOnFailed(e -> {
+            Throwable ex = task.getException();
+            String msg = (ex != null && ex.getMessage() != null)
+                    ? ex.getMessage()
+                    : provider + " login fallito. Riprova.";
+            showError(msg);
+            googleBtn.setDisable(false);
+            metaBtn.setDisable(false);
+        });
+
+        Thread t = new Thread(task, provider.toLowerCase() + "-oauth");
+        t.setDaemon(true);
+        t.start();
     }
 
     @FXML
@@ -285,6 +326,18 @@ public class LoginGfxController {
     // ----------------------------------------------------------------
 
     private void showError(String message) {
+        showMessage(message, "error-label", "info-label");
+    }
+
+    private void showInfo(String message) {
+        showMessage(message, "info-label", "error-label");
+    }
+
+    private void showMessage(String message, String addStyle, String removeStyle) {
+        errorLabel.getStyleClass().remove(removeStyle);
+        if (!errorLabel.getStyleClass().contains(addStyle)) {
+            errorLabel.getStyleClass().add(addStyle);
+        }
         errorLabel.setText(message);
         errorLabel.setVisible(true);
         errorLabel.setManaged(true);

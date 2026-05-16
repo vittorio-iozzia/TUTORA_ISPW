@@ -32,6 +32,7 @@ import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
@@ -427,8 +428,10 @@ public class StudentContentController {
             Stage stage = new Stage();
             stage.initOwner(tutorGrid.getScene().getWindow());
             stage.initModality(Modality.WINDOW_MODAL);
-            stage.setTitle("Book a Lesson · TUTORA");
-            stage.setScene(new Scene(root));
+            stage.initStyle(StageStyle.TRANSPARENT);
+            Scene scene = new Scene(root);
+            scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+            stage.setScene(scene);
             stage.setMinWidth(560);
             stage.setMinHeight(500);
             stage.setOnHiding(ev -> parentRoot.setEffect(null));
@@ -455,7 +458,7 @@ public class StudentContentController {
                     .toList();
             if (upcoming.isEmpty()) {
                 Label empty = new Label("No upcoming lessons.");
-                empty.setStyle("-fx-text-fill:#9CA3AF;-fx-font-size:13px;");
+                empty.setStyle("-fx-text-fill:#9CA3AF;-fx-font-size:15px;");
                 upcomingList.getChildren().add(empty);
             } else {
                 for (Booking b : upcoming) upcomingList.getChildren().add(buildLessonCard(b, true));
@@ -491,7 +494,7 @@ public class StudentContentController {
             upcomingList.getChildren().clear();
             if (upcoming.isEmpty()) {
                 Label empty = new Label("No upcoming lessons.");
-                empty.setStyle("-fx-text-fill:#9CA3AF;-fx-font-size:13px;");
+                empty.setStyle("-fx-text-fill:#9CA3AF;-fx-font-size:15px;");
                 upcomingList.getChildren().add(empty);
             } else {
                 for (Booking b : upcoming) upcomingList.getChildren().add(buildLessonCard(b, true));
@@ -520,7 +523,7 @@ public class StudentContentController {
                     .toList();
             if (history.isEmpty()) {
                 Label empty = new Label("No past lessons.");
-                empty.setStyle("-fx-text-fill:#9CA3AF;-fx-font-size:13px;");
+                empty.setStyle("-fx-text-fill:#9CA3AF;-fx-font-size:15px;");
                 historyList.getChildren().add(empty);
             } else {
                 for (Booking b : history) historyList.getChildren().add(buildLessonCard(b, false));
@@ -538,41 +541,49 @@ public class StudentContentController {
         String datetime = booking.getLesson().getStartTime().format(CARD_FMT);
 
         HBox card = new HBox(16);
-        card.getStyleClass().add("lesson-card");
+        card.getStyleClass().addAll("lesson-card", upcoming ? "lesson-card-upcoming" : "lesson-card-completed");
         card.setAlignment(Pos.CENTER_LEFT);
 
-        StackPane dot = new StackPane();
-        dot.getStyleClass().add(upcoming ? "lesson-dot-upcoming" : "lesson-dot-completed");
-
-        VBox info = new VBox(4);
+        VBox info = new VBox(6);
         HBox.setHgrow(info, Priority.ALWAYS);
+
+        // Title row: subject + status badge
+        HBox titleRow = new HBox(10);
+        titleRow.setAlignment(Pos.CENTER_LEFT);
         Label subjectLbl = new Label(subject);
         subjectLbl.getStyleClass().add("lesson-title");
+        HBox.setHgrow(subjectLbl, Priority.ALWAYS);
+        Label statusBadge = new Label(upcoming ? "Upcoming" : "Completed");
+        statusBadge.getStyleClass().add(upcoming ? "badge-upcoming" : "badge-completed");
+        titleRow.getChildren().addAll(subjectLbl, statusBadge);
 
-        HBox meta = new HBox(8);
-        meta.setAlignment(Pos.CENTER_LEFT);
+        // Tutor row
+        HBox tutorRow = new HBox(6);
+        tutorRow.setAlignment(Pos.CENTER_LEFT);
         FontIcon userIcon = new FontIcon("fas-user");
         userIcon.getStyleClass().add("lesson-meta-icon");
         Label tutorLbl = new Label(tutorName);
         tutorLbl.getStyleClass().add("lesson-meta");
+        tutorRow.getChildren().addAll(userIcon, tutorLbl);
+
+        // Time row
+        HBox timeRow = new HBox(6);
+        timeRow.setAlignment(Pos.CENTER_LEFT);
         FontIcon clockIcon = new FontIcon("fas-clock");
         clockIcon.getStyleClass().add("lesson-meta-icon");
         Label time = new Label(datetime);
         time.getStyleClass().add("lesson-meta");
-        meta.getChildren().addAll(userIcon, tutorLbl, clockIcon, time);
-        info.getChildren().addAll(subjectLbl, meta);
+        timeRow.getChildren().addAll(clockIcon, time);
+
+        info.getChildren().addAll(titleRow, tutorRow, timeRow);
+        card.getChildren().add(info);
 
         if (upcoming) {
             Button joinBtn = new Button("Join");
-            joinBtn.getStyleClass().add("book-btn"); // stesso colore del Book button
-            card.getChildren().addAll(dot, info, joinBtn);
-        } else {
-            Label badge = new Label("Completed");
-            badge.getStyleClass().add("badge-completed");
-            card.getChildren().addAll(dot, info, badge);
+            joinBtn.getStyleClass().add("book-btn");
+            card.getChildren().add(joinBtn);
         }
 
-        HBox.setMargin(card, new Insets(0));
         return card;
     }
 }

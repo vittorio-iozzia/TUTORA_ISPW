@@ -145,6 +145,8 @@ public abstract class User {
      * @return true se la password è corretta
      */
     public boolean matchesPassword(String rawPassword) {
+        // Gli utenti OAuth non hanno una password: passwordHash è null
+        if (this.passwordHash == null || this.passwordHash.isBlank()) return false;
         return BCrypt.checkpw(rawPassword, this.passwordHash);
     }
 

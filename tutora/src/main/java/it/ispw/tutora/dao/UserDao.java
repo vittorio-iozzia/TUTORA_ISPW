@@ -3,6 +3,7 @@ package it.ispw.tutora.dao;
 import it.ispw.tutora.exception.DatabaseException;
 import it.ispw.tutora.exception.DuplicateUserException;
 import it.ispw.tutora.exception.UserNotFoundException;
+import it.ispw.tutora.model.Tutor;
 import it.ispw.tutora.model.User;
 
 import java.sql.Connection;
@@ -67,5 +68,21 @@ public interface UserDao {
      * Non aggiorna passwordHash — usare updatePassword per quello.
      */
     void updateProfile(Connection conn, String username, String description, boolean isActive)
+            throws DatabaseException, UserNotFoundException;
+
+    /**
+     * Carica un utente per indirizzo email.
+     * Usato principalmente dal social login per identificare utenti OAuth
+     * già registrati, indipendentemente dallo username.
+     */
+    User findByEmail(Connection conn, String email)
+            throws DatabaseException, UserNotFoundException;
+
+    /**
+     * Promuove uno studente al ruolo di tutor aggiornando il record utente.
+     * Deve essere chiamato all'interno di una transazione già aperta.
+     * Restituisce il nuovo oggetto Tutor creato.
+     */
+    Tutor promoteToTutor(Connection conn, String studentUsername)
             throws DatabaseException, UserNotFoundException;
 }

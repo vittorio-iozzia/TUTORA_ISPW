@@ -19,11 +19,14 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.effect.GaussianBlur;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.IOException;
@@ -53,8 +56,9 @@ public class HomeGfxController {
     @FXML private Label avatarLabel;
     @FXML private Label headerTitle;
     @FXML private Button headerProfileBtn;
-    @FXML private Button notifBtn;
-    @FXML private Label  notifBadge;
+    @FXML private Button    notifBtn;
+    @FXML private Label     notifBadge;
+    @FXML private ImageView notifIconView;
     @FXML private VBox contentArea;
 
     private final List<Button> navButtons = new ArrayList<>();
@@ -87,6 +91,7 @@ public class HomeGfxController {
         DashboardComponent dashboard = DashboardFactory.create(session);
         dashboard.decorateContent(contentArea);
         refreshNotifBadge();
+        loadNotifBellEmoji();
     }
 
     // ----------------------------------------------------------------
@@ -211,7 +216,7 @@ public class HomeGfxController {
                 new NavEntry("Dashboard",  "fas-home",        "Dashboard",   () -> swapContent("/fxml/student_content.fxml")),
                 new NavEntry("Find Tutors","fas-search",      "Find Tutors", () -> swapContent("/fxml/find_tutors_content.fxml")),
                 new NavEntry("My Lessons", "fas-calendar-alt","My Lessons",  () -> swapContent("/fxml/my_lessons_content.fxml")),
-                new NavEntry("Messages",   "fas-comments",    "Messages",    this::noop),
+                new NavEntry("Messages",   "fas-comments",    "Messages",    () -> swapContent("/fxml/messages_content.fxml")),
                 new NavEntry("Payments",   "fas-credit-card", "Payments",    this::noop),
                 new NavEntry("Favorites",  "fas-heart",       "Favorites",   this::noop),
                 new NavEntry("Settings",   "fas-cog",         "Settings",    this::noop)
@@ -222,7 +227,7 @@ public class HomeGfxController {
                 new NavEntry("Dashboard",    "fas-home",        "Dashboard",    this::noop),
                 new NavEntry("My Lessons",   "fas-calendar-alt","My Lessons",   () -> SceneManager.getInstance().showTutorLessons()),
                 new NavEntry("My Expertise", "fas-star",        "My Expertise", () -> SceneManager.getInstance().showTutorExpertise()),
-                new NavEntry("Messages",     "fas-comments",    "Messages",     this::noop),
+                new NavEntry("Messages",     "fas-comments",    "Messages",     () -> swapContent("/fxml/messages_content.fxml")),
                 new NavEntry("Settings",     "fas-cog",         "Settings",     this::noop)
             );
         }
@@ -265,8 +270,11 @@ public class HomeGfxController {
             Stage dialog = new Stage();
             dialog.initOwner(notifBtn.getScene().getWindow());
             dialog.initModality(Modality.WINDOW_MODAL);
-            dialog.setTitle("Notifications – TUTORA");
-            dialog.setScene(new javafx.scene.Scene(root));
+            dialog.initStyle(StageStyle.DECORATED);
+            dialog.setTitle("Notifications");
+            dialog.setResizable(false);
+            javafx.scene.Scene notifScene = new javafx.scene.Scene(root);
+            dialog.setScene(notifScene);
             dialog.setMinWidth(460);
             dialog.setMinHeight(400);
 
@@ -285,6 +293,19 @@ public class HomeGfxController {
         } catch (IOException e) {
             LOGGER.warning("Cannot open notifications: " + e.getMessage());
         }
+    }
+
+    private void loadNotifBellEmoji() {
+        if (notifIconView == null) return;
+        notifIconView.setFitWidth(20);
+        notifIconView.setFitHeight(20);
+        notifIconView.setSmooth(true);
+        notifIconView.setPreserveRatio(true);
+        String url = "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f514.png";
+        Image img = new Image(url, 40, 40, true, true, true);
+        img.progressProperty().addListener((obs, o, n) -> {
+            if (n.doubleValue() >= 1.0 && !img.isError()) notifIconView.setImage(img);
+        });
     }
 
     private void refreshNotifBadge() {

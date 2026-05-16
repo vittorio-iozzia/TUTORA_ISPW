@@ -2,34 +2,37 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
-<?import org.kordamp.ikonli.javafx.FontIcon?>
 
 <VBox xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="it.ispw.tutora.controller.graphic.BookTutorGfxController"
+      fx:id="dialogRoot"
       stylesheets="@../css/home.css"
+      styleClass="app-dialog-root app-dialog-form"
       spacing="0" minWidth="560" prefWidth="720" prefHeight="680">
 
     <!-- ── Header ── -->
     <HBox styleClass="app-dialog-header" alignment="CENTER_LEFT" spacing="16">
         <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
-        <StackPane styleClass="app-header-icon-wrap">
-            <FontIcon iconLiteral="fas-calendar-check" iconSize="20" styleClass="app-header-icon"/>
+        <StackPane fx:id="headerIconWrap" styleClass="app-header-icon-wrap">
+            <ImageView fx:id="headerIconView" fitWidth="22" fitHeight="22" preserveRatio="true" smooth="true"/>
         </StackPane>
         <VBox spacing="4" HBox.hgrow="ALWAYS">
             <Label fx:id="titleLabel" text="Book a Lesson" styleClass="app-header-title"/>
             <Label fx:id="subtitleLabel" text="Select an available slot and your preferred duration."
                    styleClass="app-header-subtitle" wrapText="true"/>
         </VBox>
+        <Button onAction="#handleBack" styleClass="app-dialog-close-btn" text="✕"/>
     </HBox>
 
     <!-- ── Booking For banner ── -->
     <HBox styleClass="app-applying-banner" alignment="CENTER_LEFT" spacing="10">
         <VBox.margin><Insets top="12" right="20" bottom="0" left="20"/></VBox.margin>
         <padding><Insets top="10" right="14" bottom="10" left="14"/></padding>
-        <StackPane styleClass="app-applying-icon-wrap">
-            <FontIcon iconLiteral="fas-user-tie" iconSize="11" styleClass="app-applying-icon"/>
+        <StackPane fx:id="bannerIconWrap" styleClass="app-applying-icon-wrap">
+            <ImageView fx:id="bannerIconView" fitWidth="13" fitHeight="13" preserveRatio="true" smooth="true"/>
         </StackPane>
         <Label fx:id="bookingBannerLabel" text="Booking with: —" styleClass="app-applying-label"/>
     </HBox>
@@ -45,8 +48,8 @@
     <VBox fx:id="successPane" visible="false" managed="false"
           alignment="CENTER" spacing="18" VBox.vgrow="ALWAYS">
         <padding><Insets top="48" right="48" bottom="48" left="48"/></padding>
-        <StackPane styleClass="app-success-icon-wrap" maxWidth="72" maxHeight="72">
-            <FontIcon iconLiteral="fas-check-circle" iconSize="34" styleClass="app-success-icon"/>
+        <StackPane fx:id="successIconWrap" styleClass="app-success-icon-wrap" maxWidth="72" maxHeight="72">
+            <ImageView fx:id="successIconView" fitWidth="34" fitHeight="34" preserveRatio="true" smooth="true"/>
         </StackPane>
         <Label text="Booking request sent!" styleClass="app-success-title"/>
         <Label text="The tutor will review your request and confirm the lesson. You will be notified when accepted."

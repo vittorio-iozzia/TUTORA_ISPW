@@ -1,5 +1,7 @@
 package it.ispw.tutora.controller.graphic;
 
+import it.ispw.tutora.bean.ApplicationReviewBean;
+import it.ispw.tutora.controller.application.ApplyToBecomeATutorController;
 import it.ispw.tutora.dao.TutorApplicationDao;
 import it.ispw.tutora.dao.TutorDao;
 import it.ispw.tutora.dao.factory.DaoFactory;
@@ -11,8 +13,10 @@ import it.ispw.tutora.model.session.Session;
 import it.ispw.tutora.model.session.SessionManager;
 import it.ispw.tutora.view.SceneManager;
 import javafx.animation.*;
+import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -26,6 +30,8 @@ import java.util.logging.Logger;
 public class AdminContentController {
 
     private static final Logger LOGGER = Logger.getLogger(AdminContentController.class.getName());
+
+    private final ApplyToBecomeATutorController appController = new ApplyToBecomeATutorController();
 
     // Stats
     @FXML private Label welcomeTitle;
@@ -162,8 +168,58 @@ public class AdminContentController {
         Button rejectBtn  = new Button("Reject");
         rejectBtn.getStyleClass().add("decline-btn");
 
+        approveBtn.setOnAction(e -> {
+            approveBtn.setDisable(true);
+            rejectBtn.setDisable(true);
+            doEvaluate(app, ApplicationStatus.ACCEPTED, card, approveBtn, rejectBtn);
+        });
+        rejectBtn.setOnAction(e -> {
+            approveBtn.setDisable(true);
+            rejectBtn.setDisable(true);
+            doEvaluate(app, ApplicationStatus.REJECTED, card, approveBtn, rejectBtn);
+        });
+
         card.getChildren().addAll(avatar, info, approveBtn, rejectBtn);
         return card;
+    }
+
+    private void doEvaluate(TutorApplication app, ApplicationStatus status,
+                            HBox card, Button approveBtn, Button rejectBtn) {
+        String token = SceneManager.getInstance().getSessionToken();
+
+        ApplicationReviewBean bean = new ApplicationReviewBean();
+        bean.setApplicationId(app.getId());
+        bean.setStatus(status);
+        bean.setAdminNotes("");
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                appController.evaluateApplication(bean, token);
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(e -> Platform.runLater(() -> {
+            applicationsList.getChildren().remove(card);
+            int remaining = applicationsList.getChildren().size();
+            pendingCountLabel.setText(remaining + " pending");
+            if (remaining == 0) {
+                Label empty = new Label("No pending applications.");
+                empty.setStyle("-fx-text-fill: #8FAF9A; -fx-font-size: 13px;");
+                applicationsList.getChildren().add(empty);
+            }
+        }));
+
+        task.setOnFailed(e -> Platform.runLater(() -> {
+            approveBtn.setDisable(false);
+            rejectBtn.setDisable(false);
+            LOGGER.warning("Evaluation failed: " + task.getException().getMessage());
+        }));
+
+        Thread t = new Thread(task, "admin-evaluate");
+        t.setDaemon(true);
+        t.start();
     }
 
     // ----------------------------------------------------------------

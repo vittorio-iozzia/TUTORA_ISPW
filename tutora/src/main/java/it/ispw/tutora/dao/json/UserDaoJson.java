@@ -149,6 +149,43 @@ public class UserDaoJson implements UserDao {
     }
 
     // ----------------------------------------------------------------
+    // findByEmail
+    // ----------------------------------------------------------------
+
+    @Override
+    public User findByEmail(Connection conn, String email)
+            throws DatabaseException, UserNotFoundException {
+
+        for (UserRecord r : readAll()) {
+            if (email.equalsIgnoreCase(r.email)) return toUser(r);
+        }
+        throw new UserNotFoundException("email: " + email);
+    }
+
+    // ----------------------------------------------------------------
+    // promoteToTutor
+    // ----------------------------------------------------------------
+
+    @Override
+    public Tutor promoteToTutor(Connection conn, String studentUsername)
+            throws DatabaseException, UserNotFoundException {
+
+        List<UserRecord> records = readAll();
+        for (UserRecord r : records) {
+            if (r.username.equals(studentUsername)) {
+                if (!"STUDENT".equals(r.role)) throw new UserNotFoundException(studentUsername);
+                r.role = "TUTOR";
+                r.rating = "0.00";
+                r.ratingCount = 0;
+                r.budget = null;
+                writeAll(records);
+                return (Tutor) toUser(r);
+            }
+        }
+        throw new UserNotFoundException(studentUsername);
+    }
+
+    // ----------------------------------------------------------------
     // Helper privati / protected
     // ----------------------------------------------------------------
 

@@ -4,8 +4,11 @@ import it.ispw.tutora.dao.UserDao;
 import it.ispw.tutora.exception.DatabaseException;
 import it.ispw.tutora.exception.DuplicateUserException;
 import it.ispw.tutora.exception.UserNotFoundException;
+import it.ispw.tutora.model.Student;
+import it.ispw.tutora.model.Tutor;
 import it.ispw.tutora.model.User;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
@@ -97,5 +100,43 @@ public class UserDaoDemo implements UserDao {
         if (existing == null) throw new UserNotFoundException(username);
         existing.setDescription(description);
         existing.setActive(isActive);
+    }
+
+    // ----------------------------------------------------------------
+    // findByEmail
+    // ----------------------------------------------------------------
+
+    @Override
+    public User findByEmail(Connection conn, String email)
+            throws DatabaseException, UserNotFoundException {
+        return cache.values().stream()
+                .filter(u -> email.equalsIgnoreCase(u.getEmail()))
+                .findFirst()
+                .orElseThrow(() -> new UserNotFoundException("email: " + email));
+    }
+
+    // ----------------------------------------------------------------
+    // promoteToTutor
+    // ----------------------------------------------------------------
+
+    @Override
+    public Tutor promoteToTutor(Connection conn, String studentUsername)
+            throws DatabaseException, UserNotFoundException {
+        User user = cache.get(studentUsername);
+        if (!(user instanceof Student student)) throw new UserNotFoundException(studentUsername);
+        Tutor tutor = new Tutor.Builder()
+                .username(student.getUsername())
+                .email(student.getEmail())
+                .name(student.getName())
+                .surname(student.getSurname())
+                .passwordHash(student.getPasswordHash())
+                .description(student.getDescription())
+                .active(student.isActive())
+                .createdAt(student.getCreatedAt())
+                .rating(BigDecimal.ZERO)
+                .ratingCount(0)
+                .build();
+        cache.put(studentUsername, tutor);
+        return tutor;
     }
 }

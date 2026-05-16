@@ -2,20 +2,22 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
-<?import org.kordamp.ikonli.javafx.FontIcon?>
 
 <VBox xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="it.ispw.tutora.controller.graphic.NotificationGfxController"
+      fx:id="dialogRoot"
       stylesheets="@../css/home.css"
+      styleClass="app-dialog-root"
       spacing="0" minWidth="460" prefWidth="540" prefHeight="600">
 
     <!-- ── Header ── -->
     <HBox styleClass="app-dialog-header" alignment="CENTER_LEFT" spacing="16">
         <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
-        <StackPane styleClass="app-header-icon-wrap">
-            <FontIcon iconLiteral="fas-bell" iconSize="20" styleClass="app-header-icon"/>
+        <StackPane fx:id="headerIconWrap" styleClass="app-header-icon-wrap">
+            <ImageView fx:id="headerIconView" fitWidth="22" fitHeight="22" preserveRatio="true" smooth="true"/>
         </StackPane>
         <VBox spacing="4" HBox.hgrow="ALWAYS">
             <Label text="Notifications" styleClass="app-header-title"/>

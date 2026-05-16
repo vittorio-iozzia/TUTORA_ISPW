@@ -12,6 +12,8 @@ import it.ispw.tutora.exception.*;
 import it.ispw.tutora.model.*;
 import it.ispw.tutora.model.session.SessionManager;
 
+import java.util.logging.Level;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -223,6 +225,11 @@ public class ApplyToBecomeATutorController {
             appDao.updateStatus(conn, application);
             sendNotificationToStudent(conn, notifDao, adminUsername,
                     application.getStudentUsername(), application.getId(), newStatus);
+
+            if (newStatus == ApplicationStatus.ACCEPTED) {
+                promoteStudentToTutor(conn, application.getStudentUsername());
+            }
+
             if (conn != null) conn.commit();
         } catch (ApplicationNotFoundException | InvalidApplicationStateException | DatabaseException e) {
             safeRollback(conn);
@@ -230,6 +237,25 @@ public class ApplyToBecomeATutorController {
         } catch (Exception e) {
             safeRollback(conn);
             throw new DatabaseException("Unexpected error evaluating application.", e);
+        }
+    }
+
+    private void promoteStudentToTutor(Connection conn, String studentUsername)
+            throws DatabaseException {
+        try {
+            DaoFactory factory = DaoFactory.getInstance();
+            UserDao userDao = factory.createUserDao();
+            TutorDao tutorDao = factory.createTutorDao();
+            Tutor promoted = userDao.promoteToTutor(conn, studentUsername);
+            try {
+                tutorDao.insert(conn, promoted);
+            } catch (DuplicateUserException ignored) {
+                // DB mode: the tutor row was already created inside promoteToTutor()
+            }
+            SessionManager.getInstance().markAsNewlyPromotedTutor(studentUsername);
+            SessionManager.getInstance().invalidateSessionsForUser(studentUsername);
+        } catch (UserNotFoundException e) {
+            LOGGER.log(Level.WARNING, "Cannot promote to tutor, student not found: {0}", studentUsername);
         }
     }
 

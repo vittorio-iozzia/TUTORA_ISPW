@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
@@ -77,19 +78,20 @@
 
             <!-- Notification bell with unread badge -->
             <StackPane>
-                <Button fx:id="notifBtn" styleClass="header-icon-btn" onAction="#handleNotifications">
+                <Button fx:id="notifBtn" styleClass="header-notif-box" onAction="#handleNotifications">
                     <graphic>
-                        <FontIcon iconLiteral="fas-bell" iconSize="16" styleClass="header-icon"/>
+                        <ImageView fx:id="notifIconView" fitWidth="20" fitHeight="20"
+                                   preserveRatio="true" smooth="true"/>
                     </graphic>
                 </Button>
                 <Label fx:id="notifBadge" text="0" styleClass="notif-badge"
                        StackPane.alignment="TOP_RIGHT" visible="false" managed="false"/>
             </StackPane>
 
-            <!-- Profile dropdown trigger (sostituisce il cerchio avatar) -->
+            <!-- Profile dropdown trigger -->
             <Button fx:id="headerProfileBtn" styleClass="header-icon-btn">
                 <graphic>
-                    <FontIcon iconLiteral="fas-user-circle" iconSize="22" styleClass="header-profile-icon"/>
+                    <FontIcon iconLiteral="fas-user-circle" iconSize="40" styleClass="header-profile-icon"/>
                 </graphic>
             </Button>
 

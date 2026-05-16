@@ -3,6 +3,7 @@ package it.ispw.tutora.model.session;
 import it.ispw.tutora.model.User;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -31,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SessionManager {
 
     private final Map<String, Session> activeSessions = new ConcurrentHashMap<>();
+    private final Set<String> newlyPromotedTutors = ConcurrentHashMap.newKeySet();
 
     // ----------------------------------------------------------------
     // Bill Pugh Holder
@@ -95,5 +97,31 @@ public class SessionManager {
      */
     public void invalidateAllSessions() {
         activeSessions.clear();
+    }
+
+    /**
+     * Segna un utente come neotutor per mostrare il popup di benvenuto
+     * al primo accesso dopo la promozione.
+     */
+    public void markAsNewlyPromotedTutor(String username) {
+        newlyPromotedTutors.add(username);
+    }
+
+    /**
+     * Controlla e consuma il flag di neotutor (one-shot).
+     * Restituisce true solo la prima volta dopo la promozione.
+     */
+    public boolean consumeNewlyPromotedTutor(String username) {
+        return newlyPromotedTutors.remove(username);
+    }
+
+    /**
+     * Invalida tutte le sessioni attive per un utente specifico.
+     * Chiamato quando un utente viene promosso a un nuovo ruolo,
+     * forzando il re-login per aggiornare la sessione.
+     */
+    public void invalidateSessionsForUser(String username) {
+        activeSessions.entrySet().removeIf(
+                e -> e.getValue().getUser().getUsername().equals(username));
     }
 }

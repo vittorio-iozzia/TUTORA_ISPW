@@ -13,9 +13,11 @@ import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -48,16 +50,25 @@ public class TutorApplicationGfxController {
     // FXML
     // ----------------------------------------------------------------
 
-    @FXML private Label    titleLabel;
-    @FXML private Label    subtitleLabel;
-    @FXML private Label    applyingForLabel;
-    @FXML private VBox     formContainer;
-    @FXML private VBox     successPane;
-    @FXML private VBox     footer;
-    @FXML private Button   submitBtn;
-    @FXML private Label    errorLabel;
-    @FXML private CheckBox agreeCheckBox;
-    @FXML private Label    agreeLabel;
+    @FXML private VBox      dialogRoot;
+    @FXML private Label     titleLabel;
+    @FXML private Label     subtitleLabel;
+    @FXML private Label     applyingForLabel;
+    @FXML private VBox      formContainer;
+    @FXML private VBox      successPane;
+    @FXML private VBox      footer;
+    @FXML private Button    submitBtn;
+    @FXML private Button    backBtn;
+    @FXML private Label     errorLabel;
+    @FXML private CheckBox  agreeCheckBox;
+    @FXML private Label     agreeLabel;
+
+    @FXML private StackPane headerIconWrap;
+    @FXML private ImageView headerIconView;
+    @FXML private StackPane bannerIconWrap;
+    @FXML private ImageView bannerIconView;
+    @FXML private StackPane successIconWrap;
+    @FXML private ImageView successIconView;
 
     // ----------------------------------------------------------------
     // State
@@ -74,6 +85,48 @@ public class TutorApplicationGfxController {
 
     private final ApplyToBecomeATutorController appController =
             new ApplyToBecomeATutorController();
+
+    // ----------------------------------------------------------------
+    // Lifecycle
+    // ----------------------------------------------------------------
+
+    @FXML
+    private void initialize() {
+        setupIconBox(headerIconWrap, headerIconView, "1f393", 22); // 🎓 graduation cap
+        setupIconBox(bannerIconWrap, bannerIconView, "1f3f7", 13); // 🏷️ tag
+        setupIconBox(successIconWrap, successIconView, "2705", 34); // ✅ check
+        applyRoundedClip(dialogRoot);
+    }
+
+    private void applyRoundedClip(VBox root) {
+        if (root == null) return;
+        javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle();
+        clip.setArcWidth(32);
+        clip.setArcHeight(32);
+        root.layoutBoundsProperty().addListener((obs, o, n) -> {
+            if (n.getWidth() > 0 && root.getClip() == null) {
+                clip.setWidth(n.getWidth());
+                clip.setHeight(n.getHeight());
+                root.widthProperty().addListener((o2, ov, nv)  -> clip.setWidth(nv.doubleValue()));
+                root.heightProperty().addListener((o2, ov, nv) -> clip.setHeight(nv.doubleValue()));
+                root.setClip(clip);
+            }
+        });
+    }
+
+    private void setupIconBox(StackPane wrap, ImageView iv, String codepoint, double size) {
+        if (wrap == null) return;
+        wrap.setEffect(new DropShadow(10, 0, 4, Color.web("#00000026")));
+        if (iv != null) {
+            iv.setFitWidth(size);
+            iv.setFitHeight(size);
+            String url = "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/" + codepoint + ".png";
+            Image img = new Image(url, size * 2, size * 2, true, true, true);
+            img.progressProperty().addListener((obs, o, n) -> {
+                if (n.doubleValue() >= 1.0 && !img.isError()) iv.setImage(img);
+            });
+        }
+    }
 
     // ----------------------------------------------------------------
     // Entry point
@@ -189,8 +242,8 @@ public class TutorApplicationGfxController {
         HBox row = new HBox(12);
         row.setAlignment(Pos.CENTER_LEFT);
 
-        // 📁 closed yellow folder – contrasts on indigo button
-        ImageView uploadIcon = loadTwemoji("1f4c1", 15);
+        // 📂 open folder – classic browse icon, yellow/warm on the light outlined button
+        ImageView uploadIcon = loadTwemoji("1f4c2", 15);
 
         Button pickBtn = new Button("Choose file…");
         pickBtn.setGraphic(uploadIcon);
@@ -235,10 +288,10 @@ public class TutorApplicationGfxController {
         Label title = new Label("Availability");
         title.getStyleClass().add("app-field-label");
 
-        Label opt = new Label("(optional)");
-        opt.getStyleClass().add("app-optional-label");
+        Label star = new Label("*");
+        star.setStyle("-fx-text-fill: #EF4444; -fx-font-weight: bold; -fx-font-size: 14px;");
 
-        labelRow.getChildren().addAll(calIcon, title, opt);
+        labelRow.getChildren().addAll(calIcon, title, star);
 
         Label desc = new Label("Select the days and time slots when you are available to teach.");
         desc.getStyleClass().add("app-field-desc");
@@ -299,6 +352,7 @@ public class TutorApplicationGfxController {
                 cell.selectedProperty().addListener((obs, was, on) -> {
                     if (on) selectedSlots.add(key);
                     else    selectedSlots.remove(key);
+                    updateSubmitState();
                 });
 
                 grid.add(cell, d + 1, s + 1);
@@ -329,6 +383,10 @@ public class TutorApplicationGfxController {
                 }
             }
         }
+        if (selectedSlots.isEmpty()) {
+            submitBtn.setDisable(true);
+            return;
+        }
         if (!agreeCheckBox.isSelected()) {
             submitBtn.setDisable(true);
             return;
@@ -342,6 +400,10 @@ public class TutorApplicationGfxController {
 
     @FXML
     private void handleSubmit() {
+        if (selectedSlots.isEmpty()) {
+            showError("Please select at least one availability slot before submitting.");
+            return;
+        }
         showError(null);
         submitBtn.setDisable(true);
         submitBtn.setText("Submitting…");
@@ -374,6 +436,11 @@ public class TutorApplicationGfxController {
     @FXML
     private void handleClose() {
         ((Stage) successPane.getScene().getWindow()).close();
+    }
+
+    @FXML
+    private void handleBack() {
+        ((Stage) submitBtn.getScene().getWindow()).close();
     }
 
     // ----------------------------------------------------------------

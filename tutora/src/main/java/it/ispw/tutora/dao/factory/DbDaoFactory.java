@@ -116,4 +116,9 @@ public class DbDaoFactory extends DaoFactory {
     public TutorExpertiseDao createTutorExpertiseDao() {
         return new TutorExpertiseDaoDb();
     }
+
+    @Override
+    public MessageDao createMessageDao() {
+        return new MessageDaoDb();
+    }
 }

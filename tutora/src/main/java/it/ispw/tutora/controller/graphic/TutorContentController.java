@@ -13,8 +13,10 @@ import it.ispw.tutora.view.SceneManager;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
+import java.util.List;
 import java.util.logging.Logger;
 import javafx.animation.*;
+import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.concurrent.Task;
@@ -24,8 +26,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
-
-import java.util.List;
 
 public class TutorContentController {
 
@@ -100,6 +100,195 @@ public class TutorContentController {
         buildUpcomingLessons();
         buildBookingRequests();
         buildThisWeek();
+
+        if (SessionManager.getInstance().consumeNewlyPromotedTutor(tutorUsername)) {
+            Platform.runLater(this::showWelcomePopup);
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Welcome popup
+    // ----------------------------------------------------------------
+
+    private void showWelcomePopup() {
+        javafx.scene.Scene scene = welcomeTitle.getScene();
+        if (!(scene.getRoot() instanceof Pane root)) return;
+
+        // ── Backdrop ──────────────────────────────────────────────────
+        StackPane overlay = new StackPane();
+        overlay.setStyle("-fx-background-color: rgba(0,0,0,0.52);");
+        overlay.setManaged(false);
+        overlay.setLayoutX(0);
+        overlay.setLayoutY(0);
+
+        overlay.resize(scene.getWidth(), scene.getHeight());
+        scene.widthProperty().addListener((obs, o, n) ->
+                overlay.resize(n.doubleValue(), overlay.getHeight()));
+        scene.heightProperty().addListener((obs, o, n) ->
+                overlay.resize(overlay.getWidth(), n.doubleValue()));
+
+        // ── Card ──────────────────────────────────────────────────────
+        VBox card = new VBox(16);
+        card.setMaxWidth(440);
+        card.setMaxHeight(480);
+        card.setAlignment(Pos.TOP_CENTER);
+        card.setStyle(
+            "-fx-background-color: white;" +
+            "-fx-background-radius: 16px;" +
+            "-fx-padding: 28 28 22 28;" +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.22), 40, 0, 0, 12);"
+        );
+        card.setOnMouseClicked(javafx.event.Event::consume);
+
+        // Dismiss when clicking outside the card
+        overlay.setOnMouseClicked(e -> dismissOverlay(root, overlay, card));
+
+        // ── Trophy emoji ──────────────────────────────────────────────
+        StackPane iconWrap = new StackPane();
+        iconWrap.setStyle(
+            "-fx-background-color: #2A5C45;" +
+            "-fx-background-radius: 28px;" +
+            "-fx-min-width: 56px; -fx-min-height: 56px;" +
+            "-fx-max-width: 56px; -fx-max-height: 56px;" +
+            "-fx-effect: dropshadow(gaussian, rgba(42,92,69,0.45), 14, 0, 0, 6);"
+        );
+        iconWrap.getChildren().add(loadEmoji("1f3c6", 28)); // 🏆
+
+        // ── Text ──────────────────────────────────────────────────────
+        Label title = new Label("You're now a Tutor!");
+        title.setStyle(
+            "-fx-font-family: 'Manrope','Segoe UI',sans-serif;" +
+            "-fx-font-size: 24px; -fx-font-weight: bold;" +
+            "-fx-text-fill: #1C2621; -fx-text-alignment: center;"
+        );
+
+        Label subtitle = new Label("Your application was approved — here's what you can do:");
+        subtitle.setStyle("-fx-font-size: 14px; -fx-text-fill: #5C6661; -fx-text-alignment: center;");
+        subtitle.setWrapText(true);
+        subtitle.setMaxWidth(360);
+
+        // ── Feature rows ──────────────────────────────────────────────
+        VBox features = new VBox(8);
+        features.getChildren().addAll(
+            featureRow("1f4c5", "Set your availability",   "Choose days and time slots to teach."),
+            featureRow("1f4da", "Manage your bookings",    "Accept or decline lesson requests."),
+            featureRow("1f4c8", "Track your earnings",     "Monitor revenue and upcoming payouts."),
+            featureRow("2b50",  "Build your reputation",   "Collect ratings and grow your students.")
+        );
+
+        // ── CTA button ────────────────────────────────────────────────
+        Button startBtn = new Button("Get Started →");
+        startBtn.setMaxWidth(Double.MAX_VALUE);
+        startBtn.setStyle(
+            "-fx-background-color: #2A5C45; -fx-background-radius: 8px;" +
+            "-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: 600;" +
+            "-fx-padding: 11px 20px; -fx-cursor: hand;"
+        );
+        startBtn.setOnMouseEntered(e ->
+            startBtn.setStyle(startBtn.getStyle().replace("#2A5C45", "#214A37")));
+        startBtn.setOnMouseExited(e ->
+            startBtn.setStyle(startBtn.getStyle().replace("#214A37", "#2A5C45")));
+        startBtn.setOnAction(e -> dismissOverlay(root, overlay, card));
+
+        card.getChildren().addAll(iconWrap, title, subtitle, features, startBtn);
+        overlay.getChildren().add(card);
+        root.getChildren().add(overlay);
+
+        // ── Entry animation — bounce (scale overshoot then settle) ────
+        card.setScaleX(0.0);
+        card.setScaleY(0.0);
+        card.setOpacity(0);
+        overlay.setOpacity(0);
+
+        // Stored in fields to prevent GC mid-play
+        popupEntryAnim = new Timeline(
+            new KeyFrame(Duration.ZERO,
+                new KeyValue(card.scaleXProperty(),     0.0),
+                new KeyValue(card.scaleYProperty(),     0.0),
+                new KeyValue(card.opacityProperty(),    0.0),
+                new KeyValue(overlay.opacityProperty(), 0.0)
+            ),
+            new KeyFrame(Duration.millis(160),
+                new KeyValue(card.opacityProperty(),    1.0,  Interpolator.EASE_IN),
+                new KeyValue(overlay.opacityProperty(), 1.0,  Interpolator.EASE_IN)
+            ),
+            new KeyFrame(Duration.millis(300),
+                // overshoot to 1.10
+                new KeyValue(card.scaleXProperty(), 1.10, Interpolator.EASE_OUT),
+                new KeyValue(card.scaleYProperty(), 1.10, Interpolator.EASE_OUT)
+            ),
+            new KeyFrame(Duration.millis(400),
+                // bounce back to 0.96
+                new KeyValue(card.scaleXProperty(), 0.96, Interpolator.EASE_BOTH),
+                new KeyValue(card.scaleYProperty(), 0.96, Interpolator.EASE_BOTH)
+            ),
+            new KeyFrame(Duration.millis(460),
+                // settle at 1.0
+                new KeyValue(card.scaleXProperty(), 1.0, Interpolator.EASE_BOTH),
+                new KeyValue(card.scaleYProperty(), 1.0, Interpolator.EASE_BOTH)
+            )
+        );
+        popupEntryAnim.play();
+    }
+
+    /** Kept as a field to prevent garbage collection of the animation. */
+    private Timeline popupEntryAnim;
+    private Timeline popupExitAnim;
+
+    private HBox featureRow(String emojiCodepoint, String heading, String detail) {
+        HBox row = new HBox(14);
+        row.setAlignment(Pos.CENTER_LEFT);
+
+        StackPane dot = new StackPane();
+        dot.setStyle(
+            "-fx-background-color: #F3F4F1;" +
+            "-fx-background-radius: 10px;" +
+            "-fx-min-width: 42px; -fx-min-height: 42px;" +
+            "-fx-max-width: 42px; -fx-max-height: 42px;" +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 8, 0, 0, 3);"
+        );
+        dot.getChildren().add(loadEmoji(emojiCodepoint, 22));
+
+        VBox text = new VBox(2);
+        Label h = new Label(heading);
+        h.setStyle("-fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #1C2621;");
+        Label d = new Label(detail);
+        d.setStyle("-fx-font-size: 12px; -fx-text-fill: #5C6661;");
+        text.getChildren().addAll(h, d);
+
+        row.getChildren().addAll(dot, text);
+        return row;
+    }
+
+    private javafx.scene.image.ImageView loadEmoji(String codepoint, double size) {
+        javafx.scene.image.ImageView iv = new javafx.scene.image.ImageView();
+        iv.setFitWidth(size);
+        iv.setFitHeight(size);
+        iv.setSmooth(true);
+        iv.setPreserveRatio(true);
+        String url = "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/" + codepoint + ".png";
+        javafx.scene.image.Image img = new javafx.scene.image.Image(url, size * 2, size * 2, true, true, true);
+        img.progressProperty().addListener((obs, o, n) -> {
+            if (n.doubleValue() >= 1.0 && !img.isError()) iv.setImage(img);
+        });
+        return iv;
+    }
+
+    private void dismissOverlay(Pane root, StackPane overlay, VBox card) {
+        popupExitAnim = new Timeline(
+            new KeyFrame(Duration.ZERO,
+                new KeyValue(card.scaleXProperty(),  1.0),
+                new KeyValue(card.scaleYProperty(),  1.0),
+                new KeyValue(overlay.opacityProperty(), 1.0)
+            ),
+            new KeyFrame(Duration.millis(200),
+                new KeyValue(card.scaleXProperty(),  0.90, Interpolator.EASE_IN),
+                new KeyValue(card.scaleYProperty(),  0.90, Interpolator.EASE_IN),
+                new KeyValue(overlay.opacityProperty(), 0.0, Interpolator.EASE_IN)
+            )
+        );
+        popupExitAnim.setOnFinished(e -> root.getChildren().remove(overlay));
+        popupExitAnim.play();
     }
 
     // ----------------------------------------------------------------

@@ -119,4 +119,6 @@ public abstract class DaoFactory {
     public abstract BookingDao createBookingDao();
     public abstract TutorExpertiseDao createTutorExpertiseDao();
     public abstract ReviewDao createReviewDao();
+
+    public abstract MessageDao createMessageDao();
 }

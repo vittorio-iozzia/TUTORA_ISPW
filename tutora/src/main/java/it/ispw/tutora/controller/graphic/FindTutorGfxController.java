@@ -25,6 +25,7 @@ import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
@@ -242,8 +243,10 @@ public class FindTutorGfxController {
             Stage stage = new Stage();
             stage.initOwner(applyBtn.getScene().getWindow());
             stage.initModality(Modality.WINDOW_MODAL);
-            stage.setTitle("Apply – " + selectedCategory + " Tutor · TUTORA");
-            stage.setScene(new Scene(root));
+            stage.initStyle(StageStyle.TRANSPARENT);
+            Scene scene = new Scene(root);
+            scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+            stage.setScene(scene);
             stage.setMinWidth(560);
             stage.setMinHeight(500);
             stage.setOnHiding(e -> parentRoot.setEffect(null));
@@ -418,8 +421,10 @@ public class FindTutorGfxController {
             Stage stage = new Stage();
             stage.initOwner(applyBtn.getScene().getWindow());
             stage.initModality(Modality.WINDOW_MODAL);
-            stage.setTitle("Book a Lesson · TUTORA");
-            stage.setScene(new Scene(root));
+            stage.initStyle(StageStyle.TRANSPARENT);
+            Scene scene = new Scene(root);
+            scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+            stage.setScene(scene);
             stage.setMinWidth(560);
             stage.setMinHeight(500);
             stage.setOnHiding(ev -> parentRoot.setEffect(null));

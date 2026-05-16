@@ -1,6 +1,7 @@
 package it.ispw.tutora.dao.factory;
 
 import it.ispw.tutora.dao.*;
+import it.ispw.tutora.dao.demo.MessageDaoDemo;
 import it.ispw.tutora.dao.json.*;
 
 /**
@@ -84,4 +85,7 @@ public class JsonDaoFactory extends DaoFactory {
 
     @Override
     public ReviewDao createReviewDao() { return new ReviewDaoJson(); }
+
+    @Override
+    public MessageDao createMessageDao() { return new MessageDaoDemo(); }
 }

@@ -13,9 +13,12 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -33,16 +36,25 @@ public class BookTutorGfxController {
     private static final DateTimeFormatter TIME_FMT =
             DateTimeFormatter.ofPattern("HH:mm");
 
-    @FXML private Label    titleLabel;
-    @FXML private Label    subtitleLabel;
-    @FXML private Label    bookingBannerLabel;
-    @FXML private VBox     formContainer;
-    @FXML private VBox     successPane;
-    @FXML private VBox     footer;
-    @FXML private Button   bookBtn;
-    @FXML private Label    errorLabel;
-    @FXML private CheckBox confirmCheckBox;
-    @FXML private Button   closeBtn;
+    @FXML private VBox      dialogRoot;
+    @FXML private Label     titleLabel;
+    @FXML private Label     subtitleLabel;
+    @FXML private Label     bookingBannerLabel;
+    @FXML private VBox      formContainer;
+    @FXML private VBox      successPane;
+    @FXML private VBox      footer;
+    @FXML private Button    bookBtn;
+    @FXML private Button    backBtn;
+    @FXML private Label     errorLabel;
+    @FXML private CheckBox  confirmCheckBox;
+    @FXML private Button    closeBtn;
+
+    @FXML private StackPane headerIconWrap;
+    @FXML private ImageView headerIconView;
+    @FXML private StackPane bannerIconWrap;
+    @FXML private ImageView bannerIconView;
+    @FXML private StackPane successIconWrap;
+    @FXML private ImageView successIconView;
 
     private Tutor       tutor;
     private Lesson      selectedLesson;
@@ -55,6 +67,48 @@ public class BookTutorGfxController {
     private ToggleGroup durationGroup;
 
     private final BookTutorController bookTutorController = new BookTutorController();
+
+    // ----------------------------------------------------------------
+    // Lifecycle
+    // ----------------------------------------------------------------
+
+    @FXML
+    private void initialize() {
+        setupIconBox(headerIconWrap, headerIconView, "1f4c5", 22); // 📅 calendar
+        setupIconBox(bannerIconWrap, bannerIconView, "1f9d1", 13); // 🧑 person (warm skin tone)
+        setupIconBox(successIconWrap, successIconView, "2705", 34); // ✅ check
+        applyRoundedClip(dialogRoot);
+    }
+
+    private void applyRoundedClip(VBox root) {
+        if (root == null) return;
+        javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle();
+        clip.setArcWidth(32);
+        clip.setArcHeight(32);
+        root.layoutBoundsProperty().addListener((obs, o, n) -> {
+            if (n.getWidth() > 0 && root.getClip() == null) {
+                clip.setWidth(n.getWidth());
+                clip.setHeight(n.getHeight());
+                root.widthProperty().addListener((o2, ov, nv)  -> clip.setWidth(nv.doubleValue()));
+                root.heightProperty().addListener((o2, ov, nv) -> clip.setHeight(nv.doubleValue()));
+                root.setClip(clip);
+            }
+        });
+    }
+
+    private void setupIconBox(StackPane wrap, ImageView iv, String codepoint, double size) {
+        if (wrap == null) return;
+        wrap.setEffect(new DropShadow(10, 0, 4, Color.web("#00000026")));
+        if (iv != null) {
+            iv.setFitWidth(size);
+            iv.setFitHeight(size);
+            String url = "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/" + codepoint + ".png";
+            Image img = new Image(url, size * 2, size * 2, true, true, true);
+            img.progressProperty().addListener((obs, o, n) -> {
+                if (n.doubleValue() >= 1.0 && !img.isError()) iv.setImage(img);
+            });
+        }
+    }
 
     // ----------------------------------------------------------------
     // Entry point
@@ -171,10 +225,8 @@ public class BookTutorGfxController {
         // Icon
         StackPane iconWrap = new StackPane();
         iconWrap.getStyleClass().addAll("stat-icon-wrap", "stat-blue");
-        FontIcon icon = new FontIcon("fas-calendar-alt");
-        icon.setIconSize(16);
-        icon.getStyleClass().add("stat-icon");
-        iconWrap.getChildren().add(icon);
+        iconWrap.setEffect(new DropShadow(10, 0, 3, Color.web("#00000020")));
+        iconWrap.getChildren().add(loadTwemoji("1f4c5", 20)); // 📅 calendar
 
         // Info
         VBox info = new VBox(5);
@@ -403,6 +455,11 @@ public class BookTutorGfxController {
         ((Stage) successPane.getScene().getWindow()).close();
     }
 
+    @FXML
+    private void handleBack() {
+        ((Stage) bookBtn.getScene().getWindow()).close();
+    }
+
     // ----------------------------------------------------------------
     // UI helpers
     // ----------------------------------------------------------------
@@ -430,5 +487,19 @@ public class BookTutorGfxController {
     private String formatDuration(long minutes) {
         if (minutes % 60 == 0) return (minutes / 60) + "h";
         return (minutes / 60) + "h " + (minutes % 60) + "m";
+    }
+
+    private ImageView loadTwemoji(String codepoint, double size) {
+        ImageView iv = new ImageView();
+        iv.setFitWidth(size);
+        iv.setFitHeight(size);
+        iv.setSmooth(true);
+        iv.setPreserveRatio(true);
+        String url = "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/" + codepoint + ".png";
+        Image img = new Image(url, size * 2, size * 2, true, true, true);
+        img.progressProperty().addListener((obs, o, n) -> {
+            if (n.doubleValue() >= 1.0 && !img.isError()) iv.setImage(img);
+        });
+        return iv;
     }
 }

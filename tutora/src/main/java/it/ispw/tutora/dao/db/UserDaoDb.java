@@ -62,6 +62,12 @@ public abstract class UserDaoDb implements UserDao {
             "WHERE username = ?";
 
     @Language("SQL")
+    private static final String SQL_FIND_BY_EMAIL =
+            "SELECT * " +
+            "FROM user " +
+            "WHERE email = ?";
+
+    @Language("SQL")
     private static final String SQL_UPDATEPASS =
             "UPDATE user " +
             "SET password_hash = ? " +
@@ -72,6 +78,18 @@ public abstract class UserDaoDb implements UserDao {
             "UPDATE user " +
             "SET description = ?, is_active = ? " +
             "WHERE username = ?";
+
+    @Language("SQL")
+    private static final String SQL_PROMOTE_ROLE =
+            "UPDATE user SET role = 'TUTOR' WHERE username = ?";
+
+    @Language("SQL")
+    private static final String SQL_DELETE_STUDENT =
+            "DELETE FROM student WHERE username = ?";
+
+    @Language("SQL")
+    private static final String SQL_INSERT_TUTOR =
+            "INSERT INTO tutor (username, rating, rating_count) VALUES (?, 0, 0)";
 
     // ----------------------------------------------------------------
     // insert
@@ -194,6 +212,55 @@ public abstract class UserDaoDb implements UserDao {
             throw e;
         } catch (SQLException e) {
             throw new DatabaseException("Error updating profile for user: " + username, e);
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // findByEmail
+    // ----------------------------------------------------------------
+
+    @Override
+    public User findByEmail(Connection conn, String email)
+            throws UserNotFoundException, DatabaseException {
+
+        try (PreparedStatement ps = conn.prepareStatement(SQL_FIND_BY_EMAIL)) {
+            ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) throw new UserNotFoundException("email: " + email);
+                return mapUser(rs);
+            }
+        } catch (UserNotFoundException e) {
+            throw e;
+        } catch (SQLException e) {
+            throw new DatabaseException("Errore nel recupero utente per email: " + email, e);
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // promoteToTutor
+    // ----------------------------------------------------------------
+
+    @Override
+    public Tutor promoteToTutor(Connection conn, String studentUsername)
+            throws DatabaseException, UserNotFoundException {
+        try {
+            try (PreparedStatement ps = conn.prepareStatement(SQL_PROMOTE_ROLE)) {
+                ps.setString(1, studentUsername);
+                if (ps.executeUpdate() == 0) throw new UserNotFoundException(studentUsername);
+            }
+            try (PreparedStatement ps = conn.prepareStatement(SQL_DELETE_STUDENT)) {
+                ps.setString(1, studentUsername);
+                ps.executeUpdate();
+            }
+            try (PreparedStatement ps = conn.prepareStatement(SQL_INSERT_TUTOR)) {
+                ps.setString(1, studentUsername);
+                ps.executeUpdate();
+            }
+            return (Tutor) findByUsername(conn, studentUsername);
+        } catch (UserNotFoundException e) {
+            throw e;
+        } catch (SQLException e) {
+            throw new DatabaseException("Error promoting student to tutor: " + studentUsername, e);
         }
     }
 
