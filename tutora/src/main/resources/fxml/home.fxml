@@ -83,10 +83,9 @@
 
             <!-- Notification bell with unread badge -->
             <StackPane>
-                <Button fx:id="notifBtn" styleClass="header-notif-box" onAction="#handleNotifications">
+                <Button fx:id="notifBtn" styleClass="header-notif-btn" onAction="#handleNotifications">
                     <graphic>
-                        <ImageView fx:id="notifIconView" fitWidth="20" fitHeight="20"
-                                   preserveRatio="true" smooth="true"/>
+                        <FontIcon iconLiteral="fas-bell" iconSize="28" styleClass="header-bell-icon"/>
                     </graphic>
                 </Button>
                 <Label fx:id="notifBadge" text="0" styleClass="notif-badge"
@@ -96,7 +95,7 @@
             <!-- Profile dropdown trigger -->
             <Button fx:id="headerProfileBtn" styleClass="header-icon-btn">
                 <graphic>
-                    <FontIcon iconLiteral="fas-user-circle" iconSize="40" styleClass="header-profile-icon"/>
+                    <FontIcon iconLiteral="fas-user-circle" iconSize="32" styleClass="header-profile-icon"/>
                 </graphic>
             </Button>
 

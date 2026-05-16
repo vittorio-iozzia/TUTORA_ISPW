@@ -9,10 +9,17 @@ import it.ispw.tutora.view.home.DashboardComponent;
 import it.ispw.tutora.view.home.DashboardFactory;
 import it.ispw.tutora.view.home.StudentDashboardDecorator;
 import it.ispw.tutora.view.home.TutorDashboardDecorator;
+import it.ispw.tutora.dao.factory.DaoFactory;
+import it.ispw.tutora.exception.DatabaseException;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.effect.GaussianBlur;
@@ -26,6 +33,7 @@ import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.File;
@@ -66,7 +74,6 @@ public class HomeGfxController {
     @FXML private Button    headerProfileBtn;
     @FXML private Button    notifBtn;
     @FXML private Label     notifBadge;
-    @FXML private ImageView notifIconView;
     @FXML private VBox      contentArea;
 
     // ----------------------------------------------------------------
@@ -78,6 +85,7 @@ public class HomeGfxController {
 
     private final List<Button> navButtons = new ArrayList<>();
     private Button activeNavBtn;
+    private Label msgNavBadge;
 
     /** Snapshot dell'area destra quando mostriamo il profilo a schermo intero. */
     private List<Node> defaultMainAreaChildren;
@@ -112,7 +120,6 @@ public class HomeGfxController {
         DashboardComponent dashboard = DashboardFactory.create(session);
         dashboard.decorateContent(contentArea);
         refreshNotifBadge();
-        loadNotifBellEmoji();
 
         // Salva i figli originali di mainArea per il restore dopo il profilo
         defaultMainAreaChildren = new ArrayList<>(mainArea.getChildren());
@@ -122,6 +129,7 @@ public class HomeGfxController {
         updateAvatarDisplay(currentUsername);
 
         instance = this;
+        startMsgBadgePoller(session);
     }
 
     // ----------------------------------------------------------------
@@ -306,11 +314,26 @@ public class HomeGfxController {
         icon.getStyleClass().add("nav-icon");
 
         Button btn = new Button(entry.label());
-        btn.setGraphic(icon);
         btn.setContentDisplay(javafx.scene.control.ContentDisplay.LEFT);
         btn.setGraphicTextGap(10);
         btn.setMaxWidth(Double.MAX_VALUE);
         btn.getStyleClass().add("nav-item");
+
+        if ("Messages".equals(entry.label())) {
+            msgNavBadge = new Label();
+            msgNavBadge.getStyleClass().add("nav-msg-badge");
+            msgNavBadge.setVisible(false);
+            msgNavBadge.setManaged(false);
+            StackPane iconWrapper = new StackPane(icon, msgNavBadge);
+            iconWrapper.setAlignment(Pos.CENTER);
+            StackPane.setAlignment(msgNavBadge, Pos.TOP_RIGHT);
+            msgNavBadge.setTranslateX(10);
+            msgNavBadge.setTranslateY(-8);
+            btn.setGraphic(iconWrapper);
+        } else {
+            btn.setGraphic(icon);
+        }
+
         btn.setOnAction(e -> {
             // Se il profilo è aperto, ripristina prima la struttura normale
             if (mainArea.getChildren().size() == 1
@@ -344,7 +367,7 @@ public class HomeGfxController {
         }
         if (session.isTutor()) {
             return List.of(
-                new NavEntry("Dashboard",    "fas-home",        "Dashboard",    this::noop),
+                new NavEntry("Dashboard",    "fas-home",        "Dashboard",    () -> swapContent("/fxml/tutor_content.fxml")),
                 new NavEntry("My Lessons",   "fas-calendar-alt","My Lessons",   () -> SceneManager.getInstance().showTutorLessons()),
                 new NavEntry("My Expertise", "fas-star",        "My Expertise", () -> SceneManager.getInstance().showTutorExpertise()),
                 new NavEntry("Messages",     "fas-comments",    "Messages",     () -> swapContent("/fxml/messages_content.fxml")),
@@ -412,19 +435,6 @@ public class HomeGfxController {
         }
     }
 
-    private void loadNotifBellEmoji() {
-        if (notifIconView == null) return;
-        notifIconView.setFitWidth(20);
-        notifIconView.setFitHeight(20);
-        notifIconView.setSmooth(true);
-        notifIconView.setPreserveRatio(true);
-        String url = "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f514.png";
-        Image img = new Image(url, 40, 40, true, true, true);
-        img.progressProperty().addListener((obs, o, n) -> {
-            if (n.doubleValue() >= 1.0 && !img.isError()) notifIconView.setImage(img);
-        });
-    }
-
     private void refreshNotifBadge() {
         String tk = SceneManager.getInstance().getSessionToken();
         Task<Integer> task = new Task<>() {
@@ -462,10 +472,55 @@ public class HomeGfxController {
             Node content = loader.load();
             VBox.setVgrow(content, Priority.ALWAYS);
             contentArea.getChildren().setAll(content);
+            boolean isChat = "/fxml/messages_content.fxml".equals(fxmlPath);
+            // Chat fills edge-to-edge; other pages keep standard padding
+            contentArea.setPadding(isChat ? new Insets(0) : new Insets(28, 36, 28, 36));
+            // Force the wrapping ScrollPane to fill height in chat mode so the
+            // sidebar stretches all the way to the bottom of the window
+            if (contentArea.getParent() instanceof ScrollPane sp) {
+                sp.setFitToHeight(isChat);
+            }
         } catch (Exception e) {
             LOGGER.severe("Cannot load content fragment: " + fxmlPath + " — " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private void startMsgBadgePoller(Session session) {
+        Timeline tl = new Timeline(new KeyFrame(Duration.seconds(5),
+                e -> refreshMsgBadge(session)));
+        tl.setCycleCount(Timeline.INDEFINITE);
+        tl.play();
+        refreshMsgBadge(session); // initial check
+    }
+
+    private void refreshMsgBadge(Session session) {
+        if (msgNavBadge == null) return;
+        String username = session.getUser().getUsername();
+        Task<Integer> task = new Task<>() {
+            @Override protected Integer call() {
+                try {
+                    return DaoFactory.getInstance().createMessageDao()
+                            .countTotalUnread(DaoFactory.getInstance().getConnection(), username);
+                } catch (DatabaseException ex) {
+                    return 0;
+                }
+            }
+        };
+        task.setOnSucceeded(ev -> Platform.runLater(() -> {
+            int count = task.getValue();
+            if (count > 0) {
+                msgNavBadge.setText(count > 99 ? "99+" : String.valueOf(count));
+                msgNavBadge.setVisible(true);
+                msgNavBadge.setManaged(true);
+            } else {
+                msgNavBadge.setVisible(false);
+                msgNavBadge.setManaged(false);
+            }
+        }));
+        Thread t = new Thread(task, "msg-badge-poll");
+        t.setDaemon(true);
+        t.start();
     }
 
     private void noop() {}

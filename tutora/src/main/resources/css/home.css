@@ -187,22 +187,22 @@
     -fx-icon-color: #214A9C;
 }
 
-/* ── Purple notification box button ── */
-.header-notif-box {
-    -fx-background-color: linear-gradient(to bottom right, #6366F1, #8B5CF6);
-    -fx-background-radius: 12;
-    -fx-padding: 0;
-    -fx-min-width: 40;
-    -fx-min-height: 40;
-    -fx-max-width: 40;
-    -fx-max-height: 40;
+/* ── Green notification bell — same hover box as profile ── */
+.header-notif-btn {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+    -fx-padding: 8;
     -fx-cursor: hand;
-    -fx-effect: dropshadow(gaussian, rgba(99,102,241,0.35), 8, 0, 0, 2);
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
 }
 
-.header-notif-box:hover {
-    -fx-background-color: linear-gradient(to bottom right, #4F46E5, #7C3AED);
-    -fx-effect: dropshadow(gaussian, rgba(99,102,241,0.50), 10, 0, 0, 3);
+.header-notif-btn:hover {
+    -fx-background-color: #F0F7F3;
+}
+
+.header-bell-icon {
+    -fx-icon-color: #2A5C45;
 }
 
 /* Pulsante profilo in alto a destra (sostituisce il cerchio avatar) */
@@ -2552,20 +2552,31 @@
    ================================================================ */
 
 .chat-root {
-    -fx-background-color: #F8FAF9;
+    -fx-background-color: #ECEEED;
     -fx-min-height: 0;
 }
 
-/* ── Sidebar ── */
+/* ── Sidebar — floating card ── */
 .chat-sidebar {
     -fx-background-color: white;
-    -fx-border-color: transparent #E2E8E4 transparent transparent;
-    -fx-border-width: 0 1 0 0;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 10, 0, 4, 0);
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.09), 14, 0, 0, 3);
+}
+
+/* ── Main chat panel — floating card ── */
+.chat-main-panel {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.07), 12, 0, 0, 2);
 }
 
 .chat-sidebar-header {
     -fx-background-color: white;
+}
+
+.chat-sidebar-sep {
+    -fx-background-color: #E2E8E4;
+    -fx-padding: 0;
 }
 
 .chat-sidebar-title {
@@ -2603,7 +2614,7 @@
 }
 
 .chat-contact-item.chat-contact-active {
-    -fx-background-color: #E8F6EE;
+    -fx-background-color: #E2E8E4;
 }
 
 /* ── Contact avatar ── */
@@ -2624,20 +2635,20 @@
 }
 
 .chat-contact-name {
-    -fx-font-size: 14px;
+    -fx-font-size: 15px;
     -fx-font-weight: 600;
     -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
     -fx-text-fill: #1C2621;
 }
 
 .chat-contact-preview {
-    -fx-font-size: 12px;
+    -fx-font-size: 13px;
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-text-fill: #9CA3AF;
 }
 
 .chat-contact-time {
-    -fx-font-size: 11px;
+    -fx-font-size: 12px;
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-text-fill: #B0C0B8;
 }
@@ -2651,63 +2662,69 @@
     -fx-max-height: 10;
 }
 
-/* ── Vertical divider ── */
-.chat-divider {
-    -fx-background-color: #E2E8E4;
-}
-
 /* ── Chat header ── */
 .chat-header {
     -fx-background-color: white;
+    -fx-background-radius: 12 12 0 0;
     -fx-border-color: transparent transparent #E2E8E4 transparent;
     -fx-border-width: 0 0 1 0;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.07), 8, 0, 0, 4);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 6, 0, 0, 3);
 }
 
 .chat-header-name {
-    -fx-font-size: 16px;
+    -fx-font-size: 17px;
     -fx-font-weight: 700;
     -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
     -fx-text-fill: #1C2621;
 }
 
 .chat-header-role {
-    -fx-font-size: 12px;
+    -fx-font-size: 13px;
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-text-fill: #8FAF9A;
 }
 
 /* ── Empty state ── */
-.chat-empty-icon {
-    -fx-font-size: 52px;
+.chat-empty-blob {
+    -fx-background-color: linear-gradient(to bottom, #C6E8D7, #A8D9C0);
+    -fx-background-radius: 54;
+    -fx-min-width: 108;
+    -fx-min-height: 108;
+    -fx-max-width: 108;
+    -fx-max-height: 108;
+}
+
+.chat-empty-icon-fa {
+    -fx-icon-color: #2A5C45;
+    -fx-opacity: 0.90;
 }
 
 .chat-empty-text {
     -fx-font-size: 18px;
     -fx-font-weight: 600;
     -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
-    -fx-text-fill: #374151;
+    -fx-text-fill: #1C2621;
 }
 
 .chat-empty-sub {
     -fx-font-size: 14px;
     -fx-font-family: "Segoe UI", sans-serif;
-    -fx-text-fill: #9CA3AF;
+    -fx-text-fill: #8C9691;
 }
 
 /* ── Messages area ── */
 .chat-messages-scroll {
-    -fx-background-color: #F8FAF9;
-    -fx-background: #F8FAF9;
+    -fx-background-color: #F9F9F8;
+    -fx-background: #F9F9F8;
     -fx-border-color: transparent;
 }
 
 .chat-messages-scroll > .viewport {
-    -fx-background-color: #F8FAF9;
+    -fx-background-color: #F9F9F8;
 }
 
 .chat-messages-container {
-    -fx-background-color: #F8FAF9;
+    -fx-background-color: #F9F9F8;
 }
 
 /* ── Message bubbles — base ── */
@@ -2718,11 +2735,9 @@
 }
 
 .chat-bubble-recv {
-    -fx-background-color: white;
-    -fx-border-color: #E8EEE8;
-    -fx-border-width: 1;
+    -fx-background-color: #F3F4F1;
     -fx-padding: 10 14;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.07), 10, 0.05, 0, 3);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 6, 0, 0, 2);
 }
 
 /* ── Bubble radius variants (solo / first-in-group / mid / last) ── */
@@ -2737,14 +2752,14 @@
 .chat-bubble-recv-last  { -fx-background-radius: 16 16 16 4; -fx-border-radius: 16 16 16 4; }
 
 .chat-bubble-text-sent {
-    -fx-font-size: 14px;
+    -fx-font-size: 15px;
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-text-fill: white;
     -fx-wrap-text: true;
 }
 
 .chat-bubble-text-recv {
-    -fx-font-size: 14px;
+    -fx-font-size: 15px;
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-text-fill: #1C2621;
     -fx-wrap-text: true;
@@ -2767,6 +2782,7 @@
 /* ── Input area ── */
 .chat-input-area {
     -fx-background-color: white;
+    -fx-background-radius: 0 0 12 12;
     -fx-border-color: #E2E8E4 transparent transparent transparent;
     -fx-border-width: 1 0 0 0;
 }
@@ -2777,7 +2793,7 @@
     -fx-border-color: transparent;
     -fx-border-radius: 24;
     -fx-padding: 10 18;
-    -fx-font-size: 14px;
+    -fx-font-size: 15px;
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-text-fill: #1C2621;
     -fx-focus-color: transparent;
@@ -2807,4 +2823,41 @@
 
 .chat-send-btn:pressed {
     -fx-background-color: #163322;
+}
+
+/* ── Chat header action buttons (call / video / more) ── */
+.chat-action-btn {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+    -fx-padding: 8 10;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.chat-action-btn:hover {
+    -fx-background-color: #F0F5F2;
+    -fx-background-radius: 8;
+}
+
+.chat-action-btn:pressed {
+    -fx-background-color: #E2E8E4;
+}
+
+.chat-action-icon {
+    -fx-icon-color: #5C6661;
+}
+
+/* ── Messages nav badge ── */
+.nav-msg-badge {
+    -fx-background-color: #E53E3E;
+    -fx-background-radius: 8;
+    -fx-text-fill: white;
+    -fx-font-size: 9px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-padding: 1 4;
+    -fx-min-width: 15;
+    -fx-min-height: 15;
+    -fx-alignment: center;
 }
