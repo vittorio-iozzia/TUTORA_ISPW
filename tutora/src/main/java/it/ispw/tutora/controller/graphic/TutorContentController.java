@@ -31,7 +31,7 @@ public class TutorContentController {
 
     private static final Logger LOGGER =
             Logger.getLogger(TutorContentController.class.getName());
-    private static final String TIME_SLOT_UNAVAILABLE = TIME_SLOT_UNAVAILABLE;
+    private static final String TIME_SLOT_UNAVAILABLE = "time-slot-unavailable";
 
     private static final DateTimeFormatter CARD_FMT =
             DateTimeFormatter.ofPattern("EEE d MMM · HH:mm", java.util.Locale.ENGLISH);
