@@ -69,4 +69,15 @@ public class MessageDaoDemo implements MessageDao {
                         && !m.isRead())
                 .forEach(m -> m.setRead(true));
     }
+
+    // ----------------------------------------------------------------
+    // countTotalUnread
+    // ----------------------------------------------------------------
+
+    @Override
+    public int countTotalUnread(Connection conn, String recipientUsername) throws DatabaseException {
+        return (int) cache.stream()
+                .filter(m -> m.getRecipientUsername().equals(recipientUsername) && !m.isRead())
+                .count();
+    }
 }

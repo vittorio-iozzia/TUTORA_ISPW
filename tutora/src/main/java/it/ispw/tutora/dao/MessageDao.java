@@ -30,4 +30,9 @@ public interface MessageDao {
      */
     void markConversationRead(Connection conn, String senderUsername, String recipientUsername)
             throws DatabaseException;
+
+    /**
+     * Restituisce il numero totale di messaggi non letti ricevuti da {@code recipientUsername}.
+     */
+    int countTotalUnread(Connection conn, String recipientUsername) throws DatabaseException;
 }

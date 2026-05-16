@@ -43,19 +43,25 @@ public class ChatGfxController {
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("d MMM · HH:mm", Locale.ENGLISH);
 
-    // Portrait pool — same set used by StudentContentController for consistency
+    // Per-username portrait URLs — must match StudentContentController.PHOTO_URLS (same person, same photo)
+    private static final Map<String, String> PHOTO_URLS = Map.of(
+        "tutor_vitto",
+        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&h=120&fit=crop&crop=faces"
+    );
+
+    // Fallback pool for usernames not in PHOTO_URLS
     private static final List<String> PORTRAIT_POOL = List.of(
         "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop&crop=faces",
         "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&h=120&fit=crop&crop=faces",
         "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&h=120&fit=crop&crop=faces",
-        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&h=120&fit=crop&crop=faces",
-        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&h=120&fit=crop&crop=faces"
+        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&h=120&fit=crop&crop=faces"
     );
 
     // ----------------------------------------------------------------
     // FXML
     // ----------------------------------------------------------------
 
+    @FXML private VBox       chatSidebar;
     @FXML private VBox       contactList;
     @FXML private HBox       chatHeader;
     @FXML private StackPane  chatHeaderAvatar;
@@ -63,6 +69,9 @@ public class ChatGfxController {
     @FXML private ImageView  chatHeaderImageView;
     @FXML private Label      chatHeaderName;
     @FXML private Label      chatHeaderRole;
+    @FXML private Button     callBtn;
+    @FXML private Button     videoCallBtn;
+    @FXML private Button     moreBtn;
     @FXML private VBox       emptyState;
     @FXML private ScrollPane messagesScroll;
     @FXML private VBox       messagesContainer;
@@ -96,8 +105,26 @@ public class ChatGfxController {
         currentUsername = session.getUser().getUsername();
         isStudent       = session.isStudent();
 
+        clipToRoundedRect(chatSidebar, 12);
         loadContacts();
         startPolling();
+    }
+
+    // ----------------------------------------------------------------
+    // Clip a Region to a rounded rectangle so hover states don't bleed
+    // outside the card corners
+    // ----------------------------------------------------------------
+
+    private void clipToRoundedRect(javafx.scene.layout.Region node, double radius) {
+        if (node == null) return;
+        Platform.runLater(() -> {
+            Rectangle clip = new Rectangle();
+            clip.setArcWidth(radius * 2);
+            clip.setArcHeight(radius * 2);
+            clip.widthProperty().bind(node.widthProperty());
+            clip.heightProperty().bind(node.heightProperty());
+            node.setClip(clip);
+        });
     }
 
     // ----------------------------------------------------------------
@@ -132,10 +159,13 @@ public class ChatGfxController {
             String contactRole = isStudent ? "Tutor" : "Student";
             int idx = 0;
             for (Map.Entry<String, User> e : contacts.entrySet()) {
-                contactIndexMap.put(e.getKey(), idx);
+                String uname = e.getKey();
+                if (!PHOTO_URLS.containsKey(uname)) {
+                    contactIndexMap.put(uname, idx);
+                    idx++;
+                }
                 contactList.getChildren().add(
-                        buildContactItem(e.getKey(), e.getValue().getFullName(), contactRole, idx));
-                idx++;
+                        buildContactItem(uname, e.getValue().getFullName(), contactRole));
             }
 
         } catch (DatabaseException e) {
@@ -147,10 +177,10 @@ public class ChatGfxController {
     // Build a contact list item
     // ----------------------------------------------------------------
 
-    private Button buildContactItem(String username, String fullName, String role, int poolIndex) {
+    private Button buildContactItem(String username, String fullName, String role) {
 
         // ── Avatar (circle with Unsplash photo) ──
-        StackPane avatar = buildAvatarPane(fullName, poolIndex, 42);
+        StackPane avatar = buildAvatarPane(username, fullName, 42);
 
         // ── Right side: name + preview ──
         VBox textBox = new VBox(3);
@@ -189,7 +219,7 @@ public class ChatGfxController {
         btn.getStyleClass().add("chat-contact-item");
         btn.setGraphic(content);
         btn.setMaxWidth(Double.MAX_VALUE);
-        btn.setOnAction(e -> selectContact(btn, username, fullName, role, poolIndex));
+        btn.setOnAction(e -> selectContact(btn, username, fullName, role));
 
         return btn;
     }
@@ -198,7 +228,7 @@ public class ChatGfxController {
     // Build a circular avatar StackPane with async Unsplash photo
     // ----------------------------------------------------------------
 
-    private StackPane buildAvatarPane(String fullName, int poolIndex, double size) {
+    private StackPane buildAvatarPane(String username, String fullName, double size) {
         StackPane avatar = new StackPane();
         avatar.getStyleClass().add("chat-contact-avatar");
         avatar.setMinSize(size, size);
@@ -224,8 +254,11 @@ public class ChatGfxController {
 
         avatar.getChildren().add(imgView);
 
-        // Async load
-        String url = PORTRAIT_POOL.get(poolIndex % PORTRAIT_POOL.size());
+        // Prefer the per-username photo; fall back to pool
+        String url = PHOTO_URLS.containsKey(username)
+                ? PHOTO_URLS.get(username)
+                : PORTRAIT_POOL.get(contactIndexMap.getOrDefault(username, 0) % PORTRAIT_POOL.size());
+
         Image img = new Image(url, size, size, false, true, true);
         img.progressProperty().addListener((obs, oldV, newV) -> {
             if (newV.doubleValue() >= 1.0 && !img.isError()) {
@@ -237,11 +270,17 @@ public class ChatGfxController {
         return avatar;
     }
 
+    private String resolvePhotoUrl(String username, double size) {
+        if (PHOTO_URLS.containsKey(username)) return PHOTO_URLS.get(username);
+        int idx = contactIndexMap.getOrDefault(username, 0) % PORTRAIT_POOL.size();
+        return PORTRAIT_POOL.get(idx);
+    }
+
     // ----------------------------------------------------------------
     // Select a conversation
     // ----------------------------------------------------------------
 
-    private void selectContact(Button btn, String username, String fullName, String role, int poolIndex) {
+    private void selectContact(Button btn, String username, String fullName, String role) {
         if (activeContactBtn != null) activeContactBtn.getStyleClass().remove("chat-contact-active");
         activeContactBtn = btn;
         btn.getStyleClass().add("chat-contact-active");
@@ -253,9 +292,9 @@ public class ChatGfxController {
         chatHeaderName.setText(fullName);
         chatHeaderRole.setText(role);
 
-        // Reload header avatar photo
+        // Reload header avatar photo (use same URL logic as the contact list)
         chatHeaderImageView.setVisible(false);
-        String url = PORTRAIT_POOL.get(poolIndex % PORTRAIT_POOL.size());
+        String url = resolvePhotoUrl(username, 44);
         Image img = new Image(url, 44, 44, false, true, true);
         img.progressProperty().addListener((obs, oldV, newV) -> {
             if (newV.doubleValue() >= 1.0 && !img.isError()) {
@@ -404,6 +443,28 @@ public class ChatGfxController {
 
         loadMessages();
         refreshContactItem(activeContactBtn, selectedContactUsername);
+    }
+
+    // ----------------------------------------------------------------
+    // Header action handlers (call / video / more)
+    // ----------------------------------------------------------------
+
+    @FXML
+    private void handleCall() {
+        // Placeholder — voice call not yet implemented
+        LOGGER.info("Voice call requested for: " + selectedContactUsername);
+    }
+
+    @FXML
+    private void handleVideo() {
+        // Placeholder — video call not yet implemented
+        LOGGER.info("Video call requested for: " + selectedContactUsername);
+    }
+
+    @FXML
+    private void handleMore() {
+        // Placeholder — context menu (mute, block, clear) not yet implemented
+        LOGGER.info("More options requested for: " + selectedContactUsername);
     }
 
     // ----------------------------------------------------------------

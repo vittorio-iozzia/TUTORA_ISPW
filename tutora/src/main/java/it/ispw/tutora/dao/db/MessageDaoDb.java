@@ -48,6 +48,10 @@ public class MessageDaoDb implements MessageDao {
             "SET is_read = TRUE " +
             "WHERE sender_username = ? AND recipient_username = ? AND is_read = FALSE";
 
+    @Language("SQL")
+    private static final String SQL_COUNT_UNREAD =
+            "SELECT COUNT(*) FROM message WHERE recipient_username = ? AND is_read = FALSE";
+
     // ----------------------------------------------------------------
     // insert
     // ----------------------------------------------------------------
@@ -115,6 +119,22 @@ public class MessageDaoDb implements MessageDao {
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new DatabaseException("Error marking messages as read.", e);
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // countTotalUnread
+    // ----------------------------------------------------------------
+
+    @Override
+    public int countTotalUnread(Connection conn, String recipientUsername) throws DatabaseException {
+        try (PreparedStatement ps = conn.prepareStatement(SQL_COUNT_UNREAD)) {
+            ps.setString(1, recipientUsername);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Error counting unread messages.", e);
         }
     }
 }
