@@ -42,6 +42,7 @@ public class AdminContentController {
 
     private static final Logger LOGGER = Logger.getLogger(AdminContentController.class.getName());
     private static final String EMPTY_LABEL_STYLE = "-fx-text-fill: #8FAF9A; -fx-font-size: 13px;";
+    private static final String TOOLTIP_STYLE     = "-fx-font-size:12px;";
 
     private final ApplyToBecomeATutorController appController = new ApplyToBecomeATutorController();
 
@@ -352,7 +353,7 @@ public class AdminContentController {
                 if (node == null) return;
                 String label = "€" + String.format("%.0f", d.getYValue().doubleValue());
                 Tooltip tip = new Tooltip(label);
-                tip.setStyle("-fx-font-size:12px;");
+                tip.setStyle(TOOLTIP_STYLE);
                 Tooltip.install(node, tip);
                 node.setOnMouseEntered(e -> node.setStyle("-fx-opacity:0.75;-fx-cursor:hand;"));
                 node.setOnMouseExited (e -> node.setStyle("-fx-opacity:1.0;"));
@@ -372,7 +373,7 @@ public class AdminContentController {
             d.nodeProperty().addListener((obs, old, node) -> {
                 if (node == null) return;
                 Tooltip tip = new Tooltip(d.getYValue() + " bookings");
-                tip.setStyle("-fx-font-size:12px;");
+                tip.setStyle(TOOLTIP_STYLE);
                 Tooltip.install(node, tip);
                 node.setOnMouseEntered(e -> node.setStyle("-fx-bar-fill: #1B5E35;-fx-cursor:hand;"));
                 node.setOnMouseExited (e -> node.setStyle("-fx-bar-fill: #2E7D50;"));
@@ -392,7 +393,7 @@ public class AdminContentController {
                 if (node == null) return;
                 String label = slice.getName() + " — " + (int) slice.getPieValue() + " tutors";
                 Tooltip tip = new Tooltip(label);
-                tip.setStyle("-fx-font-size:12px;");
+                tip.setStyle(TOOLTIP_STYLE);
                 Tooltip.install(node, tip);
                 node.setOnMouseEntered(e -> node.setStyle("-fx-opacity:0.8;-fx-cursor:hand;"));
                 node.setOnMouseExited (e -> node.setStyle("-fx-opacity:1.0;"));

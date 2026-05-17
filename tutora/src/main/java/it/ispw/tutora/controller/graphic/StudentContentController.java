@@ -59,6 +59,7 @@ public class StudentContentController {
     private static final Logger LOGGER =
             Logger.getLogger(StudentContentController.class.getName());
     private static final String EMPTY_LESSON_STYLE = "-fx-text-fill:#9CA3AF;-fx-font-size:15px;";
+    private static final String BOOK_BTN           = "BOOK_BTN";
 
     // ----------------------------------------------------------------
     // FXML – Welcome
@@ -360,7 +361,7 @@ public class StudentContentController {
         profileBtn.setMaxWidth(Double.MAX_VALUE);
         profileBtn.setOnAction(e -> HomeGfxController.navigateToTutorPublicProfile(tutor));
         Button bookBtn = new Button("Book");
-        bookBtn.getStyleClass().add("book-btn");
+        bookBtn.getStyleClass().add(BOOK_BTN);
         HBox.setHgrow(bookBtn, Priority.ALWAYS);
         bookBtn.setMaxWidth(Double.MAX_VALUE);
         bookBtn.setOnAction(e -> TutorBrowseUtil.openBookingDialog(tutor, tutorGrid, LOGGER));
@@ -530,11 +531,11 @@ public class StudentContentController {
 
         if (upcoming) {
             Button joinBtn = new Button("Join");
-            joinBtn.getStyleClass().add("book-btn");
+            joinBtn.getStyleClass().add(BOOK_BTN);
             card.getChildren().add(joinBtn);
         } else {
             Button reviewBtn = new Button(isReviewed ? "Reviewed ✓" : "Review");
-            reviewBtn.getStyleClass().add(isReviewed ? "lesson-reviewed-btn" : "book-btn");
+            reviewBtn.getStyleClass().add(isReviewed ? "lesson-reviewed-btn" : BOOK_BTN);
             reviewBtn.setDisable(isReviewed);
             if (!isReviewed) {
                 reviewBtn.setOnAction(e -> openReviewDialog(booking, reviewBtn));
@@ -553,7 +554,7 @@ public class StudentContentController {
             ReviewGfxController ctrl = loader.getController();
             ctrl.initBooking(booking, () -> {
                 reviewBtn.setText("Reviewed ✓");
-                reviewBtn.getStyleClass().remove("book-btn");
+                reviewBtn.getStyleClass().remove(BOOK_BTN);
                 reviewBtn.getStyleClass().add("lesson-reviewed-btn");
                 reviewBtn.setDisable(true);
                 reviewBtn.setOnAction(null);

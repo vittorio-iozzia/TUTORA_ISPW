@@ -26,7 +26,8 @@ import java.util.logging.Logger;
 
 public class ReviewGfxController {
 
-    private static final Logger LOGGER = Logger.getLogger(ReviewGfxController.class.getName());
+    private static final Logger LOGGER   = Logger.getLogger(ReviewGfxController.class.getName());
+    private static final String STAR_OFF = "STAR_OFF";
 
     @FXML private VBox     dialogRoot;
     @FXML private Label    subtitleLabel;
@@ -70,7 +71,7 @@ public class ReviewGfxController {
         for (int i = 1; i <= 5; i++) {
             final int value = i;
             Label star = new Label("★");
-            star.getStyleClass().addAll("review-star", "review-star-off");
+            star.getStyleClass().addAll("review-star", STAR_OFF);
             star.setOnMouseEntered(e -> highlightStars(value));
             star.setOnMouseExited (e -> highlightStars(selectedRating));
             star.setOnMouseClicked(e -> selectRating(value));
@@ -82,8 +83,8 @@ public class ReviewGfxController {
     private void highlightStars(int upTo) {
         for (int i = 0; i < starLabels.size(); i++) {
             Label s = starLabels.get(i);
-            s.getStyleClass().removeAll("review-star-on", "review-star-off");
-            s.getStyleClass().add(i < upTo ? "review-star-on" : "review-star-off");
+            s.getStyleClass().removeAll("review-star-on", STAR_OFF);
+            s.getStyleClass().add(i < upTo ? "review-star-on" : STAR_OFF);
         }
     }
 

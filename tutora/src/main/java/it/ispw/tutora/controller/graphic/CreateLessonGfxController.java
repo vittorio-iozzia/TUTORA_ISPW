@@ -174,15 +174,7 @@ public class CreateLessonGfxController {
             }
         };
 
-        task.setOnSucceeded(e -> Platform.runLater(() -> {
-            if (bean.getErrorMessage() != null) {
-                showError(bean.getErrorMessage());
-                submitBtn.setDisable(false);
-            } else {
-                if (onLessonCreated != null) onLessonCreated.run();
-                closeDialog();
-            }
-        }));
+        task.setOnSucceeded(e -> Platform.runLater(() -> handleSubmitSuccess(bean)));
 
         task.setOnFailed(e -> Platform.runLater(() -> {
             showError("Unexpected error. Please try again.");
@@ -192,6 +184,16 @@ public class CreateLessonGfxController {
         Thread t = new Thread(task, "create-lesson");
         t.setDaemon(true);
         t.start();
+    }
+
+    private void handleSubmitSuccess(LessonTutorBean bean) {
+        if (bean.getErrorMessage() != null) {
+            showError(bean.getErrorMessage());
+            submitBtn.setDisable(false);
+        } else {
+            if (onLessonCreated != null) onLessonCreated.run();
+            closeDialog();
+        }
     }
 
     @FXML

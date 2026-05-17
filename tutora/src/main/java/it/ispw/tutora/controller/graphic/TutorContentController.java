@@ -58,8 +58,9 @@ public class TutorContentController {
 
     private static final Logger LOGGER =
             Logger.getLogger(TutorContentController.class.getName());
-    private static final String LESSON_META_ICON = "lesson-meta-icon";
-    private static final String LESSON_META = "lesson-meta";
+    private static final String LESSON_META_ICON   = "lesson-meta-icon";
+    private static final String LESSON_META        = "lesson-meta";
+    private static final String EMPTY_LABEL_STYLE  = "-fx-text-fill:#9CA3AF;-fx-font-size:13px;";
 
     private static final DateTimeFormatter CARD_FMT =
             DateTimeFormatter.ofPattern("EEE d MMM · HH:mm", java.util.Locale.ENGLISH);
@@ -534,7 +535,7 @@ public class TutorContentController {
                     .toList();
             if (upcoming.isEmpty()) {
                 Label empty = new Label("No upcoming lessons.");
-                empty.setStyle("-fx-text-fill:#9CA3AF;-fx-font-size:13px;");
+                empty.setStyle(EMPTY_LABEL_STYLE);
                 upcomingLessonsList.getChildren().add(empty);
             } else {
                 for (Lesson l : upcoming) upcomingLessonsList.getChildren().add(buildUpcomingCard(l));
@@ -567,7 +568,7 @@ public class TutorContentController {
             upcomingLessonsList.getChildren().clear();
             if (upcoming.isEmpty()) {
                 Label empty = new Label("No upcoming lessons.");
-                empty.setStyle("-fx-text-fill:#9CA3AF;-fx-font-size:13px;");
+                empty.setStyle(EMPTY_LABEL_STYLE);
                 upcomingLessonsList.getChildren().add(empty);
             } else {
                 for (Lesson l : upcoming) upcomingLessonsList.getChildren().add(buildUpcomingCard(l));
@@ -645,7 +646,7 @@ public class TutorContentController {
             bookingRequestsList.getChildren().clear();
             if (pending.isEmpty()) {
                 Label empty = new Label("No pending booking requests.");
-                empty.setStyle("-fx-text-fill:#9CA3AF;-fx-font-size:13px;");
+                empty.setStyle(EMPTY_LABEL_STYLE);
                 bookingRequestsList.getChildren().add(empty);
             } else {
                 for (Notification notif : pending) {
@@ -777,11 +778,11 @@ public class TutorContentController {
             } else {
                 bookingRequestsList.getChildren().remove(card);
                 long remaining = bookingRequestsList.getChildren().stream()
-                        .filter(n -> n instanceof VBox).count();
+                        .filter(VBox.class::isInstance).count();
                 pendingBadge.setText(remaining + " new");
                 if (bookingRequestsList.getChildren().isEmpty()) {
                     Label empty = new Label("No pending booking requests.");
-                    empty.setStyle("-fx-text-fill:#9CA3AF;-fx-font-size:13px;");
+                    empty.setStyle(EMPTY_LABEL_STYLE);
                     bookingRequestsList.getChildren().add(empty);
                 }
             }

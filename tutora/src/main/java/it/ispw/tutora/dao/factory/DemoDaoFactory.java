@@ -514,7 +514,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .startTime(now.plusDays(10).withHour(14).withMinute(0).withSecond(0).withNano(0))
                 .endTime(now.plusDays(10).withHour(15).withMinute(30).withSecond(0).withNano(0))
                 .remote(false)
-                .listedPrice(new BigDecimal("45.00"))
+                .listedPrice(new BigDecimal(PRICE_45))
                 .lessonStatus(LessonStatus.AVAILABLE)
                 .createdAt(now)
                 .build();

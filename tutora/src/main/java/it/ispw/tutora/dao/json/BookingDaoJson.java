@@ -50,6 +50,7 @@ import java.util.List;
 public class BookingDaoJson implements BookingDao {
 
     private static final String JSON_PATH = "../tutora_data/bookings.json";
+    private static final String REFUNDED  = "REFUNDED";
     private final ObjectMapper mapper = new ObjectMapper();
 
     /**
@@ -164,8 +165,10 @@ public class BookingDaoJson implements BookingDao {
                                         String subcategoryName)
             throws DatabaseException, DuplicateBookingException {
         for (BookingRecord r : readAll()) {
-            if ("Refunded".equals(r.paymentStatus)) continue;
-            if ("COMPLETED".equals(r.lessonStatus) || "CANCELLED".equals(r.lessonStatus)) continue;
+            boolean inactive = REFUNDED.equals(r.paymentStatus)
+                    || "COMPLETED".equals(r.lessonStatus)
+                    || "CANCELLED".equals(r.lessonStatus);
+            if (inactive) continue;
             if (studentUsername.equals(r.studentUsername)
                     && tutorUsername.equals(r.tutorUsername)
                     && subcategoryName.equals(r.subjectName)) {
@@ -329,7 +332,7 @@ public class BookingDaoJson implements BookingDao {
         return switch (status) {
             case PENDING  -> "Pending";
             case PAID     -> "Paid";
-            case REFUNDED -> "Refunded";
+            case REFUNDED -> REFUNDED;
         };
     }
 
@@ -337,7 +340,7 @@ public class BookingDaoJson implements BookingDao {
         return switch (s) {
             case "Pending"  -> PaymentStatus.PENDING;
             case "Paid"     -> PaymentStatus.PAID;
-            case "Refunded" -> PaymentStatus.REFUNDED;
+            case REFUNDED -> PaymentStatus.REFUNDED;
             default -> throw new IllegalArgumentException("Unknown payment status: " + s);
         };
     }
