@@ -1,4 +1,4 @@
-﻿package it.ispw.tutora.controller.cli;
+package it.ispw.tutora.controller.cli;
 
 import java.io.Console;
 import java.util.Scanner;
