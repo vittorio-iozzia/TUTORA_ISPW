@@ -26,7 +26,6 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
@@ -65,8 +64,7 @@ public class FindTutorGfxController {
     private List<Tutor>    allTutors     = List.of();
     private List<Category> allCategories = List.of();
 
-    private Map<String, List<String>>  expertiseNames = new HashMap<>();
-    private Map<String, BigDecimal> minPrices = new HashMap<>();
+    private Map<String, List<String>> expertiseNames = new HashMap<>();
 
     private final SearchTutorController searchController = new SearchTutorController();
 
@@ -126,13 +124,6 @@ public class FindTutorGfxController {
                         .limit(3)
                         .toList();
                 expertiseNames.put(t.getUsername(), approved);
-
-                list.stream()
-                        .filter(e -> e.getStatus() == Status.APPROVED
-                                && e.getHourlyPrice() != null)
-                        .map(TutorExpertise::getHourlyPrice)
-                        .min(BigDecimal::compareTo)
-                        .ifPresent(min -> minPrices.put(t.getUsername(), min));
             }
         } catch (SQLException | DatabaseException e) {
             LOGGER.warning("Cannot load expertises: " + e.getMessage());
@@ -290,9 +281,9 @@ public class FindTutorGfxController {
     private VBox buildTutorCard(Tutor tutor, int poolIndex) {
         VBox card = new VBox(0);
         card.getStyleClass().add("tutor-card");
-        card.setPrefWidth(280);
+        card.setPrefWidth(260);
 
-        StackPane photo = TutorBrowseUtil.buildPhotoHalf(tutor, poolIndex, 280, PHOTO_URLS, PORTRAIT_POOL);
+        StackPane photo = TutorBrowseUtil.buildPhotoHalf(tutor, poolIndex, 260, PHOTO_URLS, PORTRAIT_POOL);
 
         VBox body = new VBox(10);
         body.getStyleClass().add("tutor-card-body");
@@ -300,83 +291,43 @@ public class FindTutorGfxController {
         Label name = new Label(tutor.getFullName());
         name.getStyleClass().add("tutor-name");
 
-        String descText = tutor.getDescription() != null
+        Label desc = new Label(tutor.getDescription() != null
                 ? TutorBrowseUtil.truncate(tutor.getDescription(), 55)
-                : "@" + tutor.getUsername();
-        Label desc = new Label(descText);
+                : tutor.getUsername());
         desc.getStyleClass().add("tutor-subject");
         desc.setWrapText(true);
 
-        HBox ratingRow = buildRatingRow(tutor);
-
-        List<String> chips = expertiseNames.getOrDefault(tutor.getUsername(), List.of());
-
-        HBox footer = buildFooter(tutor);
-
-        body.getChildren().addAll(name, desc, ratingRow);
-        if (!chips.isEmpty()) body.getChildren().add(buildChipsPane(chips));
-        body.getChildren().add(footer);
-
-        card.getChildren().addAll(photo, body);
-        TutorBrowseUtil.addHoverLift(card);
-        return card;
-    }
-
-    private HBox buildRatingRow(Tutor tutor) {
-        HBox row = new HBox(6);
-        row.setAlignment(Pos.CENTER_LEFT);
+        HBox ratingRow = new HBox(5);
+        ratingRow.setAlignment(Pos.CENTER_LEFT);
         FontIcon star = new FontIcon("fas-star");
         star.getStyleClass().add("star-icon");
-        boolean hasRating = tutor.getRating() != null && tutor.getRatingCount() > 0;
-        String text = hasRating
-                ? String.format("%.1f", tutor.getRating())
-                  + "  ·  " + tutor.getRatingCount() + " reviews"
+        String ratingText = tutor.getRating() != null
+                ? String.format("%.1f (%d reviews)", tutor.getRating(), tutor.getRatingCount())
                 : "No reviews yet";
-        Label lbl = new Label(text);
-        lbl.getStyleClass().add("tutor-rating");
-        row.getChildren().addAll(star, lbl);
-        return row;
-    }
+        Label ratingLabel = new Label(ratingText);
+        ratingLabel.getStyleClass().add("tutor-rating");
+        ratingRow.getChildren().addAll(star, ratingLabel);
 
-    private FlowPane buildChipsPane(List<String> chips) {
-        FlowPane pane = new FlowPane(6, 6);
-        for (String chip : chips) {
-            Label tag = new Label(chip);
-            tag.getStyleClass().add("expertise-chip");
-            pane.getChildren().add(tag);
-        }
-        return pane;
-    }
+        Label price = new Label("From €30/h");
+        price.getStyleClass().add("tutor-price");
 
-    private HBox buildFooter(Tutor tutor) {
-        HBox footer = new HBox();
-        footer.setAlignment(Pos.CENTER_LEFT);
-
-        BigDecimal price = minPrices.get(tutor.getUsername());
-        if (price != null) {
-            VBox priceBox = new VBox(0);
-            priceBox.setAlignment(Pos.CENTER_LEFT);
-            Label fromLbl = new Label("from");
-            fromLbl.getStyleClass().add("ft-price-from");
-            Label priceLbl = new Label("€" + price.stripTrailingZeros().toPlainString() + "/h");
-            priceLbl.getStyleClass().add("ft-price-value");
-            priceBox.getChildren().addAll(fromLbl, priceLbl);
-            footer.getChildren().add(priceBox);
-        }
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
+        HBox buttons = new HBox(10);
+        buttons.setAlignment(Pos.CENTER_LEFT);
         Button profileBtn = new Button("Profile");
         profileBtn.getStyleClass().add("profile-btn");
+        HBox.setHgrow(profileBtn, Priority.ALWAYS);
+        profileBtn.setMaxWidth(Double.MAX_VALUE);
         profileBtn.setOnAction(e -> HomeGfxController.navigateToTutorPublicProfile(tutor));
-
         Button bookBtn = new Button("Book");
         bookBtn.getStyleClass().add("book-btn");
-        bookBtn.setOnAction(e -> TutorBrowseUtil.openBookingDialog(tutor, applyBtn, LOGGER));
+        HBox.setHgrow(bookBtn, Priority.ALWAYS);
+        bookBtn.setMaxWidth(Double.MAX_VALUE);
+        bookBtn.setOnAction(e -> TutorBrowseUtil.openBookingDialog(tutor, tutorGrid, LOGGER));
+        buttons.getChildren().addAll(profileBtn, bookBtn);
 
-        footer.getChildren().addAll(spacer, profileBtn, bookBtn);
-        return footer;
+        body.getChildren().addAll(name, desc, ratingRow, price, buttons);
+        card.getChildren().addAll(photo, body);
+        return card;
     }
 
     // ----------------------------------------------------------------

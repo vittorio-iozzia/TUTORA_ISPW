@@ -132,44 +132,49 @@ public class ChatGfxController {
     // ----------------------------------------------------------------
 
     private void loadContacts() {
-        try {
+        {
             BookingDao bookingDao = DaoFactory.getInstance().createBookingDao();
-            List<Booking> bookings = isStudent
-                    ? bookingDao.findByStudent(DaoFactory.getInstance().getConnection(), currentUsername)
-                    : bookingDao.findByTutor(DaoFactory.getInstance().getConnection(), currentUsername);
 
-            LinkedHashMap<String, User> contacts = new LinkedHashMap<>();
-            for (Booking b : bookings) {
-                User contact = isStudent
-                        ? b.getLesson().getExpertise().getTutor()
-                        : b.getStudent();
-                contacts.putIfAbsent(contact.getUsername(), contact);
-            }
+            // Load from both student and tutor bookings — handles users who changed role
+            LinkedHashMap<String, User>   contacts = new LinkedHashMap<>();
+            LinkedHashMap<String, String> roles    = new LinkedHashMap<>();
+
+            try {
+                for (Booking b : bookingDao.findByStudent(
+                        DaoFactory.getInstance().getConnection(), currentUsername)) {
+                    User contact = b.getLesson().getExpertise().getTutor();
+                    if (contacts.putIfAbsent(contact.getUsername(), contact) == null)
+                        roles.put(contact.getUsername(), "Tutor");
+                }
+            } catch (DatabaseException ignored) {}
+
+            try {
+                for (Booking b : bookingDao.findByTutor(
+                        DaoFactory.getInstance().getConnection(), currentUsername)) {
+                    User contact = b.getStudent();
+                    if (contacts.putIfAbsent(contact.getUsername(), contact) == null)
+                        roles.put(contact.getUsername(), "Student");
+                }
+            } catch (DatabaseException ignored) {}
 
             if (contacts.isEmpty()) {
-                Label empty = new Label(isStudent
-                        ? "No tutors yet.\nBook a lesson to start chatting!"
-                        : "No students have booked yet.");
+                Label empty = new Label("No conversations yet.\nBook a lesson to start chatting!");
                 empty.setStyle("-fx-text-fill:#9CA3AF;-fx-font-size:14px;-fx-padding:24;-fx-wrap-text:true;-fx-text-alignment:center;");
                 empty.setWrapText(true);
                 contactList.getChildren().add(empty);
                 return;
             }
 
-            String contactRole = isStudent ? "Tutor" : "Student";
             int idx = 0;
             for (Map.Entry<String, User> e : contacts.entrySet()) {
                 String uname = e.getKey();
                 if (!PHOTO_URLS.containsKey(uname)) {
-                    contactIndexMap.put(uname, idx);
-                    idx++;
+                    contactIndexMap.put(uname, idx++);
                 }
                 contactList.getChildren().add(
-                        buildContactItem(uname, e.getValue().getFullName(), contactRole));
+                        buildContactItem(uname, e.getValue().getFullName(), roles.get(uname)));
             }
 
-        } catch (DatabaseException e) {
-            LOGGER.warning("Cannot load contacts: " + e.getMessage());
         }
     }
 

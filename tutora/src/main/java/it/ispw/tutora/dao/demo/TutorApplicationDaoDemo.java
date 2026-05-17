@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Implementazione in memoria di TutorApplicationDao.
@@ -45,19 +46,21 @@ public class TutorApplicationDaoDemo implements TutorApplicationDao {
         for (TutorApplication a : cache) {
             if (a.getStudentUsername().equals(application.getStudentUsername())
                     && a.getCategoryName().equals(application.getCategoryName())
+                    && Objects.equals(a.getSubcategoryName(), application.getSubcategoryName())
                     && !a.getStatus().isTerminal()) {
                 throw new DuplicateApplicationException(
                         application.getStudentUsername(), application.getCategoryName());
             }
         }
         int id = nextId++;
-        cache.add(new TutorApplication(
+        TutorApplication stored = new TutorApplication(
                 id,
                 application.getCategoryName(),
                 application.getStudentUsername(),
                 application.getCreationDate(),
-                application.getStatus()
-        ));
+                application.getStatus());
+        stored.setSubcategoryName(application.getSubcategoryName());
+        cache.add(stored);
         return id;
     }
 

@@ -40,4 +40,8 @@ public class LessonTutorBean {
 
     public BigDecimal getListedPrice() { return listedPrice; }
     public void setListedPrice(BigDecimal listedPrice) { this.listedPrice = listedPrice; }
+
+    private String errorMessage;
+    public String getErrorMessage() { return errorMessage; }
+    public void setErrorMessage(String errorMessage) { this.errorMessage = errorMessage; }
 }

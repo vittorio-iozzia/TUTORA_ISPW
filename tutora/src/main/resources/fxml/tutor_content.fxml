@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
@@ -11,12 +12,35 @@
       spacing="28">
 
     <!-- ============================================================ -->
-    <!-- Welcome                                                      -->
+    <!-- Hero Banner                                                   -->
     <!-- ============================================================ -->
-    <VBox spacing="4" styleClass="welcome-section">
-        <Label fx:id="welcomeTitle" text="Tutor Dashboard" styleClass="welcome-title"/>
-        <Label text="Manage your schedule, bookings, and profile" styleClass="welcome-subtitle"/>
-    </VBox>
+    <StackPane fx:id="heroPane" styleClass="dash-hero" minHeight="190">
+
+        <!-- Background photo (bound in controller) -->
+        <ImageView fx:id="heroBgImageView" preserveRatio="false" smooth="true"/>
+
+        <!-- Dark gradient overlay -->
+        <Region styleClass="dash-hero-overlay" maxWidth="Infinity" maxHeight="Infinity"/>
+
+        <!-- Text content -->
+        <HBox alignment="CENTER_LEFT" spacing="36" maxWidth="Infinity">
+            <padding><Insets top="28" right="32" bottom="28" left="32"/></padding>
+            <VBox spacing="14" HBox.hgrow="ALWAYS">
+                <HBox spacing="8" alignment="CENTER_LEFT">
+                    <Label text="👩‍🏫" style="-fx-font-size:18px;"/>
+                    <Label text="TUTOR DASHBOARD" styleClass="dash-hero-chip"/>
+                </HBox>
+                <Label fx:id="welcomeTitle" text="Welcome!" styleClass="dash-hero-title"/>
+                <Label text="Manage your calendar, accept bookings and track your earnings."
+                       styleClass="dash-hero-subtitle"/>
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="📅  Create a new lesson" styleClass="dash-hero-pill"/>
+                    <Label text="⭐  Build your reputation!" styleClass="dash-hero-pill"/>
+                </HBox>
+            </VBox>
+        </HBox>
+
+    </StackPane>
 
     <!-- ============================================================ -->
     <!-- Stats row                                                    -->
@@ -82,13 +106,13 @@
         <VBox styleClass="tab-panel-card" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
             <TabPane styleClass="tutor-tabs" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
 
-                <!-- Availability -->
+                <!-- Availability / Calendar -->
                 <Tab text="Availability">
                     <VBox spacing="16" styleClass="tab-content">
                         <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
-                        <Label text="Set your available time slots for students to book"
+                        <Label text="Click on a day to create a new available lesson slot"
                                styleClass="tutor-tab-desc"/>
-                        <FlowPane fx:id="timeSlotGrid" hgap="10" vgap="10"/>
+                        <VBox fx:id="calendarContainer"/>
                     </VBox>
                 </Tab>
 

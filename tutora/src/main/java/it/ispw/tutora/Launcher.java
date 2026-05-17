@@ -14,9 +14,6 @@
  * Questa classe non estende Application, quindi il controllo non viene
  * eseguito all'avvio. JavaFX viene caricato normalmente dal classpath
  * quando TutoraApp.main() chiama Application.launch().
- *
- * Soluzione documentata da OpenJFX per progetti non-modulari:
- * https://openjfx.io/openjfx-docs/#IDE-Intellij  (sezione "Non-modular")
  */
 public class Launcher {
 

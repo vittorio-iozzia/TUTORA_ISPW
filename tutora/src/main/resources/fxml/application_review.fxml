@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:id="dialogRoot"
+      fx:controller="it.ispw.tutora.controller.graphic.ApplicationReviewGfxController"
+      stylesheets="@../css/home.css"
+      styleClass="app-dialog-root app-dialog-form"
+      spacing="0" minWidth="560" prefWidth="660" prefHeight="680">
+
+    <!-- Header -->
+    <HBox styleClass="app-dialog-header" alignment="CENTER_LEFT" spacing="16">
+        <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+        <VBox spacing="4" HBox.hgrow="ALWAYS">
+            <Label text="Application Review" styleClass="app-header-title"/>
+            <Label fx:id="headerSubtitle" text="—" styleClass="app-header-subtitle"/>
+        </VBox>
+        <Button onAction="#handleClose" styleClass="app-dialog-close-btn" text="✕"/>
+    </HBox>
+
+    <!-- Applicant banner -->
+    <HBox fx:id="applyingForBanner" styleClass="app-applying-banner" alignment="CENTER_LEFT" spacing="12">
+        <VBox.margin><Insets top="10" right="20" bottom="10" left="20"/></VBox.margin>
+        <padding><Insets top="10" right="14" bottom="10" left="14"/></padding>
+        <Label fx:id="applicantLabel" text="Applicant: —" styleClass="app-applying-label" HBox.hgrow="ALWAYS"/>
+        <Label fx:id="dateLabel" text="—" styleClass="app-header-subtitle"/>
+    </HBox>
+
+    <!-- Items list (scrollable) -->
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="app-scroll">
+        <VBox fx:id="itemsContainer" spacing="14">
+            <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+        </VBox>
+    </ScrollPane>
+
+    <!-- Footer: notes + buttons -->
+    <VBox styleClass="app-dialog-footer" spacing="10">
+        <padding><Insets top="16" right="24" bottom="16" left="24"/></padding>
+        <Label text="Admin Notes (shown to applicant on rejection)" styleClass="app-field-label"/>
+        <TextArea fx:id="adminNotesField" promptText="Optional notes for the applicant…"
+                  prefRowCount="2" wrapText="true" styleClass="app-text-area"/>
+        <Label fx:id="errorLabel" text="" styleClass="app-error-label"
+               visible="false" managed="false" wrapText="true"/>
+        <HBox spacing="10">
+            <Button fx:id="rejectBtn" text="✗  Reject" onAction="#handleReject"
+                    styleClass="decline-btn" prefWidth="120"/>
+            <Button fx:id="approveBtn" text="✓  Approve" onAction="#handleApprove"
+                    styleClass="accept-btn" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+        </HBox>
+    </VBox>
+
+</VBox>

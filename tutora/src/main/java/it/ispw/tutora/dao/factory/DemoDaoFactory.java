@@ -138,6 +138,10 @@ public class DemoDaoFactory extends DaoFactory {
                 CAT_PHOTOGRAPHY, "bio", REQ_BIOGRAPHY,
                 "Describe your photography experience",
                 true, 50, 800));
+        photography.addRequirement(new TextRequirement(
+                CAT_PHOTOGRAPHY, "subcategory", "Subcategory",
+                "What specific area do you want to teach? (e.g., Portrait, Landscape, Videomaking)",
+                true, 2, 100));
         photography.addRequirement(new DocumentRequirement(
                 CAT_PHOTOGRAPHY, "portfolio", "Portfolio",
                 "Upload a sample of your photographic work",
@@ -152,6 +156,10 @@ public class DemoDaoFactory extends DaoFactory {
                 CAT_SPORT, "bio", REQ_BIOGRAPHY,
                 "Describe your sports background",
                 true, 50, 800));
+        sport.addRequirement(new TextRequirement(
+                CAT_SPORT, "subcategory", "Subcategory",
+                "What sport do you want to teach? (e.g., Tennis, Swimming, Football)",
+                true, 2, 100));
         sport.addRequirement(new DocumentRequirement(
                 CAT_SPORT, "certification", "Sports certification",
                 "Upload your coaching or sports certification",
@@ -249,6 +257,7 @@ public class DemoDaoFactory extends DaoFactory {
                 submittedAt,
                 ApplicationStatus.SUBMITTED
         );
+        application.setSubcategoryName("Guitar");
         tutorApplicationDao.insert(null, application);
 
         TextItem bioItem = new TextItem(

@@ -7,6 +7,8 @@ import it.ispw.tutora.dao.TutorDao;
 import it.ispw.tutora.dao.factory.DaoFactory;
 import it.ispw.tutora.enums.ApplicationStatus;
 import it.ispw.tutora.exception.DatabaseException;
+import java.sql.Connection;
+import java.sql.SQLException;
 import it.ispw.tutora.model.Tutor;
 import it.ispw.tutora.model.TutorApplication;
 import it.ispw.tutora.model.session.Session;
@@ -49,11 +51,11 @@ public class AdminContentController {
 
     // Users tab
     @FXML private TextField userSearchField;
-    @FXML private VBox      usersList;
+    @FXML private VBox usersList;
 
     // State
     private List<TutorApplication> pendingApplications = List.of();
-    private List<Tutor>            allTutors           = List.of();
+    private List<Tutor> allTutors = List.of();
 
     // ----------------------------------------------------------------
     // Init
@@ -82,6 +84,26 @@ public class AdminContentController {
         buildUsersList(allTutors);
 
         userSearchField.textProperty().addListener((obs, old, val) -> filterUsers(val));
+
+        // Quando l'admin valuta un'application dal pannello notifiche, aggiorna la lista qui.
+        NotificationGfxController.setApplicationEvaluatedCallback(this::reloadApplicationsList);
+    }
+
+    private void reloadApplicationsList() {
+        Task<List<TutorApplication>> task = new Task<>() {
+            @Override
+            protected List<TutorApplication> call() {
+                return loadPendingApplications();
+            }
+        };
+        task.setOnSucceeded(e -> Platform.runLater(() -> {
+            pendingApplications = task.getValue();
+            applicationsList.getChildren().clear();
+            buildApplicationsList();
+        }));
+        Thread t = new Thread(task, "admin-reload-apps");
+        t.setDaemon(true);
+        t.start();
     }
 
     // ----------------------------------------------------------------
@@ -89,20 +111,20 @@ public class AdminContentController {
     // ----------------------------------------------------------------
 
     private List<TutorApplication> loadPendingApplications() {
-        try {
-            TutorApplicationDao dao = DaoFactory.getInstance().createTutorApplicationDao();
-            return dao.findByStatus(DaoFactory.getInstance().getConnection(), ApplicationStatus.SUBMITTED);
-        } catch (DatabaseException e) {
+        TutorApplicationDao dao = DaoFactory.getInstance().createTutorApplicationDao();
+        try (Connection conn = DaoFactory.getInstance().getConnection()) {
+            return dao.findByStatus(conn, ApplicationStatus.SUBMITTED);
+        } catch (DatabaseException | SQLException e) {
             LOGGER.warning("Cannot load applications: " + e.getMessage());
             return List.of();
         }
     }
 
     private List<Tutor> loadTutors() {
-        try {
-            TutorDao dao = DaoFactory.getInstance().createTutorDao();
-            return dao.selectAllTutors(DaoFactory.getInstance().getConnection());
-        } catch (DatabaseException e) {
+        TutorDao dao = DaoFactory.getInstance().createTutorDao();
+        try (Connection conn = DaoFactory.getInstance().getConnection()) {
+            return dao.selectAllTutors(conn);
+        } catch (DatabaseException | SQLException e) {
             LOGGER.warning("Cannot load tutors: " + e.getMessage());
             return List.of();
         }
@@ -167,15 +189,29 @@ public class AdminContentController {
         Button rejectBtn  = new Button("Reject");
         rejectBtn.getStyleClass().add("decline-btn");
 
+        // Observer (Push Model): quando il model aggiorna lo status, la View si aggiorna automaticamente.
+        // Platform.runLater garantisce che la modifica al scene graph avvenga sempre sul FX thread,
+        // anche se firePropertyChange() viene invocato da un thread di background (es. notif-approve).
+        app.addPropertyChangeListener(TutorApplication.PROP_STATUS, event -> Platform.runLater(() -> {
+            applicationsList.getChildren().remove(card);
+            int remaining = applicationsList.getChildren().size();
+            pendingCountLabel.setText(remaining + " pending");
+            if (remaining == 0) {
+                Label empty = new Label("No pending applications.");
+                empty.setStyle(EMPTY_LABEL_STYLE);
+                applicationsList.getChildren().add(empty);
+            }
+        }));
+
         approveBtn.setOnAction(e -> {
             approveBtn.setDisable(true);
             rejectBtn.setDisable(true);
-            doEvaluate(app, ApplicationStatus.ACCEPTED, card, approveBtn, rejectBtn);
+            doEvaluate(app, ApplicationStatus.ACCEPTED, approveBtn, rejectBtn);
         });
         rejectBtn.setOnAction(e -> {
             approveBtn.setDisable(true);
             rejectBtn.setDisable(true);
-            doEvaluate(app, ApplicationStatus.REJECTED, card, approveBtn, rejectBtn);
+            doEvaluate(app, ApplicationStatus.REJECTED, approveBtn, rejectBtn);
         });
 
         card.getChildren().addAll(avatar, info, approveBtn, rejectBtn);
@@ -183,7 +219,7 @@ public class AdminContentController {
     }
 
     private void doEvaluate(TutorApplication app, ApplicationStatus status,
-                            HBox card, Button approveBtn, Button rejectBtn) {
+                            Button approveBtn, Button rejectBtn) {
         String token = SceneManager.getInstance().getSessionToken();
 
         ApplicationReviewBean bean = new ApplicationReviewBean();
@@ -199,16 +235,8 @@ public class AdminContentController {
             }
         };
 
-        task.setOnSucceeded(e -> Platform.runLater(() -> {
-            applicationsList.getChildren().remove(card);
-            int remaining = applicationsList.getChildren().size();
-            pendingCountLabel.setText(remaining + " pending");
-            if (remaining == 0) {
-                Label empty = new Label("No pending applications.");
-                empty.setStyle(EMPTY_LABEL_STYLE);
-                applicationsList.getChildren().add(empty);
-            }
-        }));
+        // Persisted successfully: update the model → the registered observer updates the UI
+        task.setOnSucceeded(e -> Platform.runLater(() -> app.updateStatus(status)));
 
         task.setOnFailed(e -> Platform.runLater(() -> {
             approveBtn.setDisable(false);

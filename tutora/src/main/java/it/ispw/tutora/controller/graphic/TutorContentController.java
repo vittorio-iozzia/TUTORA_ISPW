@@ -1,6 +1,7 @@
 package it.ispw.tutora.controller.graphic;
 
 import it.ispw.tutora.dao.BookingDao;
+import it.ispw.tutora.dao.LessonDao;
 import it.ispw.tutora.dao.factory.DaoFactory;
 import it.ispw.tutora.enums.PaymentStatus;
 import it.ispw.tutora.exception.DatabaseException;
@@ -10,20 +11,39 @@ import it.ispw.tutora.model.session.Session;
 import it.ispw.tutora.model.session.SessionManager;
 import it.ispw.tutora.view.SceneManager;
 
+import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.effect.ColorAdjust;
+import javafx.scene.effect.GaussianBlur;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
@@ -31,7 +51,6 @@ public class TutorContentController {
 
     private static final Logger LOGGER =
             Logger.getLogger(TutorContentController.class.getName());
-    private static final String TIME_SLOT_UNAVAILABLE = "time-slot-unavailable";
     private static final String LESSON_META_ICON = "lesson-meta-icon";
     private static final String LESSON_META = "lesson-meta";
 
@@ -39,6 +58,10 @@ public class TutorContentController {
             DateTimeFormatter.ofPattern("EEE d MMM · HH:mm", java.util.Locale.ENGLISH);
 
     private String tutorUsername;
+
+    // Hero
+    @FXML private StackPane heroPane;
+    @FXML private ImageView heroBgImageView;
 
     // Stats
     @FXML private HBox statCard1;
@@ -52,25 +75,24 @@ public class TutorContentController {
     @FXML private Label avgRatingLabel;
 
     // Tabs
-    @FXML private FlowPane timeSlotGrid;
-    @FXML private VBox     upcomingLessonsList;
+    @FXML private VBox calendarContainer;
+    @FXML private VBox upcomingLessonsList;
 
     // Right column
     @FXML private Label pendingBadge;
     @FXML private VBox  bookingRequestsList;
     @FXML private VBox  thisWeekList;
 
+    // Calendar state
+    private YearMonth currentMonth    = YearMonth.now();
+    private LocalDate selectedCalendarDate = null;
+    private Set<LocalDate> lessonDates = new HashSet<>();
+
     // ----------------------------------------------------------------
     // Demo data
     // ----------------------------------------------------------------
 
     private record BookingMock(String student, String subject, String date, String time, boolean pending) {}
-
-    private static final List<String>  TIME_SLOTS     = List.of(
-        "9:00 AM","10:00 AM","11:00 AM","12:00 PM",
-        "1:00 PM","2:00 PM","3:00 PM","4:00 PM","5:00 PM"
-    );
-    private static final boolean[] SLOT_AVAILABLE = {true,true,false,false,true,true,true,false,true};
 
     private static final List<BookingMock> MOCK_BOOKINGS = List.of(
         new BookingMock("Alex Thompson","Calculus II",   "Jan 15","3:00 PM", true),
@@ -89,6 +111,8 @@ public class TutorContentController {
         this.tutorUsername = session.getUser().getUsername();
         welcomeTitle.setText("Welcome, " + session.getUser().getName() + "!");
 
+        loadHeroImage();
+
         animateStat(totalStudentsLabel, 48, "%.0f");
         animateStat(lessonsMonthLabel, 32, "%.0f");
         animateStat(earningsLabel, 1440, "€%.0f");
@@ -99,13 +123,209 @@ public class TutorContentController {
         addHoverLift(statCard3);
         addHoverLift(statCard4);
 
-        buildTimeSlots();
+        loadLessonDates();
         buildUpcomingLessons();
         buildBookingRequests();
         buildThisWeek();
 
         if (SessionManager.getInstance().consumeNewlyPromotedTutor(tutorUsername)) {
             Platform.runLater(this::showWelcomePopup);
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Hero image
+    // ----------------------------------------------------------------
+
+    private void loadHeroImage() {
+        Rectangle clip = new Rectangle();
+        clip.setArcWidth(24);
+        clip.setArcHeight(24);
+        clip.widthProperty().bind(heroPane.widthProperty());
+        clip.heightProperty().bind(heroPane.heightProperty());
+        heroPane.setClip(clip);
+
+        heroBgImageView.fitWidthProperty().bind(heroPane.widthProperty());
+        heroBgImageView.fitHeightProperty().bind(heroPane.heightProperty());
+        heroBgImageView.setPreserveRatio(false);
+        heroBgImageView.setSmooth(true);
+
+        Image img = new Image(
+            "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&h=300&fit=crop&crop=center",
+            1200, 300, false, true, true
+        );
+        img.progressProperty().addListener((obs, oldV, newV) -> {
+            if (newV.doubleValue() >= 1.0 && !img.isError()) {
+                heroBgImageView.setImage(img);
+            }
+        });
+    }
+
+    // ----------------------------------------------------------------
+    // Calendar
+    // ----------------------------------------------------------------
+
+    private void loadLessonDates() {
+        Task<Set<LocalDate>> task = new Task<>() {
+            @Override
+            protected Set<LocalDate> call() throws Exception {
+                LessonDao dao = DaoFactory.getInstance().createLessonDao();
+                return dao.findByTutor(DaoFactory.getInstance().getConnection(), tutorUsername)
+                        .stream()
+                        .map(l -> l.getStartTime().toLocalDate())
+                        .collect(Collectors.toSet());
+            }
+        };
+        task.setOnSucceeded(e -> Platform.runLater(() -> {
+            lessonDates = task.getValue();
+            buildCalendar();
+        }));
+        task.setOnFailed(e -> {
+            LOGGER.warning("Cannot load lesson dates: " + task.getException().getMessage());
+            buildCalendar();
+        });
+        Thread t = new Thread(task, "load-lesson-dates");
+        t.setDaemon(true);
+        t.start();
+    }
+
+    private void buildCalendar() {
+        calendarContainer.getChildren().clear();
+
+        // Header: prev arrow — month/year label — next arrow
+        HBox header = new HBox(10);
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        Button prevBtn = new Button("‹");
+        prevBtn.getStyleClass().add("cal-nav-btn");
+        prevBtn.setOnAction(e -> { currentMonth = currentMonth.minusMonths(1); buildCalendar(); });
+
+        Label monthLabel = new Label(
+                currentMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH)));
+        monthLabel.getStyleClass().add("cal-month-label");
+        HBox.setHgrow(monthLabel, Priority.ALWAYS);
+        monthLabel.setMaxWidth(Double.MAX_VALUE);
+
+        Button nextBtn = new Button("›");
+        nextBtn.getStyleClass().add("cal-nav-btn");
+        nextBtn.setOnAction(e -> { currentMonth = currentMonth.plusMonths(1); buildCalendar(); });
+
+        header.getChildren().addAll(prevBtn, monthLabel, nextBtn);
+
+        // Day-of-week header row
+        String[] DOW = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+        GridPane dowRow = new GridPane();
+        dowRow.setHgap(6);
+        for (int i = 0; i < 7; i++) {
+            ColumnConstraints cc = new ColumnConstraints();
+            cc.setPercentWidth(100.0 / 7);
+            cc.setFillWidth(true);
+            cc.setHgrow(Priority.ALWAYS);
+            dowRow.getColumnConstraints().add(cc);
+            Label d = new Label(DOW[i]);
+            d.getStyleClass().add("cal-day-header");
+            d.setMaxWidth(Double.MAX_VALUE);
+            d.setAlignment(Pos.CENTER);
+            dowRow.add(d, i, 0);
+        }
+
+        // Days grid
+        GridPane grid = new GridPane();
+        grid.setHgap(6);
+        grid.setVgap(6);
+        for (int i = 0; i < 7; i++) {
+            ColumnConstraints cc = new ColumnConstraints();
+            cc.setPercentWidth(100.0 / 7);
+            cc.setFillWidth(true);
+            cc.setHgrow(Priority.ALWAYS);
+            grid.getColumnConstraints().add(cc);
+        }
+
+        LocalDate today     = LocalDate.now();
+        LocalDate firstDay  = currentMonth.atDay(1);
+        LocalDate lastDay   = currentMonth.atEndOfMonth();
+        int startCol = firstDay.getDayOfWeek().getValue() - 1; // Mon=0, Sun=6
+
+        int col = startCol;
+        int row = 0;
+        LocalDate day = firstDay;
+
+        while (!day.isAfter(lastDay)) {
+            final LocalDate d = day;
+            Button dayBtn = new Button(String.valueOf(day.getDayOfMonth()));
+            dayBtn.setMaxWidth(Double.MAX_VALUE);
+            GridPane.setFillWidth(dayBtn, true);
+
+            boolean isPast     = d.isBefore(today);
+            boolean isToday    = d.equals(today);
+            boolean isSelected = d.equals(selectedCalendarDate);
+            boolean hasLesson  = lessonDates.contains(d);
+
+            if (isSelected) {
+                dayBtn.getStyleClass().add("cal-day-selected");
+            } else if (!isPast && hasLesson) {
+                dayBtn.getStyleClass().add("cal-day-has-lesson");
+            } else if (isToday) {
+                dayBtn.getStyleClass().add("cal-day-today");
+            } else if (isPast) {
+                dayBtn.getStyleClass().add("cal-day-past");
+                dayBtn.setDisable(true);
+            } else {
+                dayBtn.getStyleClass().add("cal-day");
+            }
+
+            if (!isPast) {
+                dayBtn.setOnAction(e -> {
+                    selectedCalendarDate = d;
+                    buildCalendar();
+                    openCreateLessonDialog(d);
+                });
+            }
+
+            grid.add(dayBtn, col, row);
+            col++;
+            if (col == 7) { col = 0; row++; }
+            day = day.plusDays(1);
+        }
+
+        VBox calCard = new VBox(12);
+        calCard.getStyleClass().add("cal-card");
+        calCard.getChildren().addAll(header, dowRow, grid);
+        calendarContainer.getChildren().add(calCard);
+    }
+
+    private void openCreateLessonDialog(LocalDate date) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/fxml/create_lesson.fxml"));
+            Parent root = loader.load();
+            CreateLessonGfxController ctrl = loader.getController();
+            ctrl.initDate(date);
+            ctrl.setOnLessonCreated(() -> {
+                selectedCalendarDate = null;
+                loadLessonDates();
+            });
+
+            Parent parentRoot = heroPane.getScene().getRoot();
+            GaussianBlur blur = new GaussianBlur(10);
+            ColorAdjust dim   = new ColorAdjust();
+            dim.setBrightness(-0.35);
+            dim.setInput(blur);
+            parentRoot.setEffect(dim);
+
+            Stage stage = new Stage();
+            stage.initOwner(heroPane.getScene().getWindow());
+            stage.initModality(Modality.WINDOW_MODAL);
+            stage.initStyle(StageStyle.TRANSPARENT);
+            Scene scene = new Scene(root);
+            scene.setFill(Color.TRANSPARENT);
+            stage.setScene(scene);
+            stage.setMinWidth(500);
+            stage.setMinHeight(440);
+            stage.setOnHiding(e -> parentRoot.setEffect(null));
+            stage.show();
+        } catch (IOException e) {
+            LOGGER.warning("Cannot open create lesson dialog: " + e.getMessage());
         }
     }
 
@@ -117,20 +337,17 @@ public class TutorContentController {
         javafx.scene.Scene scene = welcomeTitle.getScene();
         if (!(scene.getRoot() instanceof Pane root)) return;
 
-        // ── Backdrop ──────────────────────────────────────────────────
         StackPane overlay = new StackPane();
         overlay.setStyle("-fx-background-color: rgba(0,0,0,0.52);");
         overlay.setManaged(false);
         overlay.setLayoutX(0);
         overlay.setLayoutY(0);
-
         overlay.resize(scene.getWidth(), scene.getHeight());
         scene.widthProperty().addListener((obs, o, n) ->
                 overlay.resize(n.doubleValue(), overlay.getHeight()));
         scene.heightProperty().addListener((obs, o, n) ->
                 overlay.resize(overlay.getWidth(), n.doubleValue()));
 
-        // ── Card ──────────────────────────────────────────────────────
         VBox card = new VBox(16);
         card.setMaxWidth(440);
         card.setMaxHeight(480);
@@ -142,11 +359,8 @@ public class TutorContentController {
             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.22), 40, 0, 0, 12);"
         );
         card.setOnMouseClicked(javafx.event.Event::consume);
-
-        // Dismiss when clicking outside the card
         overlay.setOnMouseClicked(e -> dismissOverlay(root, overlay, card));
 
-        // ── Trophy emoji ──────────────────────────────────────────────
         StackPane iconWrap = new StackPane();
         iconWrap.setStyle(
             "-fx-background-color: #2A5C45;" +
@@ -155,9 +369,8 @@ public class TutorContentController {
             "-fx-max-width: 56px; -fx-max-height: 56px;" +
             "-fx-effect: dropshadow(gaussian, rgba(42,92,69,0.45), 14, 0, 0, 6);"
         );
-        iconWrap.getChildren().add(loadEmoji("1f3c6", 28)); // 🏆
+        iconWrap.getChildren().add(loadEmoji("1f3c6", 28));
 
-        // ── Text ──────────────────────────────────────────────────────
         Label title = new Label("You're now a Tutor!");
         title.setStyle(
             "-fx-font-family: 'Manrope','Segoe UI',sans-serif;" +
@@ -170,7 +383,6 @@ public class TutorContentController {
         subtitle.setWrapText(true);
         subtitle.setMaxWidth(360);
 
-        // ── Feature rows ──────────────────────────────────────────────
         VBox features = new VBox(8);
         features.getChildren().addAll(
             featureRow("1f4c5", "Set your availability",   "Choose days and time slots to teach."),
@@ -179,7 +391,6 @@ public class TutorContentController {
             featureRow("2b50",  "Build your reputation",   "Collect ratings and grow your students.")
         );
 
-        // ── CTA button ────────────────────────────────────────────────
         Button startBtn = new Button("Get Started →");
         startBtn.setMaxWidth(Double.MAX_VALUE);
         startBtn.setStyle(
@@ -197,7 +408,6 @@ public class TutorContentController {
         overlay.getChildren().add(card);
         root.getChildren().add(overlay);
 
-        // ── Entry animation — bounce (scale overshoot then settle) ────
         card.setScaleX(0.0);
         card.setScaleY(0.0);
         card.setOpacity(0);
@@ -215,17 +425,14 @@ public class TutorContentController {
                 new KeyValue(overlay.opacityProperty(), 1.0,  Interpolator.EASE_IN)
             ),
             new KeyFrame(Duration.millis(300),
-                // overshoot to 1.10
                 new KeyValue(card.scaleXProperty(), 1.10, Interpolator.EASE_OUT),
                 new KeyValue(card.scaleYProperty(), 1.10, Interpolator.EASE_OUT)
             ),
             new KeyFrame(Duration.millis(400),
-                // bounce back to 0.96
                 new KeyValue(card.scaleXProperty(), 0.96, Interpolator.EASE_BOTH),
                 new KeyValue(card.scaleYProperty(), 0.96, Interpolator.EASE_BOTH)
             ),
             new KeyFrame(Duration.millis(460),
-                // settle at 1.0
                 new KeyValue(card.scaleXProperty(), 1.0, Interpolator.EASE_BOTH),
                 new KeyValue(card.scaleYProperty(), 1.0, Interpolator.EASE_BOTH)
             )
@@ -275,14 +482,14 @@ public class TutorContentController {
     private void dismissOverlay(Pane root, StackPane overlay, VBox card) {
         Timeline popupExitAnim = new Timeline(
             new KeyFrame(Duration.ZERO,
-                new KeyValue(card.scaleXProperty(),  1.0),
-                new KeyValue(card.scaleYProperty(),  1.0),
+                new KeyValue(card.scaleXProperty(),     1.0),
+                new KeyValue(card.scaleYProperty(),     1.0),
                 new KeyValue(overlay.opacityProperty(), 1.0)
             ),
             new KeyFrame(Duration.millis(200),
-                new KeyValue(card.scaleXProperty(),  0.90, Interpolator.EASE_IN),
-                new KeyValue(card.scaleYProperty(),  0.90, Interpolator.EASE_IN),
-                new KeyValue(overlay.opacityProperty(), 0.0, Interpolator.EASE_IN)
+                new KeyValue(card.scaleXProperty(),     0.90, Interpolator.EASE_IN),
+                new KeyValue(card.scaleYProperty(),     0.90, Interpolator.EASE_IN),
+                new KeyValue(overlay.opacityProperty(), 0.0,  Interpolator.EASE_IN)
             )
         );
         popupExitAnim.setOnFinished(e -> root.getChildren().remove(overlay));
@@ -311,27 +518,7 @@ public class TutorContentController {
     }
 
     // ----------------------------------------------------------------
-    // Time slots
-    // ----------------------------------------------------------------
-
-    private void buildTimeSlots() {
-        for (int i = 0; i < TIME_SLOTS.size(); i++) {
-            String time      = TIME_SLOTS.get(i);
-            boolean available = SLOT_AVAILABLE[i];
-            ToggleButton btn  = new ToggleButton(time);
-            btn.setSelected(available);
-            btn.getStyleClass().add("time-slot-btn");
-            if (!available) btn.getStyleClass().add(TIME_SLOT_UNAVAILABLE);
-            btn.selectedProperty().addListener((obs, was, on) -> {
-                if (Boolean.TRUE.equals(on)) btn.getStyleClass().remove(TIME_SLOT_UNAVAILABLE);
-                else if (!btn.getStyleClass().contains(TIME_SLOT_UNAVAILABLE)) btn.getStyleClass().add(TIME_SLOT_UNAVAILABLE);
-            });
-            timeSlotGrid.getChildren().add(btn);
-        }
-    }
-
-    // ----------------------------------------------------------------
-    // Upcoming lessons — dati reali da BookingDao (solo booking PAID)
+    // Upcoming lessons — real data from BookingDao (PAID only)
     // ----------------------------------------------------------------
 
     private void buildUpcomingLessons() {
@@ -357,10 +544,6 @@ public class TutorContentController {
         }
     }
 
-    /**
-     * Ricarica la lista delle lezioni imminenti in background.
-     * Chiamato da HomeGfxController dopo che un pagamento è stato confermato.
-     */
     public void refreshUpcomingLessons() {
         upcomingLessonsList.getChildren().clear();
 
@@ -379,7 +562,7 @@ public class TutorContentController {
             }
         };
 
-        task.setOnSucceeded(e -> javafx.application.Platform.runLater(() -> {
+        task.setOnSucceeded(e -> Platform.runLater(() -> {
             List<Lesson> upcoming = task.getValue();
             upcomingLessonsList.getChildren().clear();
             if (upcoming.isEmpty()) {

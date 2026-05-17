@@ -20,6 +20,7 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -266,15 +267,35 @@ public class StudentContentController {
     private void buildTutorGrid(List<Tutor> tutors) {
         tutorGrid.getChildren().clear();
         if (tutors.isEmpty()) {
-            Label empty = new Label("No tutors found.");
-            empty.setStyle("-fx-text-fill: #8FAF9A; -fx-font-size: 13px;");
-            tutorGrid.getChildren().add(empty);
+            tutorGrid.getChildren().add(buildEmptyState());
             return;
         }
         int idx = 0;
         for (Tutor t : tutors) {
             tutorGrid.getChildren().add(buildTutorCard(t, idx++));
         }
+    }
+
+    private VBox buildEmptyState() {
+        VBox box = new VBox(14);
+        box.setAlignment(Pos.CENTER);
+        box.setPadding(new Insets(48));
+
+        StackPane iconCircle = new StackPane();
+        iconCircle.setStyle(
+            "-fx-background-color: #EEF2FF;" +
+            "-fx-background-radius: 44;" +
+            "-fx-min-width: 88; -fx-max-width: 88;" +
+            "-fx-min-height: 88; -fx-max-height: 88;");
+        iconCircle.getChildren().add(TutorBrowseUtil.loadTwemoji("1f50d", 44));
+
+        Label title = new Label("No tutors found");
+        title.setStyle("-fx-font-size: 16px; -fx-font-weight: 600; -fx-text-fill: #6B7280;");
+        Label sub = new Label("Try a different search term or category");
+        sub.setStyle("-fx-font-size: 13px; -fx-text-fill: #9CA3AF;");
+
+        box.getChildren().addAll(iconCircle, title, sub);
+        return box;
     }
 
     private VBox buildTutorCard(Tutor tutor, int poolIndex) {

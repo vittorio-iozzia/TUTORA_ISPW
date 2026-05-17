@@ -19,6 +19,7 @@ public class TutorApplicationBean {
 
     private int applicationId;
     private String categoryName;
+    private String subcategoryName;
     private String studentUsername;
     private ApplicationStatus status;
     private String adminNotes;
@@ -35,6 +36,9 @@ public class TutorApplicationBean {
 
     public String getCategoryName() { return categoryName; }
     public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
+
+    public String getSubcategoryName() { return subcategoryName; }
+    public void setSubcategoryName(String subcategoryName) { this.subcategoryName = subcategoryName; }
 
     public String getStudentUsername() { return studentUsername; }
     public void setStudentUsername(String studentUsername) { this.studentUsername = studentUsername; }

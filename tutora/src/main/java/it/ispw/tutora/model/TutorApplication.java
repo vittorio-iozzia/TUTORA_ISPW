@@ -40,6 +40,7 @@ public class TutorApplication {
 
     private final int id;
     private final String categoryName;
+    private String subcategoryName;
     private final String studentUsername;
     private final LocalDateTime creationDate;
     private ApplicationStatus status;
@@ -132,6 +133,8 @@ public class TutorApplication {
 
     public int getId() { return id; }
     public String getCategoryName() { return categoryName; }
+    public String getSubcategoryName() { return subcategoryName; }
+    public void setSubcategoryName(String subcategoryName) { this.subcategoryName = subcategoryName; }
     public String getStudentUsername() { return studentUsername; }
     public LocalDateTime getCreationDate() { return creationDate; }
     public ApplicationStatus getStatus() { return status; }

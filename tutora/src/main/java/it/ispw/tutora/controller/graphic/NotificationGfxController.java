@@ -9,23 +9,34 @@ import it.ispw.tutora.controller.application.BookTutorController;
 import it.ispw.tutora.controller.application.GetNotificationsController;
 import it.ispw.tutora.enums.ApplicationStatus;
 import it.ispw.tutora.enums.NotificationType;
+import it.ispw.tutora.exception.ApplicationNotFoundException;
+import it.ispw.tutora.exception.DatabaseException;
 import it.ispw.tutora.model.Notification;
+import it.ispw.tutora.model.TutorApplication;
 import it.ispw.tutora.model.session.Session;
 import it.ispw.tutora.model.session.SessionManager;
 import it.ispw.tutora.view.SceneManager;
+import it.ispw.tutora.bean.TutorApplicationBean;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.effect.ColorAdjust;
 import javafx.scene.effect.DropShadow;
+import javafx.scene.effect.GaussianBlur;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -59,16 +70,21 @@ public class NotificationGfxController {
      */
     private static final String PAY_NOW_LABEL = "💳  Pay Now";
     private static Runnable paymentConfirmedCallback = null;
+    private static Runnable applicationEvaluatedCallback = null;
 
     public static void setPaymentConfirmedCallback(Runnable callback) {
         paymentConfirmedCallback = callback;
     }
 
-    @FXML private VBox      dialogRoot;
-    @FXML private Label     subtitleLabel;
-    @FXML private VBox      contentContainer;
-    @FXML private Button    markAllReadBtn;
-    @FXML private Button    closeBtn;
+    public static void setApplicationEvaluatedCallback(Runnable callback) {
+        applicationEvaluatedCallback = callback;
+    }
+
+    @FXML private VBox dialogRoot;
+    @FXML private Label subtitleLabel;
+    @FXML private VBox contentContainer;
+    @FXML private Button markAllReadBtn;
+    @FXML private Button closeBtn;
     @FXML private StackPane headerIconWrap;
     @FXML private ImageView headerIconView;
 
@@ -79,9 +95,9 @@ public class NotificationGfxController {
      *  sapere quali notifiche saltare (quelle che richiedono ancora un'azione). */
     private List<Notification> currentNotifications = List.of();
 
-    private final GetNotificationsController    notifController    = new GetNotificationsController();
-    private final BookTutorController           bookTutorController = new BookTutorController();
-    private final ApplyToBecomeATutorController appController       = new ApplyToBecomeATutorController();
+    private final GetNotificationsController notifController = new GetNotificationsController();
+    private final BookTutorController bookTutorController = new BookTutorController();
+    private final ApplyToBecomeATutorController appController = new ApplyToBecomeATutorController();
 
     // ----------------------------------------------------------------
     // FXML init — called automatically by FXMLLoader
@@ -155,9 +171,9 @@ public class NotificationGfxController {
      * Queste notifiche vengono escluse dal "Mark all as read".
      */
     private boolean isActionable(Notification n) {
-        return (session.isTutor()   && n.getType() == NotificationType.LESSON_BOOKED)
+        return (session.isTutor() && n.getType() == NotificationType.LESSON_BOOKED)
             || (session.isStudent() && n.getType() == NotificationType.LESSON_ACCEPTED)
-            || (session.isAdmin()   && n.getType() == NotificationType.APPLICATION_UPDATE);
+            || (session.isAdmin() && n.getType() == NotificationType.APPLICATION_UPDATE);
     }
 
     // ----------------------------------------------------------------
@@ -207,10 +223,10 @@ public class NotificationGfxController {
     private void render(NotificationBean bean) {
         contentContainer.getChildren().clear();
 
-        List<Notification> all     = bean.getList() != null ? bean.getList() : List.of();
+        List<Notification> all = bean.getList() != null ? bean.getList() : List.of();
         currentNotifications = all; // snapshot per handleMarkAllRead
         List<Notification> pending = all.stream().filter(n -> !n.isRead()).toList();
-        List<Notification> old     = all.stream().filter(Notification::isRead).toList();
+        List<Notification> old = all.stream().filter(Notification::isRead).toList();
 
         int unread = pending.size();
         if (unread == 0) {
@@ -337,33 +353,12 @@ public class NotificationGfxController {
             card.getChildren().add(confirmed);
 
         } else if (session.isAdmin() && notif.getType() == NotificationType.APPLICATION_UPDATE) {
-            HBox actions = new HBox(8);
-            actions.setAlignment(Pos.CENTER_LEFT);
-            VBox.setMargin(actions, new Insets(8, 0, 0, 0));
-
-            Button approveBtn = new Button("✓  Approve");
-            approveBtn.getStyleClass().add("accept-btn");
-            approveBtn.setMaxWidth(Double.MAX_VALUE);
-            HBox.setHgrow(approveBtn, Priority.ALWAYS);
-
-            Button rejectBtn = new Button("✗  Reject");
-            rejectBtn.getStyleClass().add("decline-btn");
-            rejectBtn.setMaxWidth(Double.MAX_VALUE);
-            HBox.setHgrow(rejectBtn, Priority.ALWAYS);
-
-            approveBtn.setOnAction(e -> {
-                approveBtn.setDisable(true);
-                rejectBtn.setDisable(true);
-                doEvaluate(notif, true, card, approveBtn, rejectBtn);
-            });
-            rejectBtn.setOnAction(e -> {
-                approveBtn.setDisable(true);
-                rejectBtn.setDisable(true);
-                doEvaluate(notif, false, card, approveBtn, rejectBtn);
-            });
-
-            actions.getChildren().addAll(approveBtn, rejectBtn);
-            card.getChildren().add(actions);
+            Button reviewBtn = new Button("📋  Review Application");
+            reviewBtn.getStyleClass().add("notif-pay-btn");
+            reviewBtn.setMaxWidth(Double.MAX_VALUE);
+            VBox.setMargin(reviewBtn, new Insets(8, 0, 0, 0));
+            reviewBtn.setOnAction(e -> openReviewDialog(notif, card));
+            card.getChildren().add(reviewBtn);
         }
 
         return card;
@@ -507,13 +502,8 @@ public class NotificationGfxController {
                 long stillUnread = currentNotifications.stream().filter(n -> !n.isRead()).count();
                 markAllReadBtn.setDisable(!IN_PROGRESS_PAYMENTS.isEmpty() || stillUnread == 0);
             } else {
-                // Pagamento riuscito: rimuove eventuale errore residuo e ricarica
                 PAYMENT_ERRORS.remove(notif.getTargetId());
-                // Aggiorna la sezione Upcoming Lessons nel dashboard (student e tutor)
                 if (paymentConfirmedCallback != null) paymentConfirmedCallback.run();
-                // Ricarica le notifiche: LESSON_ACCEPTED → Archive (già read),
-                // PAYMENT_CONFIRMED → Pending (notifica di sistema per lo student).
-                // Il tutor vedrà la propria PAYMENT_CONFIRMED alla prossima apertura.
                 reload();
             }
         }));
@@ -533,11 +523,63 @@ public class NotificationGfxController {
         t.start();
     }
 
+    private void openReviewDialog(Notification notif, VBox card) {
+        Task<TutorApplicationBean> task = new Task<>() {
+            @Override
+            protected TutorApplicationBean call() throws Exception {
+                return appController.loadApplicationDetail(notif.getTargetId(), token);
+            }
+        };
+
+        task.setOnSucceeded(e -> Platform.runLater(() -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(
+                        getClass().getResource("/fxml/application_review.fxml"));
+                Parent root = loader.load();
+                ApplicationReviewGfxController ctrl = loader.getController();
+                ctrl.initApplication(task.getValue());
+                ctrl.setOnEvaluated(() -> {
+                    if (applicationEvaluatedCallback != null) applicationEvaluatedCallback.run();
+                    reload();
+                });
+
+                Parent parentRoot = card.getScene().getRoot();
+                GaussianBlur blur = new GaussianBlur(10);
+                ColorAdjust dim  = new ColorAdjust();
+                dim.setBrightness(-0.35);
+                dim.setInput(blur);
+                parentRoot.setEffect(dim);
+
+                Stage stage = new Stage();
+                stage.initOwner(card.getScene().getWindow());
+                stage.initModality(Modality.WINDOW_MODAL);
+                stage.initStyle(StageStyle.TRANSPARENT);
+                Scene scene = new Scene(root);
+                scene.setFill(Color.TRANSPARENT);
+                stage.setScene(scene);
+                stage.setMinWidth(560);
+                stage.setOnHiding(ev -> parentRoot.setEffect(null));
+                stage.show();
+            } catch (Exception ex) {
+                showCardError(card, "Cannot open review: " + ex.getMessage());
+            }
+        }));
+
+        task.setOnFailed(e -> Platform.runLater(() ->
+                showCardError(card, "Cannot load application: " +
+                        (task.getException() != null ? task.getException().getMessage() : "error"))));
+
+        Thread t = new Thread(task, "load-app-detail");
+        t.setDaemon(true);
+        t.start();
+    }
+
     private void doEvaluate(Notification notif, boolean accepted,
                             VBox card, Button approveBtn, Button rejectBtn) {
+        ApplicationStatus status = accepted ? ApplicationStatus.ACCEPTED : ApplicationStatus.REJECTED;
         ApplicationReviewBean bean = new ApplicationReviewBean();
         bean.setApplicationId(notif.getTargetId());
-        bean.setStatus(accepted ? ApplicationStatus.ACCEPTED : ApplicationStatus.REJECTED);
+        bean.setStatus(status);
         bean.setAdminNotes("");
 
         Task<Void> task = new Task<>() {
@@ -551,7 +593,10 @@ public class NotificationGfxController {
             }
         };
 
-        task.setOnSucceeded(e -> Platform.runLater(this::reload));
+        task.setOnSucceeded(e -> Platform.runLater(() -> {
+            if (applicationEvaluatedCallback != null) applicationEvaluatedCallback.run();
+            reload();
+        }));
         task.setOnFailed(e -> Platform.runLater(() -> {
             Throwable ex = task.getException();
             showCardError(card, ex != null ? ex.getMessage() : "Evaluation failed.");
@@ -604,39 +649,39 @@ public class NotificationGfxController {
 
     private String emojiCodepoint(NotificationType type) {
         return switch (type) {
-            case LESSON_BOOKED      -> "1f4c5"; // 📅 calendar
-            case LESSON_ACCEPTED    -> "2705";  // ✅ check
-            case LESSON_REJECTED    -> "274c";  // ❌ cross
-            case APPLICATION_UPDATE -> "1f4cb"; // 📋 clipboard
-            case EXPERTISE_OFFER    -> "2b50";  // ⭐ star
-            case PAYMENT_CONFIRMED  -> "1f4b3"; // 💳 credit card
-            case NEW_REVIEW         -> "1f31f"; // 🌟 glowing star
+            case LESSON_BOOKED -> "1f4c5";
+            case LESSON_ACCEPTED -> "2705";
+            case LESSON_REJECTED -> "274c";
+            case APPLICATION_UPDATE -> "1f4cb";
+            case EXPERTISE_OFFER -> "2b50";
+            case PAYMENT_CONFIRMED -> "1f4b3";
+            case NEW_REVIEW -> "1f31f";
         };
     }
 
     private String iconColorClass(NotificationType type) {
         return switch (type) {
-            case LESSON_BOOKED     -> "notif-icon-blue";
-            case LESSON_ACCEPTED   -> "notif-icon-green";
-            case LESSON_REJECTED   -> "notif-icon-red";
+            case LESSON_BOOKED -> "notif-icon-blue";
+            case LESSON_ACCEPTED -> "notif-icon-green";
+            case LESSON_REJECTED -> "notif-icon-red";
             case APPLICATION_UPDATE -> "notif-icon-amber";
-            case EXPERTISE_OFFER   -> "notif-icon-purple";
+            case EXPERTISE_OFFER -> "notif-icon-purple";
             case PAYMENT_CONFIRMED -> "notif-icon-green";
-            case NEW_REVIEW        -> "notif-icon-amber";
+            case NEW_REVIEW -> "notif-icon-amber";
         };
     }
 
     private String notifTitle(NotificationType type, boolean isArchived) {
-        if (isArchived && type == NotificationType.LESSON_BOOKED)      return "Old Booking Request";
+        if (isArchived && type == NotificationType.LESSON_BOOKED) return "Old Booking Request";
         if (isArchived && type == NotificationType.APPLICATION_UPDATE && session.isAdmin()) return "Reviewed Application";
         return switch (type) {
-            case LESSON_BOOKED      -> "New Booking Request";
-            case LESSON_ACCEPTED    -> "Lesson Accepted";
-            case LESSON_REJECTED    -> "Lesson Declined";
+            case LESSON_BOOKED -> "New Booking Request";
+            case LESSON_ACCEPTED -> "Lesson Accepted";
+            case LESSON_REJECTED -> "Lesson Declined";
             case APPLICATION_UPDATE -> session.isAdmin() ? "New Tutor Application" : "Application Update";
-            case EXPERTISE_OFFER    -> "New Expertise Offer";
-            case PAYMENT_CONFIRMED  -> "Payment Confirmed";
-            case NEW_REVIEW         -> "New Review";
+            case EXPERTISE_OFFER -> "New Expertise Offer";
+            case PAYMENT_CONFIRMED -> "Payment Confirmed";
+            case NEW_REVIEW -> "New Review";
         };
     }
 
@@ -648,8 +693,10 @@ public class NotificationGfxController {
     public void markVisibleAsRead() {
         List<Notification> toMark = currentNotifications.stream()
                 .filter(n -> !n.isRead())
+
                 // Non marcare LESSON_BOOKED del tutor (richiede ancora accept/reject)
                 .filter(n -> !(session.isTutor() && n.getType() == NotificationType.LESSON_BOOKED))
+
                 // Non marcare LESSON_ACCEPTED dello student (deve ancora pagare,
                 // indipendentemente dallo stato del pagamento in background)
                 .filter(n -> !(session.isStudent() && n.getType() == NotificationType.LESSON_ACCEPTED))

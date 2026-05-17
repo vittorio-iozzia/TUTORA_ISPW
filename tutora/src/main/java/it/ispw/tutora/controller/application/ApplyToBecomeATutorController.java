@@ -8,10 +8,12 @@ import it.ispw.tutora.dao.factory.DaoFactory;
 import it.ispw.tutora.enums.ApplicationStatus;
 import it.ispw.tutora.enums.ItemType;
 import it.ispw.tutora.enums.NotificationType;
+import it.ispw.tutora.enums.Status;
 import it.ispw.tutora.exception.*;
 import it.ispw.tutora.model.*;
 import it.ispw.tutora.model.session.SessionManager;
 
+import java.math.BigDecimal;
 import java.util.logging.Level;
 
 import java.sql.Connection;
@@ -161,9 +163,19 @@ public class ApplyToBecomeATutorController {
                               NotificationDao notifDao)
             throws DuplicateApplicationException, DatabaseException {
         try {
+            String subcategoryName = bean.getItems().stream()
+                    .filter(i -> "subcategory".equals(i.getRequirementName())
+                            && i.getTextContent() != null
+                            && !i.getTextContent().isBlank())
+                    .map(ApplicationItemBean::getTextContent)
+                    .map(String::trim)
+                    .findFirst()
+                    .orElse(null);
+
             TutorApplication application = new TutorApplication(
                     0, bean.getCategoryName(), studentUsername,
                     LocalDateTime.now(), ApplicationStatus.SUBMITTED);
+            application.setSubcategoryName(subcategoryName);
             int applicationId = appDao.insert(conn, application);
             for (ApplicationItemBean itemBean : bean.getItems()) {
                 itemDao.insert(conn, buildItem(conn, itemBean, applicationId, documentDao));
@@ -227,7 +239,11 @@ public class ApplyToBecomeATutorController {
                     application.getStudentUsername(), application.getId(), newStatus);
 
             if (newStatus == ApplicationStatus.ACCEPTED) {
-                promoteStudentToTutor(conn, application.getStudentUsername());
+                Tutor promoted = promoteStudentToTutor(conn, application.getStudentUsername());
+                if (promoted != null) {
+                    createInitialExpertise(conn, promoted,
+                            application.getCategoryName(), application.getId());
+                }
             }
 
             if (conn != null) conn.commit();
@@ -240,7 +256,7 @@ public class ApplyToBecomeATutorController {
         }
     }
 
-    private void promoteStudentToTutor(Connection conn, String studentUsername)
+    private Tutor promoteStudentToTutor(Connection conn, String studentUsername)
             throws DatabaseException {
         try {
             DaoFactory factory = DaoFactory.getInstance();
@@ -250,8 +266,55 @@ public class ApplyToBecomeATutorController {
             insertTutorIfNeeded(conn, tutorDao, promoted);
             SessionManager.getInstance().markAsNewlyPromotedTutor(studentUsername);
             SessionManager.getInstance().invalidateSessionsForUser(studentUsername);
+            return promoted;
         } catch (UserNotFoundException e) {
             LOGGER.log(Level.WARNING, "Cannot promote to tutor, student not found: {0}", studentUsername);
+            return null;
+        }
+    }
+
+    private void createInitialExpertise(Connection conn, Tutor tutor,
+                                        String categoryName, int applicationId) {
+        try {
+            DaoFactory factory = DaoFactory.getInstance();
+            ApplicationItemDao itemDao = factory.createApplicationItemDao();
+            TutorExpertiseDao expertiseDao = factory.createTutorExpertiseDao();
+
+            List<ApplicationItem> items = itemDao.findByApplicationId(conn, applicationId);
+
+            String subcategoryName = items.stream()
+                    .filter(i -> "subcategory".equals(i.getRequirementName()) && i instanceof TextItem ti && !ti.getTextContent().isBlank())
+                    .map(i -> ((TextItem) i).getTextContent().trim())
+                    .findFirst()
+                    .orElse(categoryName);
+
+            BigDecimal price = items.stream()
+                    .filter(i -> "hourly_price".equals(i.getRequirementName()) && i instanceof TextItem)
+                    .map(i -> {
+                        try { return new BigDecimal(((TextItem) i).getTextContent().replace(",", ".")); }
+                        catch (NumberFormatException e) { return null; }
+                    })
+                    .filter(p -> p != null && p.compareTo(BigDecimal.ZERO) > 0)
+                    .findFirst()
+                    .orElse(new BigDecimal("30.00"));
+
+            CategoryDao categoryDao = factory.createCategoryDao();
+            Category category;
+            try {
+                category = categoryDao.findByNameWithRequirements(categoryName);
+            } catch (CategoryNotFoundException e) {
+                category = new Category(categoryName, "");
+            }
+
+            SubCategory subcategory = new SubCategory(subcategoryName, category, "");
+            TutorExpertise expertise = new TutorExpertise(
+                    tutor, subcategory, price, Status.APPROVED, LocalDateTime.now());
+            expertiseDao.insertExpertise(conn, expertise);
+
+        } catch (DuplicateTutorExpertiseException e) {
+            LOGGER.info("Expertise already exists for this tutor/subcategory, skipping.");
+        } catch (Exception e) {
+            LOGGER.warning("Cannot create initial expertise: " + e.getMessage());
         }
     }
 
@@ -274,7 +337,59 @@ public class ApplyToBecomeATutorController {
     }
 
     // ----------------------------------------------------------------
-    // 5. loadMyApplications
+    // 5. loadApplicationDetail (admin)
+    // ----------------------------------------------------------------
+
+    /**
+     * Carica il dettaglio completo di una candidatura (inclusi gli item)
+     * per la revisione da parte dell'admin.
+     */
+    public TutorApplicationBean loadApplicationDetail(int applicationId, String token)
+            throws AuthenticationException, AuthorizationException,
+            ApplicationNotFoundException, DatabaseException {
+
+        requireAdmin(token);
+
+        DaoFactory factory = DaoFactory.getInstance();
+        TutorApplicationDao appDao  = factory.createTutorApplicationDao();
+        ApplicationItemDao  itemDao = factory.createApplicationItemDao();
+
+        try (Connection conn = factory.getConnection()) {
+            TutorApplication app   = appDao.findById(conn, applicationId);
+            List<ApplicationItem> items = itemDao.findByApplicationId(conn, applicationId);
+
+            TutorApplicationBean bean = new TutorApplicationBean();
+            bean.setApplicationId(app.getId());
+            bean.setCategoryName(app.getCategoryName());
+            bean.setSubcategoryName(app.getSubcategoryName());
+            bean.setStudentUsername(app.getStudentUsername());
+            bean.setStatus(app.getStatus());
+            bean.setCreationDate(app.getCreationDate());
+
+            List<ApplicationItemBean> itemBeans = new ArrayList<>();
+            for (ApplicationItem item : items) {
+                ApplicationItemBean ib = new ApplicationItemBean();
+                ib.setRequirementName(item.getRequirementName());
+                if (item instanceof TextItem ti) {
+                    ib.setItemType(ItemType.TEXT);
+                    ib.setTextContent(ti.getTextContent());
+                } else if (item instanceof DocumentItem di) {
+                    ib.setItemType(ItemType.DOCUMENT);
+                    ib.setOriginalFilename(di.getDocument().getOriginalFilename());
+                    ib.setSizeBytes(di.getDocument().getSizeBytes());
+                }
+                itemBeans.add(ib);
+            }
+            bean.setItems(itemBeans);
+            return bean;
+
+        } catch (SQLException e) {
+            throw new DatabaseException("Error loading application detail.", e);
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // 6. loadMyApplications
     // ----------------------------------------------------------------
 
     /**

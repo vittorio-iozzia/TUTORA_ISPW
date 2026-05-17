@@ -19,6 +19,7 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.logging.Logger;
@@ -28,19 +29,7 @@ public class TutorApplicationGfxController extends DialogGfxController {
     private static final Logger LOGGER =
             Logger.getLogger(TutorApplicationGfxController.class.getName());
 
-    // ----------------------------------------------------------------
-    // Availability config
-    // ----------------------------------------------------------------
-
-    private static final String[] DAYS     = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
-    /** Full DayOfWeek names so the backend can parse with DayOfWeek.valueOf() */
-    private static final String[] DAY_KEYS = {
-        "MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY","SUNDAY"};
-    private static final String[] SLOTS     = {"Morning\n08:00–12:00", "Afternoon\n12:00–17:00", "Evening\n17:00–21:00"};
-    /** Start times – parseable with LocalTime.parse() */
-    private static final String[] SLOT_START = {"08:00", "12:00", "17:00"};
-    /** End times – parseable with LocalTime.parse() */
-    private static final String[] SLOT_END   = {"12:00", "17:00", "21:00"};
+    private static final String HOURLY_PRICE_KEY = "hourly_price";
 
     // ----------------------------------------------------------------
     // FXML
@@ -64,8 +53,7 @@ public class TutorApplicationGfxController extends DialogGfxController {
     private final Map<String, TextArea> textFields    = new LinkedHashMap<>();
     private final Map<String, File[]>   documentFiles = new LinkedHashMap<>();
 
-    /** Selected availability slots: "MONDAY|08:00|12:00", etc. */
-    private final Set<String> selectedSlots = new LinkedHashSet<>();
+    private TextField hourlyRateField;
 
     private final ApplyToBecomeATutorController appController =
             new ApplyToBecomeATutorController();
@@ -119,18 +107,18 @@ public class TutorApplicationGfxController extends DialogGfxController {
         textFields.clear();
         documentFiles.clear();
 
+        int step = 1;
         if (requirements.isEmpty()) {
             Label empty = new Label("No requirements found for this category.");
             empty.setStyle("-fx-text-fill: #6B7280; -fx-font-size: 13px;");
             formContainer.getChildren().add(empty);
         } else {
-            int step = 1;
             for (RequirementBean req : requirements) {
                 formContainer.getChildren().add(buildFieldBox(req, step++));
             }
         }
 
-        formContainer.getChildren().add(buildAvailabilitySection());
+        formContainer.getChildren().add(buildHourlyRateSection(step));
         updateSubmitState();
     }
 
@@ -224,86 +212,38 @@ public class TutorApplicationGfxController extends DialogGfxController {
     }
 
     // ----------------------------------------------------------------
-    // Availability calendar
+    // Hourly rate field
     // ----------------------------------------------------------------
 
-    private VBox buildAvailabilitySection() {
-        VBox section = new VBox(12);
+    private VBox buildHourlyRateSection(int step) {
+        VBox section = new VBox(10);
         section.getStyleClass().add("app-field-box");
 
         HBox labelRow = new HBox(8);
         labelRow.setAlignment(Pos.CENTER_LEFT);
 
-        ImageView calIcon = loadTwemoji("1f4c5", 22);
+        Label stepLbl = new Label(String.valueOf(step));
+        stepLbl.getStyleClass().add("app-step-badge");
 
-        Label title = new Label("Availability");
+        Label title = new Label("Hourly Rate (€)");
         title.getStyleClass().add("app-field-label");
 
         Label star = new Label("*");
         star.setStyle("-fx-text-fill: #EF4444; -fx-font-weight: bold; -fx-font-size: 14px;");
 
-        labelRow.getChildren().addAll(calIcon, title, star);
+        labelRow.getChildren().addAll(stepLbl, title, star);
 
-        Label desc = new Label("Select the days and time slots when you are available to teach.");
+        Label desc = new Label("Set your hourly rate for this subject. You can update it later from your profile.");
         desc.getStyleClass().add("app-field-desc");
         desc.setWrapText(true);
 
-        GridPane grid = buildAvailabilityGrid();
+        hourlyRateField = new TextField();
+        hourlyRateField.setPromptText("e.g. 35.00");
+        hourlyRateField.getStyleClass().add("lesson-field");
+        hourlyRateField.textProperty().addListener((obs, o, n) -> updateSubmitState());
 
-        section.getChildren().addAll(labelRow, desc, grid);
+        section.getChildren().addAll(labelRow, desc, hourlyRateField);
         return section;
-    }
-
-    private GridPane buildAvailabilityGrid() {
-        GridPane grid = new GridPane();
-        grid.setHgap(6);
-        grid.setVgap(6);
-
-        ColumnConstraints timeCol = new ColumnConstraints(70);
-        grid.getColumnConstraints().add(timeCol);
-        for (int d = 0; d < DAYS.length; d++) {
-            ColumnConstraints cc = new ColumnConstraints();
-            cc.setHgrow(Priority.ALWAYS);
-            cc.setMinWidth(52);
-            grid.getColumnConstraints().add(cc);
-        }
-
-        for (int d = 0; d < DAYS.length; d++) {
-            Label dayLbl = new Label(DAYS[d]);
-            dayLbl.getStyleClass().add("app-avail-day-header");
-            dayLbl.setMaxWidth(Double.MAX_VALUE);
-            dayLbl.setAlignment(Pos.CENTER);
-            GridPane.setHgrow(dayLbl, Priority.ALWAYS);
-            grid.add(dayLbl, d + 1, 0);
-        }
-
-        for (int s = 0; s < SLOTS.length; s++) {
-            Label slotLbl = new Label(SLOTS[s]);
-            slotLbl.getStyleClass().add("app-avail-time-label");
-            slotLbl.setWrapText(true);
-            slotLbl.setAlignment(Pos.CENTER_RIGHT);
-            grid.add(slotLbl, 0, s + 1);
-
-            for (int d = 0; d < DAYS.length; d++) {
-                final String key = DAY_KEYS[d] + "|" + SLOT_START[s] + "|" + SLOT_END[s];
-                ToggleButton cell = new ToggleButton();
-                cell.getStyleClass().add("app-avail-cell");
-                cell.setMaxWidth(Double.MAX_VALUE);
-                cell.setMaxHeight(Double.MAX_VALUE);
-                GridPane.setHgrow(cell, Priority.ALWAYS);
-                GridPane.setVgrow(cell, Priority.ALWAYS);
-
-                cell.selectedProperty().addListener((obs, was, on) -> {
-                    if (Boolean.TRUE.equals(on)) selectedSlots.add(key);
-                    else                         selectedSlots.remove(key);
-                    updateSubmitState();
-                });
-
-                grid.add(cell, d + 1, s + 1);
-            }
-        }
-
-        return grid;
     }
 
     // ----------------------------------------------------------------
@@ -325,7 +265,14 @@ public class TutorApplicationGfxController extends DialogGfxController {
                 if (holder == null || holder[0] == null) return false;
             }
         }
-        return !selectedSlots.isEmpty() && agreeCheckBox.isSelected();
+        if (hourlyRateField == null || hourlyRateField.getText().isBlank()) return false;
+        try {
+            BigDecimal price = new BigDecimal(hourlyRateField.getText().trim().replace(",", "."));
+            if (price.compareTo(BigDecimal.ZERO) <= 0) return false;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+        return agreeCheckBox.isSelected();
     }
 
     // ----------------------------------------------------------------
@@ -334,10 +281,6 @@ public class TutorApplicationGfxController extends DialogGfxController {
 
     @FXML
     private void handleSubmit() {
-        if (selectedSlots.isEmpty()) {
-            showError("Please select at least one availability slot before submitting.");
-            return;
-        }
         showError(null);
         submitBtn.setDisable(true);
         submitBtn.setText("Submitting…");
@@ -399,16 +342,13 @@ public class TutorApplicationGfxController extends DialogGfxController {
             }
             items.add(item);
         }
+        ApplicationItemBean priceItem = new ApplicationItemBean();
+        priceItem.setRequirementName(HOURLY_PRICE_KEY);
+        priceItem.setItemType(ItemType.TEXT);
+        priceItem.setTextContent(hourlyRateField.getText().trim().replace(",", "."));
+        items.add(priceItem);
+
         bean.setItems(items);
-
-        if (!selectedSlots.isEmpty()) {
-            ApplicationItemBean avail = new ApplicationItemBean();
-            avail.setRequirementName("availability");
-            avail.setItemType(ItemType.TEXT);
-            avail.setTextContent(String.join(",", selectedSlots));
-            items.add(avail);
-        }
-
         return bean;
     }
 
@@ -429,7 +369,7 @@ public class TutorApplicationGfxController extends DialogGfxController {
 
     private String resolveErrorMessage(Throwable e) {
         if (e instanceof DuplicateApplicationException)
-            return "You have already submitted an application for this category.";
+            return "You have already submitted a pending application for this subject in this category.";
         if (e instanceof InvalidDocumentException)
             return "One or more documents are invalid. Please re-upload and try again.";
         if (e instanceof ValidationTimeoutException)

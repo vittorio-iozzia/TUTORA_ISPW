@@ -2848,6 +2848,251 @@
     -fx-icon-color: #5C6661;
 }
 
+/* ================================================================
+   Tutor Dashboard – Calendar
+   ================================================================ */
+.cal-card {
+    -fx-background-color: white;
+    -fx-background-radius: 14;
+    -fx-border-color: #E8EEE8;
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+    -fx-padding: 18 20;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 18, 0, 0, 5);
+}
+
+.cal-nav-btn {
+    -fx-background-color: #F3F4F6;
+    -fx-background-radius: 8;
+    -fx-border-color: transparent;
+    -fx-text-fill: #374151;
+    -fx-font-size: 20px;
+    -fx-font-weight: 700;
+    -fx-min-width: 36;
+    -fx-min-height: 36;
+    -fx-max-width: 36;
+    -fx-max-height: 36;
+    -fx-padding: 0;
+    -fx-alignment: center;
+    -fx-cursor: hand;
+}
+
+.cal-nav-btn:hover {
+    -fx-background-color: #E5E7EB;
+}
+
+.cal-month-label {
+    -fx-font-size: 20px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-text-fill: #111827;
+    -fx-alignment: center;
+}
+
+.cal-day-header {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-text-fill: #9CA3AF;
+    -fx-alignment: center;
+    -fx-padding: 4 0 8 0;
+}
+
+.cal-day {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+    -fx-border-color: transparent;
+    -fx-text-fill: #374151;
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-min-height: 46;
+    -fx-cursor: hand;
+    -fx-padding: 0;
+    -fx-alignment: center;
+}
+
+.cal-day:hover {
+    -fx-background-color: #F0F7F3;
+    -fx-text-fill: #2A5C45;
+}
+
+.cal-day-today {
+    -fx-background-color: #E8F6EE;
+    -fx-background-radius: 8;
+    -fx-border-color: #2A5C45;
+    -fx-border-radius: 8;
+    -fx-border-width: 1.5;
+    -fx-text-fill: #2A5C45;
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-min-height: 46;
+    -fx-cursor: hand;
+    -fx-padding: 0;
+    -fx-alignment: center;
+}
+
+.cal-day-today:hover {
+    -fx-background-color: #D4EDDA;
+}
+
+.cal-day-selected {
+    -fx-background-color: #2A5C45;
+    -fx-background-radius: 8;
+    -fx-border-color: transparent;
+    -fx-text-fill: white;
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-min-height: 46;
+    -fx-cursor: hand;
+    -fx-padding: 0;
+    -fx-alignment: center;
+    -fx-effect: dropshadow(gaussian, rgba(42,92,69,0.30), 8, 0, 0, 2);
+}
+
+.cal-day-selected:hover {
+    -fx-background-color: #1E4433;
+}
+
+.cal-day-past {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+    -fx-border-color: transparent;
+    -fx-text-fill: #9CA3AF;
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-min-height: 46;
+    -fx-padding: 0;
+    -fx-alignment: center;
+}
+
+.cal-day-has-lesson {
+    -fx-background-color: #EFF6FF;
+    -fx-background-radius: 8;
+    -fx-border-color: #93C5FD;
+    -fx-border-radius: 8;
+    -fx-border-width: 1.5;
+    -fx-text-fill: #1D4ED8;
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-min-height: 46;
+    -fx-cursor: hand;
+    -fx-padding: 0;
+    -fx-alignment: center;
+}
+
+.cal-day-has-lesson:hover {
+    -fx-background-color: #DBEAFE;
+}
+
+/* ================================================================
+   Create Lesson Dialog – Form fields
+   ================================================================ */
+.lesson-field {
+    -fx-background-color: white;
+    -fx-border-color: #D1D5DB;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-border-width: 1.5;
+    -fx-font-size: 13px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: #111827;
+    -fx-prompt-text-fill: #9CA3AF;
+    -fx-padding: 10 12;
+}
+
+.lesson-field:focused {
+    -fx-border-color: #2A5C45;
+    -fx-effect: dropshadow(gaussian, rgba(42,92,69,0.15), 6, 0, 0, 0);
+}
+
+.lesson-combo {
+    -fx-background-color: white;
+    -fx-border-color: #D1D5DB;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-border-width: 1.5;
+    -fx-font-size: 13px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: #111827;
+}
+
+.lesson-combo:focused {
+    -fx-border-color: #2A5C45;
+}
+
+.lesson-combo .list-cell {
+    -fx-font-size: 13px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: #111827;
+    -fx-padding: 6 10;
+}
+
+.mode-toggle {
+    -fx-background-color: #F3F4F6;
+    -fx-background-radius: 8;
+    -fx-border-color: #D1D5DB;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-text-fill: #6B7280;
+    -fx-font-size: 13px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-padding: 9 18;
+    -fx-cursor: hand;
+}
+
+.mode-toggle:selected {
+    -fx-background-color: #2A5C45;
+    -fx-border-color: #2A5C45;
+    -fx-text-fill: white;
+    -fx-font-weight: 600;
+}
+
+.mode-toggle:hover:!selected {
+    -fx-background-color: #E5E7EB;
+}
+
+.lesson-cancel-btn {
+    -fx-background-color: #F3F4F6;
+    -fx-background-radius: 8;
+    -fx-border-color: transparent;
+    -fx-text-fill: #6B7280;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-padding: 10 20;
+    -fx-cursor: hand;
+}
+
+.lesson-cancel-btn:hover {
+    -fx-background-color: #E5E7EB;
+}
+
+.lesson-submit-btn {
+    -fx-background-color: #2A5C45;
+    -fx-background-radius: 8;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-padding: 10 24;
+    -fx-cursor: hand;
+}
+
+.lesson-submit-btn:hover {
+    -fx-background-color: #1E4433;
+}
+
+.lesson-submit-btn:disabled {
+    -fx-background-color: #D1D5DB;
+    -fx-text-fill: #9CA3AF;
+    -fx-cursor: default;
+}
+
 /* ── Messages nav badge ── */
 .nav-msg-badge {
     -fx-background-color: #E53E3E;

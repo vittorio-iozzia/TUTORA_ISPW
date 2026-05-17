@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:id="dialogRoot"
+      fx:controller="it.ispw.tutora.controller.graphic.CreateLessonGfxController"
+      stylesheets="@../css/home.css"
+      styleClass="app-dialog-root app-dialog-form"
+      spacing="0" minWidth="500" prefWidth="540">
+
+    <!-- ── Header ── -->
+    <HBox styleClass="app-dialog-header" alignment="CENTER_LEFT" spacing="16">
+        <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+        <VBox spacing="4" HBox.hgrow="ALWAYS">
+            <Label text="New Lesson" styleClass="app-header-title"/>
+            <Label fx:id="dateLabel" text="—" styleClass="app-header-subtitle"/>
+        </VBox>
+        <Button onAction="#handleClose" styleClass="app-dialog-close-btn" text="✕"/>
+    </HBox>
+
+    <!-- ── Form (scrollable) ── -->
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="app-scroll">
+        <VBox spacing="18">
+            <padding><Insets top="24" right="28" bottom="24" left="28"/></padding>
+
+            <!-- Subject -->
+            <VBox spacing="6">
+                <Label text="Subject" styleClass="app-field-label"/>
+                <ComboBox fx:id="subjectCombo" maxWidth="Infinity"
+                          promptText="Select subject..." styleClass="lesson-combo"/>
+                <Label fx:id="subjectHintLabel"
+                       text="Don't see your subject? Apply for a new expertise and wait for admin approval."
+                       styleClass="app-field-desc" wrapText="true"
+                       visible="false" managed="false"/>
+            </VBox>
+
+            <!-- Times -->
+            <HBox spacing="14">
+                <VBox spacing="6" HBox.hgrow="ALWAYS">
+                    <Label text="Start time" styleClass="app-field-label"/>
+                    <ComboBox fx:id="startTimeCombo" maxWidth="Infinity"
+                              promptText="Start" styleClass="lesson-combo"/>
+                </VBox>
+                <VBox spacing="6" HBox.hgrow="ALWAYS">
+                    <Label text="End time" styleClass="app-field-label"/>
+                    <ComboBox fx:id="endTimeCombo" maxWidth="Infinity"
+                              promptText="End" styleClass="lesson-combo"/>
+                </VBox>
+            </HBox>
+
+            <!-- Price -->
+            <VBox spacing="6">
+                <Label text="Price (€)" styleClass="app-field-label"/>
+                <TextField fx:id="priceField" promptText="e.g. 35.00"
+                           styleClass="lesson-field"/>
+            </VBox>
+
+            <!-- Mode -->
+            <VBox spacing="8">
+                <Label text="Mode" styleClass="app-field-label"/>
+                <HBox spacing="10">
+                    <ToggleButton fx:id="remoteBtn" text="🌐  Remote"
+                                  styleClass="mode-toggle"
+                                  HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    <ToggleButton fx:id="inPersonBtn" text="📍  In Person"
+                                  styleClass="mode-toggle"
+                                  HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                </HBox>
+            </VBox>
+
+            <!-- Error -->
+            <Label fx:id="errorLabel" text="" styleClass="app-error-label"
+                   visible="false" managed="false" wrapText="true"/>
+
+        </VBox>
+    </ScrollPane>
+
+    <!-- ── Footer ── -->
+    <HBox styleClass="app-dialog-footer" spacing="10" alignment="CENTER_RIGHT">
+        <padding><Insets top="16" right="24" bottom="16" left="24"/></padding>
+        <Button text="Cancel" onAction="#handleClose" styleClass="lesson-cancel-btn"/>
+        <Button fx:id="submitBtn" text="Create Lesson" onAction="#handleSubmit"
+                styleClass="lesson-submit-btn" defaultButton="true"/>
+    </HBox>
+
+</VBox>
