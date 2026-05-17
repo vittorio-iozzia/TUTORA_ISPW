@@ -8,6 +8,7 @@ import it.ispw.tutora.controller.application.ApplyToBecomeATutorController;
 import it.ispw.tutora.controller.application.BookTutorController;
 import it.ispw.tutora.controller.application.GetNotificationsController;
 import it.ispw.tutora.enums.ApplicationStatus;
+import it.ispw.tutora.view.home.TutorDashboardDecorator;
 import it.ispw.tutora.enums.NotificationType;
 import it.ispw.tutora.exception.ApplicationNotFoundException;
 import it.ispw.tutora.exception.DatabaseException;
@@ -401,6 +402,28 @@ public class NotificationGfxController {
 
         info.getChildren().addAll(titleLbl, msgLbl);
 
+        // Show admin notes for students reviewing their application result
+        if (session.isStudent() && notif.getType() == NotificationType.APPLICATION_UPDATE) {
+            String fullMsg = notif.getMessage();
+            final String SEPARATOR = "\n\nAdmin notes: ";
+            int notesIdx = fullMsg.indexOf(SEPARATOR);
+            if (notesIdx >= 0) {
+                msgLbl.setText(fullMsg.substring(0, notesIdx));
+                String notes = fullMsg.substring(notesIdx + SEPARATOR.length());
+
+                VBox notesBox = new VBox(4);
+                notesBox.getStyleClass().add("notif-notes-box");
+                VBox.setMargin(notesBox, new Insets(8, 0, 0, 0));
+                Label notesTitleLbl = new Label("Admin notes");
+                notesTitleLbl.getStyleClass().add("notif-notes-title");
+                Label notesLbl = new Label(notes);
+                notesLbl.getStyleClass().add("notif-notes-content");
+                notesLbl.setWrapText(true);
+                notesBox.getChildren().addAll(notesTitleLbl, notesLbl);
+                info.getChildren().add(notesBox);
+            }
+        }
+
         // Right column: time + unread dot
         VBox rightCol = new VBox(4);
         rightCol.setAlignment(Pos.TOP_RIGHT);
@@ -450,6 +473,7 @@ public class NotificationGfxController {
                 acceptBtn.setDisable(false);
                 rejectBtn.setDisable(false);
             } else {
+                TutorDashboardDecorator.refreshBookingRequests();
                 reload();
             }
         }));
@@ -540,6 +564,7 @@ public class NotificationGfxController {
                 ctrl.initApplication(task.getValue());
                 ctrl.setOnEvaluated(() -> {
                     if (applicationEvaluatedCallback != null) applicationEvaluatedCallback.run();
+                    HomeGfxController.refreshBadgeStatic();
                     reload();
                 });
 
@@ -595,6 +620,7 @@ public class NotificationGfxController {
 
         task.setOnSucceeded(e -> Platform.runLater(() -> {
             if (applicationEvaluatedCallback != null) applicationEvaluatedCallback.run();
+            HomeGfxController.refreshBadgeStatic();
             reload();
         }));
         task.setOnFailed(e -> Platform.runLater(() -> {
@@ -690,7 +716,7 @@ public class NotificationGfxController {
      * prenotazione pendenti del tutor (LESSON_BOOKED non ancora gestite).
      * Chiamato da HomeGfxController quando il dialog viene chiuso.
      */
-    public void markVisibleAsRead() {
+    public void markVisibleAsRead(Runnable onComplete) {
         List<Notification> toMark = currentNotifications.stream()
                 .filter(n -> !n.isRead())
 
@@ -700,8 +726,14 @@ public class NotificationGfxController {
                 // Non marcare LESSON_ACCEPTED dello student (deve ancora pagare,
                 // indipendentemente dallo stato del pagamento in background)
                 .filter(n -> !(session.isStudent() && n.getType() == NotificationType.LESSON_ACCEPTED))
+
+                // Non marcare APPLICATION_UPDATE dell'admin (richiede valutazione esplicita)
+                .filter(n -> !(session.isAdmin() && n.getType() == NotificationType.APPLICATION_UPDATE))
                 .toList();
-        if (toMark.isEmpty()) return;
+        if (toMark.isEmpty()) {
+            if (onComplete != null) Platform.runLater(onComplete);
+            return;
+        }
         Task<Void> task = new Task<>() {
             @Override protected Void call() {
                 for (Notification n : toMark) {
@@ -712,6 +744,7 @@ public class NotificationGfxController {
                 return null;
             }
         };
+        task.setOnSucceeded(e -> { if (onComplete != null) Platform.runLater(onComplete); });
         Thread t = new Thread(task, "notif-auto-read");
         t.setDaemon(true);
         t.start();

@@ -17,6 +17,10 @@ public class TutorDashboardDecorator extends DashboardDecorator {
         if (lastController != null) lastController.refreshUpcomingLessons();
     }
 
+    public static void refreshBookingRequests() {
+        if (lastController != null) lastController.refreshBookingRequests();
+    }
+
     private static void setLastController(TutorContentController ctrl) {
         lastController = ctrl;
     }

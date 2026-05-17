@@ -64,6 +64,12 @@ public class NotificationDaoDb implements NotificationDao {
             "FROM notification " +
             "WHERE recipient_username = ? AND is_read = FALSE";
 
+    @Language("SQL")
+    private static final String SQL_MARK_READ_BY_TARGET =
+            "UPDATE notification " +
+            "SET is_read = TRUE " +
+            "WHERE target_id = ? AND recipient_username = ? AND is_read = FALSE";
+
     // ----------------------------------------------------------------
     // insert
     // ----------------------------------------------------------------
@@ -188,6 +194,24 @@ public class NotificationDaoDb implements NotificationDao {
         } catch (SQLException e) {
             throw new DatabaseException(
                     "Error counting unread notifications for: " + recipientUsername, e);
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // markReadByTargetIdAndRecipient
+    // ----------------------------------------------------------------
+
+    @Override
+    public void markReadByTargetIdAndRecipient(Connection conn, int targetId,
+                                               String recipientUsername)
+            throws DatabaseException {
+        try (PreparedStatement ps = conn.prepareStatement(SQL_MARK_READ_BY_TARGET)) {
+            ps.setInt(1, targetId);
+            ps.setString(2, recipientUsername);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new DatabaseException(
+                    "Error marking notification read by targetId=" + targetId, e);
         }
     }
 

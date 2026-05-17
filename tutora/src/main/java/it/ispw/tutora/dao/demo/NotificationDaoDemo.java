@@ -100,4 +100,19 @@ public class NotificationDaoDemo implements NotificationDao {
                         && !n.isRead())
                 .count();
     }
+
+    // ----------------------------------------------------------------
+    // markReadByTargetIdAndRecipient
+    // ----------------------------------------------------------------
+
+    @Override
+    public void markReadByTargetIdAndRecipient(Connection conn, int targetId,
+                                               String recipientUsername) {
+        cache.stream()
+                .filter(n -> n.getRecipientUsername().equals(recipientUsername)
+                        && n.getTargetId() != null
+                        && n.getTargetId() == targetId
+                        && !n.isRead())
+                .forEach(n -> n.setRead(true));
+    }
 }

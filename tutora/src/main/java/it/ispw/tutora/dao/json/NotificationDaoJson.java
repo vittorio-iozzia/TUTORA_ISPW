@@ -143,6 +143,25 @@ public class NotificationDaoJson implements NotificationDao {
     }
 
     // ----------------------------------------------------------------
+    // markReadByTargetIdAndRecipient
+    // ----------------------------------------------------------------
+
+    @Override
+    public void markReadByTargetIdAndRecipient(Connection conn, int targetId,
+                                               String recipientUsername)
+            throws DatabaseException {
+        List<NotifRecord> records = readAll();
+        for (NotifRecord r : records) {
+            if (r.recipientUsername.equals(recipientUsername)
+                    && r.targetId != null && r.targetId == targetId
+                    && !r.read) {
+                r.read = true;
+            }
+        }
+        writeAll(records);
+    }
+
+    // ----------------------------------------------------------------
     // Helper privati
     // ----------------------------------------------------------------
 

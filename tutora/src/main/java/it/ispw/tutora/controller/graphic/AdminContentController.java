@@ -169,25 +169,28 @@ public class AdminContentController {
     }
 
     private HBox buildApplicationCard(TutorApplication app) {
-        HBox card = new HBox(14);
+        HBox card = new HBox(16);
         card.getStyleClass().add("application-card");
         card.setAlignment(Pos.CENTER_LEFT);
 
         Label avatar = new Label(String.valueOf(app.getStudentUsername().charAt(0)).toUpperCase());
-        avatar.getStyleClass().add("booking-avatar");
+        avatar.getStyleClass().add("admin-app-avatar");
 
-        VBox info = new VBox(3);
+        VBox info = new VBox(4);
         HBox.setHgrow(info, Priority.ALWAYS);
         Label nameLabel = new Label(app.getStudentUsername());
-        nameLabel.getStyleClass().add("booking-student-name");
-        Label catLabel  = new Label(app.getCategoryName());
-        catLabel.getStyleClass().add("booking-subject");
+        nameLabel.getStyleClass().add("admin-app-name");
+        String catText = app.getCategoryName()
+                + (app.getSubcategoryName() != null && !app.getSubcategoryName().isBlank()
+                   ? " · " + app.getSubcategoryName() : "");
+        Label catLabel = new Label(catText);
+        catLabel.getStyleClass().add("admin-app-category");
         info.getChildren().addAll(nameLabel, catLabel);
 
         Button approveBtn = new Button("Approve");
-        approveBtn.getStyleClass().add("accept-btn");
+        approveBtn.getStyleClass().add("admin-approve-btn");
         Button rejectBtn  = new Button("Reject");
-        rejectBtn.getStyleClass().add("decline-btn");
+        rejectBtn.getStyleClass().add("admin-reject-btn");
 
         // Observer (Push Model): quando il model aggiorna lo status, la View si aggiorna automaticamente.
         // Platform.runLater garantisce che la modifica al scene graph avvenga sempre sul FX thread,
@@ -236,7 +239,10 @@ public class AdminContentController {
         };
 
         // Persisted successfully: update the model → the registered observer updates the UI
-        task.setOnSucceeded(e -> Platform.runLater(() -> app.updateStatus(status)));
+        task.setOnSucceeded(e -> Platform.runLater(() -> {
+            app.updateStatus(status);
+            HomeGfxController.refreshBadgeStatic();
+        }));
 
         task.setOnFailed(e -> Platform.runLater(() -> {
             approveBtn.setDisable(false);
@@ -272,14 +278,14 @@ public class AdminContentController {
         row.setAlignment(Pos.CENTER_LEFT);
 
         Label avatar = new Label(String.valueOf(tutor.getName().charAt(0)).toUpperCase());
-        avatar.getStyleClass().add("booking-avatar");
+        avatar.getStyleClass().add("admin-app-avatar");
 
-        VBox nameBox = new VBox(2);
+        VBox nameBox = new VBox(4);
         HBox.setHgrow(nameBox, Priority.ALWAYS);
         Label name     = new Label(tutor.getFullName());
-        name.getStyleClass().add("booking-student-name");
+        name.getStyleClass().add("admin-app-name");
         Label username = new Label("@" + tutor.getUsername());
-        username.getStyleClass().add("lesson-meta");
+        username.getStyleClass().add("admin-app-category");
         nameBox.getChildren().addAll(name, username);
 
         Label roleBadge = new Label("Tutor");

@@ -1,12 +1,19 @@
 package it.ispw.tutora.controller.graphic;
 
+import it.ispw.tutora.bean.BookingTutorBean;
+import it.ispw.tutora.bean.NotificationBean;
+import it.ispw.tutora.controller.application.BookTutorController;
+import it.ispw.tutora.controller.application.GetNotificationsController;
 import it.ispw.tutora.dao.BookingDao;
 import it.ispw.tutora.dao.LessonDao;
+import it.ispw.tutora.dao.NotificationDao;
 import it.ispw.tutora.dao.factory.DaoFactory;
+import it.ispw.tutora.enums.NotificationType;
 import it.ispw.tutora.enums.PaymentStatus;
 import it.ispw.tutora.exception.DatabaseException;
 import it.ispw.tutora.model.Booking;
 import it.ispw.tutora.model.Lesson;
+import it.ispw.tutora.model.Notification;
 import it.ispw.tutora.model.session.Session;
 import it.ispw.tutora.model.session.SessionManager;
 import it.ispw.tutora.view.SceneManager;
@@ -64,10 +71,10 @@ public class TutorContentController {
     @FXML private ImageView heroBgImageView;
 
     // Stats
-    @FXML private HBox statCard1;
-    @FXML private HBox statCard2;
-    @FXML private HBox statCard3;
-    @FXML private HBox statCard4;
+    @FXML private HBox  statCard1;
+    @FXML private HBox  statCard2;
+    @FXML private HBox  statCard3;
+    @FXML private HBox  statCard4;
     @FXML private Label welcomeTitle;
     @FXML private Label totalStudentsLabel;
     @FXML private Label lessonsMonthLabel;
@@ -88,17 +95,8 @@ public class TutorContentController {
     private LocalDate selectedCalendarDate = null;
     private Set<LocalDate> lessonDates = new HashSet<>();
 
-    // ----------------------------------------------------------------
-    // Demo data
-    // ----------------------------------------------------------------
-
-    private record BookingMock(String student, String subject, String date, String time, boolean pending) {}
-
-    private static final List<BookingMock> MOCK_BOOKINGS = List.of(
-        new BookingMock("Alex Thompson","Calculus II",   "Jan 15","3:00 PM", true),
-        new BookingMock("Emma Wilson",  "Linear Algebra","Jan 16","10:00 AM",true),
-        new BookingMock("Michael Brown","Statistics",    "Jan 17","2:00 PM", false)
-    );
+    private final BookTutorController bookTutorController = new BookTutorController();
+    private final GetNotificationsController notifController = new GetNotificationsController();
 
     // ----------------------------------------------------------------
     // Init
@@ -160,6 +158,8 @@ public class TutorContentController {
             }
         });
     }
+
+
 
     // ----------------------------------------------------------------
     // Calendar
@@ -619,66 +619,185 @@ public class TutorContentController {
     }
 
     // ----------------------------------------------------------------
-    // Booking requests
+    // Booking requests — real data from LESSON_BOOKED notifications
     // ----------------------------------------------------------------
 
-    private void buildBookingRequests() {
-        long pendingCount = MOCK_BOOKINGS.stream().filter(BookingMock::pending).count();
-        pendingBadge.setText(pendingCount + " new");
-        for (BookingMock booking : MOCK_BOOKINGS) {
-            bookingRequestsList.getChildren().add(buildBookingCard(booking));
-        }
+    public void refreshBookingRequests() {
+        bookingRequestsList.getChildren().clear();
+        buildBookingRequests();
     }
 
-    private VBox buildBookingCard(BookingMock booking) {
+    private void buildBookingRequests() {
+        Task<List<Notification>> task = new Task<>() {
+            @Override
+            protected List<Notification> call() throws Exception {
+                NotificationDao notifDao = DaoFactory.getInstance().createNotificationDao();
+                return notifDao.findByRecipient(DaoFactory.getInstance().getConnection(), tutorUsername)
+                        .stream()
+                        .filter(n -> n.getType() == NotificationType.LESSON_BOOKED && !n.isRead())
+                        .toList();
+            }
+        };
+
+        task.setOnSucceeded(e -> Platform.runLater(() -> {
+            List<Notification> pending = task.getValue();
+            pendingBadge.setText(pending.size() + " new");
+            bookingRequestsList.getChildren().clear();
+            if (pending.isEmpty()) {
+                Label empty = new Label("No pending booking requests.");
+                empty.setStyle("-fx-text-fill:#9CA3AF;-fx-font-size:13px;");
+                bookingRequestsList.getChildren().add(empty);
+            } else {
+                for (Notification notif : pending) {
+                    loadAndShowBookingCard(notif);
+                }
+            }
+        }));
+
+        task.setOnFailed(e ->
+                LOGGER.warning("Cannot load booking requests: " + task.getException().getMessage()));
+
+        Thread t = new Thread(task, "load-booking-requests");
+        t.setDaemon(true);
+        t.start();
+    }
+
+    private void loadAndShowBookingCard(Notification notif) {
+        Task<Lesson> task = new Task<>() {
+            @Override
+            protected Lesson call() throws Exception {
+                LessonDao lessonDao = DaoFactory.getInstance().createLessonDao();
+                return lessonDao.selectLesson(DaoFactory.getInstance().getConnection(), notif.getTargetId());
+            }
+        };
+
+        task.setOnSucceeded(e -> Platform.runLater(() ->
+                bookingRequestsList.getChildren().add(buildBookingCard(notif, task.getValue()))));
+
+        task.setOnFailed(e ->
+                LOGGER.warning("Cannot load lesson for booking card: " + task.getException().getMessage()));
+
+        Thread t = new Thread(task, "load-booking-card-" + notif.getId());
+        t.setDaemon(true);
+        t.start();
+    }
+
+    private VBox buildBookingCard(Notification notif, Lesson lesson) {
+        String studentUsername = notif.getSenderUsername();
+        String subject  = lesson.getExpertise().getSubcategory().getName();
+        String datetime = lesson.getStartTime().format(CARD_FMT);
+
         VBox card = new VBox(8);
         card.getStyleClass().add("booking-request-card");
 
         HBox topRow = new HBox(10);
         topRow.setAlignment(Pos.CENTER_LEFT);
-        Label avatar = new Label(String.valueOf(booking.student().charAt(0)).toUpperCase());
+        Label avatar = new Label(String.valueOf(studentUsername.charAt(0)).toUpperCase());
         avatar.getStyleClass().add("booking-avatar");
 
         VBox nameBox = new VBox(2);
         HBox.setHgrow(nameBox, Priority.ALWAYS);
-        Label name = new Label(booking.student());
+        Label name = new Label(studentUsername);
         name.getStyleClass().add("booking-student-name");
-        Label subject = new Label(booking.subject());
-        subject.getStyleClass().add("booking-subject");
-        nameBox.getChildren().addAll(name, subject);
+        Label subjectLbl = new Label(subject);
+        subjectLbl.getStyleClass().add("booking-subject");
+        nameBox.getChildren().addAll(name, subjectLbl);
 
-        Label statusLabel = new Label(booking.pending() ? "pending" : "confirmed");
-        statusLabel.getStyleClass().add(booking.pending() ? "badge-pending-status" : "badge-confirmed-status");
+        Label statusLabel = new Label("pending");
+        statusLabel.getStyleClass().add("badge-pending-status");
         topRow.getChildren().addAll(avatar, nameBox, statusLabel);
 
         HBox metaRow = new HBox(12);
         metaRow.setAlignment(Pos.CENTER_LEFT);
         FontIcon calIcon = new FontIcon("fas-calendar-alt");
         calIcon.getStyleClass().add(LESSON_META_ICON);
-        Label dateLbl = new Label(booking.date());
+        Label dateLbl = new Label(datetime);
         dateLbl.getStyleClass().add(LESSON_META);
-        FontIcon clkIcon = new FontIcon("fas-clock");
-        clkIcon.getStyleClass().add(LESSON_META_ICON);
-        Label timeLbl = new Label(booking.time());
-        timeLbl.getStyleClass().add(LESSON_META);
-        metaRow.getChildren().addAll(calIcon, dateLbl, clkIcon, timeLbl);
+        FontIcon modeIcon = new FontIcon(lesson.isRemote() ? "fas-video" : "fas-map-marker-alt");
+        modeIcon.getStyleClass().add(LESSON_META_ICON);
+        Label modeLbl = new Label(lesson.isRemote() ? "Remote" : "In-Person");
+        modeLbl.getStyleClass().add(LESSON_META);
+        metaRow.getChildren().addAll(calIcon, dateLbl, modeIcon, modeLbl);
 
-        card.getChildren().addAll(topRow, metaRow);
+        HBox actions = new HBox(8);
+        Button acceptBtn = new Button("Accept");
+        acceptBtn.getStyleClass().add("accept-btn");
+        acceptBtn.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(acceptBtn, Priority.ALWAYS);
+        Button declineBtn = new Button("Decline");
+        declineBtn.getStyleClass().add("decline-btn");
+        declineBtn.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(declineBtn, Priority.ALWAYS);
 
-        if (booking.pending()) {
-            HBox actions = new HBox(8);
-            Button acceptBtn = new Button("Accept");
-            acceptBtn.getStyleClass().add("accept-btn");
-            acceptBtn.setMaxWidth(Double.MAX_VALUE);
-            HBox.setHgrow(acceptBtn, Priority.ALWAYS);
-            Button declineBtn = new Button("Decline");
-            declineBtn.getStyleClass().add("decline-btn");
-            declineBtn.setMaxWidth(Double.MAX_VALUE);
-            HBox.setHgrow(declineBtn, Priority.ALWAYS);
-            actions.getChildren().addAll(acceptBtn, declineBtn);
-            card.getChildren().add(actions);
-        }
+        acceptBtn.setOnAction(e -> {
+            acceptBtn.setDisable(true);
+            declineBtn.setDisable(true);
+            doRespondToBooking(notif, true, card, acceptBtn, declineBtn);
+        });
+        declineBtn.setOnAction(e -> {
+            acceptBtn.setDisable(true);
+            declineBtn.setDisable(true);
+            doRespondToBooking(notif, false, card, acceptBtn, declineBtn);
+        });
+        actions.getChildren().addAll(acceptBtn, declineBtn);
+
+        card.getChildren().addAll(topRow, metaRow, actions);
         return card;
+    }
+
+    private void doRespondToBooking(Notification notif, boolean accepted,
+                                    VBox card, Button acceptBtn, Button declineBtn) {
+        String token = SceneManager.getInstance().getSessionToken();
+        BookingTutorBean bean = new BookingTutorBean();
+        bean.setLessonId(notif.getTargetId());
+        bean.setAccepted(accepted);
+        bean.setStudentUsername(notif.getSenderUsername());
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() {
+                bookTutorController.respondToRequest(bean, token);
+                if (bean.getErrorMessage() == null) {
+                    NotificationBean nb = new NotificationBean();
+                    nb.setNotificationId(notif.getId());
+                    notifController.markAsRead(nb, token);
+                    Platform.runLater(HomeGfxController::refreshBadgeStatic);
+                }
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(e -> Platform.runLater(() -> {
+            if (bean.getErrorMessage() != null) {
+                Label errLbl = new Label(bean.getErrorMessage());
+                errLbl.setStyle("-fx-text-fill:#EF4444;-fx-font-size:12px;");
+                card.getChildren().add(errLbl);
+                acceptBtn.setDisable(false);
+                declineBtn.setDisable(false);
+            } else {
+                bookingRequestsList.getChildren().remove(card);
+                long remaining = bookingRequestsList.getChildren().stream()
+                        .filter(n -> n instanceof VBox).count();
+                pendingBadge.setText(remaining + " new");
+                if (bookingRequestsList.getChildren().isEmpty()) {
+                    Label empty = new Label("No pending booking requests.");
+                    empty.setStyle("-fx-text-fill:#9CA3AF;-fx-font-size:13px;");
+                    bookingRequestsList.getChildren().add(empty);
+                }
+            }
+        }));
+
+        task.setOnFailed(e -> Platform.runLater(() -> {
+            Label errLbl = new Label("An error occurred. Try again.");
+            errLbl.setStyle("-fx-text-fill:#EF4444;-fx-font-size:12px;");
+            card.getChildren().add(errLbl);
+            acceptBtn.setDisable(false);
+            declineBtn.setDisable(false);
+        }));
+
+        Thread t = new Thread(task, accepted ? "booking-accept" : "booking-decline");
+        t.setDaemon(true);
+        t.start();
     }
 
     // ----------------------------------------------------------------

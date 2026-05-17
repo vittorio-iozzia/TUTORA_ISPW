@@ -1192,8 +1192,8 @@
 }
 
 .section-card-title {
-    -fx-font-size: 15px;
-    -fx-font-weight: 600;
+    -fx-font-size: 18px;
+    -fx-font-weight: 700;
     -fx-text-fill: #1C2621;
     -fx-font-family: "Segoe UI";
 }
@@ -1364,21 +1364,51 @@
    Admin dashboard – Application & user rows
    ================================================================ */
 .application-card {
-    -fx-background-color: #F9FCFA;
-    -fx-background-radius: 10;
-    -fx-border-color: #E8EEE8;
-    -fx-border-radius: 10;
+    -fx-background-color: white;
+    -fx-background-radius: 14;
+    -fx-border-color: #E2EAE4;
+    -fx-border-radius: 14;
     -fx-border-width: 1;
-    -fx-padding: 14;
+    -fx-padding: 18 20;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.07), 10, 0, 0, 3);
+}
+
+.admin-app-avatar {
+    -fx-background-color: #2A5C45;
+    -fx-background-radius: 24;
+    -fx-min-width: 48px;
+    -fx-min-height: 48px;
+    -fx-max-width: 48px;
+    -fx-max-height: 48px;
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Segoe UI";
+    -fx-alignment: center;
+    -fx-effect: dropshadow(gaussian, rgba(42,92,69,0.30), 8, 0, 0, 3);
+}
+
+.admin-app-name {
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1C2621;
+    -fx-font-family: "Segoe UI";
+}
+
+.admin-app-category {
+    -fx-font-size: 13px;
+    -fx-text-fill: #5C7A68;
+    -fx-font-family: "Segoe UI";
 }
 
 .user-row {
     -fx-background-color: white;
-    -fx-background-radius: 10;
-    -fx-border-color: #EEF2EE;
-    -fx-border-radius: 10;
+    -fx-background-radius: 14;
+    -fx-border-color: #E2EAE4;
+    -fx-border-radius: 14;
     -fx-border-width: 1;
-    -fx-padding: 12 16;
+    -fx-padding: 18 20;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.07), 10, 0, 0, 3);
 }
 
 .user-row:hover {
@@ -1389,10 +1419,10 @@
     -fx-background-color: #E8F6EE;
     -fx-background-radius: 20;
     -fx-text-fill: #2A5C45;
-    -fx-font-size: 11px;
+    -fx-font-size: 13px;
     -fx-font-weight: 600;
     -fx-font-family: "Segoe UI";
-    -fx-padding: 4 12;
+    -fx-padding: 6 16;
 }
 
 /* ================================================================
@@ -2046,9 +2076,50 @@
    Shared – Tab description text
    ================================================================ */
 .tutor-tab-desc {
-    -fx-font-size: 13px;
-    -fx-text-fill: #8FAF9A;
+    -fx-font-size: 14px;
+    -fx-text-fill: #6B8F7A;
     -fx-font-family: "Segoe UI";
+}
+
+.admin-approve-btn {
+    -fx-background-color: #27AE60;
+    -fx-background-radius: 8;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI";
+    -fx-padding: 9 22;
+    -fx-cursor: hand;
+}
+
+.admin-approve-btn:hover {
+    -fx-background-color: #1E8449;
+}
+
+.admin-approve-btn:disabled {
+    -fx-opacity: 0.5;
+}
+
+.admin-reject-btn {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+    -fx-border-color: #E74C3C;
+    -fx-border-radius: 8;
+    -fx-border-width: 1.5;
+    -fx-text-fill: #E74C3C;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI";
+    -fx-padding: 9 22;
+    -fx-cursor: hand;
+}
+
+.admin-reject-btn:hover {
+    -fx-background-color: #FEE2E2;
+}
+
+.admin-reject-btn:disabled {
+    -fx-opacity: 0.5;
 }
 
 /* ================================================================
@@ -2535,6 +2606,29 @@
     -fx-background-color: #D1FAE5;
     -fx-background-radius: 8;
     -fx-padding: 9 14;
+}
+
+.notif-notes-box {
+    -fx-background-color: #FFF8E8;
+    -fx-background-radius: 8;
+    -fx-border-color: #F0C040;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 8 10;
+}
+
+.notif-notes-title {
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #856404;
+    -fx-font-family: "Segoe UI";
+}
+
+.notif-notes-content {
+    -fx-font-size: 12px;
+    -fx-text-fill: #533F03;
+    -fx-font-family: "Segoe UI";
+    -fx-font-style: italic;
 }
 
 .notif-error-label {
