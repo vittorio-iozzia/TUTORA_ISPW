@@ -15,6 +15,7 @@ import static it.ispw.tutora.controller.cli.CLIUtils.*;
  * Schermata di autenticazione CLI.
  * Gestisce login e registrazione studente.
  */
+@SuppressWarnings("java:S106") // System.out è intenzionale: classe boundary della CLI
 public class LoginCLI {
 
     private final LoginController        loginCtrl = new LoginController();

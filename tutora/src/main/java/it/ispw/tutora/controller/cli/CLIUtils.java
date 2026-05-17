@@ -1,4 +1,4 @@
-package it.ispw.tutora.controller.cli;
+﻿package it.ispw.tutora.controller.cli;
 
 import java.io.Console;
 import java.util.Scanner;
@@ -7,26 +7,27 @@ import java.util.Scanner;
  * Utility statiche per la CLI di TUTORA.
  *
  * Gestisce:
- *  - Costanti ANSI (colori, stili) — ESC = 
+ *  - Costanti ANSI (colori, stili) — ESC = \u001B
  *  - Output formattato (banner, header, separatori, messaggi)
  *  - Input da tastiera (testo, password, numeri interi)
  */
+@SuppressWarnings("java:S106") // System.out è intenzionale: CLIUtils è il layer di output della CLI
 public final class CLIUtils {
 
     // ----------------------------------------------------------------
-    // Costanti ANSI  (ESC = carattere Unicode U+001B)
+    // Costanti ANSI  (ESC = \u001B, Unicode U+001B)
     // ----------------------------------------------------------------
 
-    public static final String RESET   = "[0m";
-    public static final String BOLD    = "[1m";
-    public static final String DIM     = "[2m";
-    public static final String RED     = "[31m";
-    public static final String GREEN   = "[32m";
-    public static final String YELLOW  = "[33m";
-    public static final String BLUE    = "[34m";
-    public static final String MAGENTA = "[35m";
-    public static final String CYAN    = "[36m";
-    public static final String WHITE   = "[37m";
+    public static final String RESET   = "\u001B[0m";
+    public static final String BOLD    = "\u001B[1m";
+    public static final String DIM     = "\u001B[2m";
+    public static final String RED     = "\u001B[31m";
+    public static final String GREEN   = "\u001B[32m";
+    public static final String YELLOW  = "\u001B[33m";
+    public static final String BLUE    = "\u001B[34m";
+    public static final String MAGENTA = "\u001B[35m";
+    public static final String CYAN    = "\u001B[36m";
+    public static final String WHITE   = "\u001B[37m";
 
     private static final int LINE_WIDTH = 60;
 
