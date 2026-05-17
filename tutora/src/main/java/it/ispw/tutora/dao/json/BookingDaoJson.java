@@ -7,6 +7,7 @@ import it.ispw.tutora.enums.PaymentStatus;
 import it.ispw.tutora.enums.Status;
 import it.ispw.tutora.exception.BookingNotFoundException;
 import it.ispw.tutora.exception.DatabaseException;
+import it.ispw.tutora.exception.DuplicateBookingException;
 import it.ispw.tutora.model.*;
 
 import java.io.File;
@@ -147,6 +148,32 @@ public class BookingDaoJson implements BookingDao {
         throw new BookingNotFoundException(id);
     }
 
+    /**
+     * Verifica che lo student non abbia già una booking attiva (Pending o Paid)
+     * con il tutor e la sottocategoria dati, per una lezione non ancora terminata.
+     * Sfrutta i campi denormalizzati tutorUsername, subjectName e lessonStatus.
+     * Record legacy senza lessonStatus (null) vengono trattati come attivi
+     * per sicurezza (approccio conservativo).
+     *
+     * @throws DuplicateBookingException se esiste già una booking attiva
+     */
+    @Override
+    public void checkNoDuplicateBooking(Connection conn,
+                                        String studentUsername,
+                                        String tutorUsername,
+                                        String subcategoryName)
+            throws DatabaseException, DuplicateBookingException {
+        for (BookingRecord r : readAll()) {
+            if ("Refunded".equals(r.paymentStatus)) continue;
+            if ("COMPLETED".equals(r.lessonStatus) || "CANCELLED".equals(r.lessonStatus)) continue;
+            if (studentUsername.equals(r.studentUsername)
+                    && tutorUsername.equals(r.tutorUsername)
+                    && subcategoryName.equals(r.subjectName)) {
+                throw new DuplicateBookingException(studentUsername, tutorUsername, subcategoryName);
+            }
+        }
+    }
+
     // ----------------------------------------------------------------
     // Mapping record ↔ model
     // ----------------------------------------------------------------
@@ -220,6 +247,8 @@ public class BookingDaoJson implements BookingDao {
             if (lesson.getStartTime() != null)
                 b.lessonStartTime = lesson.getStartTime().toString();
             b.lessonRemote = lesson.isRemote();
+            if (lesson.getLessonStatus() != null)
+                b.lessonStatus = lesson.getLessonStatus().name();
 
             TutorExpertise exp = lesson.getExpertise();
             if (exp != null) {
@@ -268,6 +297,7 @@ public class BookingDaoJson implements BookingDao {
         String  subjectName;
         String  lessonStartTime;
         boolean lessonRemote;
+        String  lessonStatus;   // LessonStatus.name() — null nei record legacy
     }
     // ----------------------------------------------------------------
     // I/O JSON

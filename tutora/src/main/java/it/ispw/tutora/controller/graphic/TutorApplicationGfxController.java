@@ -256,23 +256,28 @@ public class TutorApplicationGfxController extends DialogGfxController {
 
     private boolean isFormComplete() {
         for (RequirementBean req : requirements) {
-            if (!req.isRequired()) continue;
-            if (req.getItemType() == ItemType.TEXT) {
-                TextArea ta = textFields.get(req.getName());
-                if (ta == null || ta.getText().isBlank()) return false;
-            } else {
-                File[] holder = documentFiles.get(req.getName());
-                if (holder == null || holder[0] == null) return false;
-            }
+            if (req.isRequired() && !isRequirementMet(req)) return false;
         }
+        return isHourlyRateValid() && agreeCheckBox.isSelected();
+    }
+
+    private boolean isRequirementMet(RequirementBean req) {
+        if (req.getItemType() == ItemType.TEXT) {
+            TextArea ta = textFields.get(req.getName());
+            return ta != null && !ta.getText().isBlank();
+        }
+        File[] holder = documentFiles.get(req.getName());
+        return holder != null && holder[0] != null;
+    }
+
+    private boolean isHourlyRateValid() {
         if (hourlyRateField == null || hourlyRateField.getText().isBlank()) return false;
         try {
             BigDecimal price = new BigDecimal(hourlyRateField.getText().trim().replace(",", "."));
-            if (price.compareTo(BigDecimal.ZERO) <= 0) return false;
+            return price.compareTo(BigDecimal.ZERO) > 0;
         } catch (NumberFormatException e) {
             return false;
         }
-        return agreeCheckBox.isSelected();
     }
 
     // ----------------------------------------------------------------

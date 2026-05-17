@@ -3,6 +3,7 @@ package it.ispw.tutora.dao;
 import it.ispw.tutora.enums.PaymentStatus;
 import it.ispw.tutora.exception.BookingNotFoundException;
 import it.ispw.tutora.exception.DatabaseException;
+import it.ispw.tutora.exception.DuplicateBookingException;
 import it.ispw.tutora.model.Booking;
 
 import java.sql.Connection;
@@ -73,4 +74,17 @@ public interface BookingDao {
      */
     List<Booking> findByTutor(Connection conn, String tutorUsername)
             throws DatabaseException;
+
+    /**
+     * Verifica che lo student non abbia già una prenotazione attiva
+     * (Pending o Paid, lezione non ancora terminata) con il tutor dato
+     * per la sottocategoria data.
+     * Lancia DuplicateBookingException se il vincolo è violato;
+     * ritorna normalmente se il controllo passa.
+     */
+    void checkNoDuplicateBooking(Connection conn,
+                                 String studentUsername,
+                                 String tutorUsername,
+                                 String subcategoryName)
+            throws DatabaseException, DuplicateBookingException;
 }

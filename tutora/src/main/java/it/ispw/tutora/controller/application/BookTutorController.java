@@ -42,6 +42,8 @@ public class BookTutorController {
     private static final String ERR_ACCOUNT_NOT_FOUND = "Account not found.";
     private static final String ERR_SYSTEM = "System Error. Try later.";
     private static final String ERR_INVALID_ARGUMENT = "Invalid argument.";
+    private static final String ERR_DUPLICATE_BOOKING =
+            "You already have an active booking for this subject with this tutor.";
 
     private final StudentDao student;
     private final BookingDao booking;
@@ -106,6 +108,10 @@ public class BookTutorController {
                 bean.setErrorMessage(ERR_INSUFFICIENT_BUDGET);
                 return;
             }
+            // Vincolo one-booking-per-(student, tutor, subcategory)
+            String tutorName = less.getExpertise().getTutor().getUsername();
+            String subcatName = less.getExpertise().getSubcategory().getName();
+            booking.checkNoDuplicateBooking(conn, username, tutorName, subcatName);
             Notification notify = new Notification.Builder()
                     .recipientUsername(less.getExpertise().getTutor().getUsername())
                     .senderUsername(stu.getUsername())
@@ -119,6 +125,8 @@ public class BookTutorController {
                     .timestamp(LocalDateTime.now())
                     .build();
             notification.insert(conn, notify);
+        } catch (DuplicateBookingException e) {
+            bean.setErrorMessage(ERR_DUPLICATE_BOOKING);
         } catch (LessonNotFoundException e) {
             bean.setErrorMessage(ERR_LESSON_NOT_FOUND);
         } catch (UserNotFoundException e) {

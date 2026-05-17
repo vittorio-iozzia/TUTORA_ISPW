@@ -60,6 +60,9 @@ public class DemoDaoFactory extends DaoFactory {
     private static final String PRICE_40        = "40.00";
     private static final String PRICE_35        = "35.00";
     private static final String PRICE_30        = "30.00";
+    private static final String REQ_SUBCATEGORY   = "subcategory";
+    private static final String LABEL_SUBCATEGORY = "Subcategory";
+    private static final String SUBCAT_GUITAR     = "Guitar";
 
     // Reference to Category object so populateExpertises() can link SubCategories
     private Category musicCategory;
@@ -113,7 +116,7 @@ public class DemoDaoFactory extends DaoFactory {
                 "Describe your musical background and experience",
                 true, 50, 800));
         music.addRequirement(new TextRequirement(
-                CAT_MUSIC, "subcategory", "Subcategory",
+                CAT_MUSIC, REQ_SUBCATEGORY, LABEL_SUBCATEGORY,
                 "Which instrument do you want to teach?",
                 true, 2, 100));
         music.addRequirement(new TextRequirement(
@@ -139,7 +142,7 @@ public class DemoDaoFactory extends DaoFactory {
                 "Describe your photography experience",
                 true, 50, 800));
         photography.addRequirement(new TextRequirement(
-                CAT_PHOTOGRAPHY, "subcategory", "Subcategory",
+                CAT_PHOTOGRAPHY, REQ_SUBCATEGORY, LABEL_SUBCATEGORY,
                 "What specific area do you want to teach? (e.g., Portrait, Landscape, Videomaking)",
                 true, 2, 100));
         photography.addRequirement(new DocumentRequirement(
@@ -157,7 +160,7 @@ public class DemoDaoFactory extends DaoFactory {
                 "Describe your sports background",
                 true, 50, 800));
         sport.addRequirement(new TextRequirement(
-                CAT_SPORT, "subcategory", "Subcategory",
+                CAT_SPORT, REQ_SUBCATEGORY, LABEL_SUBCATEGORY,
                 "What sport do you want to teach? (e.g., Tennis, Swimming, Football)",
                 true, 2, 100));
         sport.addRequirement(new DocumentRequirement(
@@ -235,7 +238,7 @@ public class DemoDaoFactory extends DaoFactory {
 
         // Guitar – Music (APPROVED)
         SubCategory guitar = new SubCategory(
-                "Guitar", musicCategory, "Classical and electric guitar");
+                SUBCAT_GUITAR, musicCategory, "Classical and electric guitar");
         tutorExpertiseDao.insertExpertise(null, new TutorExpertise(
                 vitto, guitar, new BigDecimal(PRICE_30), Status.APPROVED, now));
 
@@ -257,7 +260,7 @@ public class DemoDaoFactory extends DaoFactory {
                 submittedAt,
                 ApplicationStatus.SUBMITTED
         );
-        application.setSubcategoryName("Guitar");
+        application.setSubcategoryName(SUBCAT_GUITAR);
         tutorApplicationDao.insert(null, application);
 
         TextItem bioItem = new TextItem(
@@ -266,8 +269,8 @@ public class DemoDaoFactory extends DaoFactory {
         applicationItemDao.insert(null, bioItem);
 
         TextItem subcategoryItem = new TextItem(
-                0, 1, "subcategory",
-                "Guitar");
+                0, 1, REQ_SUBCATEGORY,
+                SUBCAT_GUITAR);
         applicationItemDao.insert(null, subcategoryItem);
 
         TextItem teachingExpItem = new TextItem(

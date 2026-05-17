@@ -85,7 +85,6 @@ public class ChatGfxController {
     // ----------------------------------------------------------------
 
     private String  currentUsername;
-    private boolean isStudent;
 
     private String selectedContactUsername;
 
@@ -103,7 +102,6 @@ public class ChatGfxController {
         String token    = SceneManager.getInstance().getSessionToken();
         Session session = SessionManager.getInstance().getSession(token);
         currentUsername = session.getUser().getUsername();
-        isStudent       = session.isStudent();
 
         clipToRoundedRect(chatSidebar, 12);
         loadContacts();
@@ -132,8 +130,7 @@ public class ChatGfxController {
     // ----------------------------------------------------------------
 
     private void loadContacts() {
-        {
-            BookingDao bookingDao = DaoFactory.getInstance().createBookingDao();
+        BookingDao bookingDao = DaoFactory.getInstance().createBookingDao();
 
             // Load from both student and tutor bookings — handles users who changed role
             LinkedHashMap<String, User>   contacts = new LinkedHashMap<>();
@@ -146,7 +143,7 @@ public class ChatGfxController {
                     if (contacts.putIfAbsent(contact.getUsername(), contact) == null)
                         roles.put(contact.getUsername(), "Tutor");
                 }
-            } catch (DatabaseException ignored) {}
+            } catch (DatabaseException ignored) { /* contact load is best-effort: partial failures are acceptable */ }
 
             try {
                 for (Booking b : bookingDao.findByTutor(
@@ -155,7 +152,7 @@ public class ChatGfxController {
                     if (contacts.putIfAbsent(contact.getUsername(), contact) == null)
                         roles.put(contact.getUsername(), "Student");
                 }
-            } catch (DatabaseException ignored) {}
+            } catch (DatabaseException ignored) { /* contact load is best-effort: partial failures are acceptable */ }
 
             if (contacts.isEmpty()) {
                 Label empty = new Label("No conversations yet.\nBook a lesson to start chatting!");
@@ -174,8 +171,6 @@ public class ChatGfxController {
                 contactList.getChildren().add(
                         buildContactItem(uname, e.getValue().getFullName(), roles.get(uname)));
             }
-
-        }
     }
 
     // ----------------------------------------------------------------

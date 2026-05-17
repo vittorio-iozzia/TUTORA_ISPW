@@ -18,12 +18,10 @@ import javafx.stage.Stage;
 
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
-import java.util.logging.Logger;
+
 
 public class ApplicationReviewGfxController {
 
-    private static final Logger LOGGER =
-            Logger.getLogger(ApplicationReviewGfxController.class.getName());
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH);
 

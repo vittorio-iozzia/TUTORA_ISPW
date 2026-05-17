@@ -4,6 +4,7 @@ import it.ispw.tutora.dao.BookingDao;
 import it.ispw.tutora.enums.PaymentStatus;
 import it.ispw.tutora.exception.BookingNotFoundException;
 import it.ispw.tutora.exception.DatabaseException;
+import it.ispw.tutora.exception.DuplicateBookingException;
 import it.ispw.tutora.model.Booking;
 import it.ispw.tutora.model.Lesson;
 import it.ispw.tutora.model.Student;
@@ -89,18 +90,36 @@ public class BookingDaoDb implements BookingDao {
                     "ORDER BY booked_at DESC";
 
     /**
+     * Verifica se lo student ha già una prenotazione attiva (Pending o Paid)
+     * con il tutor dato nella sottocategoria data, per una lezione non ancora
+     * terminata (non Completed né Cancelled).
+     * lesson porta direttamente tutor_username e subcategory_name:
+     * non servono JOIN su tutor_expertise né su subcategory.
+     */
+    @Language("SQL")
+    private static final String SQL_HAS_ACTIVE_BOOKING =
+            "SELECT COUNT(*) " +
+            "FROM booking b " +
+            "JOIN lesson l ON b.lesson_id = l.id " +
+            "WHERE b.student_username = ? " +
+            "  AND l.tutor_username = ? " +
+            "  AND l.subcategory_name = ? " +
+            "  AND b.payment_status IN ('Pending', 'Paid') " +
+            "  AND l.status NOT IN ('Completed', 'Cancelled')";
+
+    /**
      * SELECT di tutte le booking per le lezioni di un tutor, ordinate
-     * per data di inizio lezione crescente (JOIN su lesson e tutor_expertise).
+     * per data di inizio lezione crescente.
+     * lesson porta direttamente tutor_username: non serve il JOIN su tutor_expertise.
      */
     @Language("SQL")
     private static final String SQL_FIND_BY_TUTOR =
             "SELECT b.id, b.lesson_id, b.student_username, b.booked_at, " +
                    " b.price_paid, b.payment_status, b.payment_ref " +
-                    "FROM booking b " +
-                    "JOIN lesson l ON b.lesson_id = l.id " +
-                    "JOIN tutor_expertise te ON l.expertise_id = te.id " +
-                    "WHERE te.tutor_username = ? " +
-                    "ORDER BY l.start_time ASC";
+            "FROM booking b " +
+            "JOIN lesson l ON b.lesson_id = l.id " +
+            "WHERE l.tutor_username = ? " +
+            "ORDER BY l.start_time ASC";
 
     // ----------------------------------------------------------------
     // updateStatus
@@ -231,6 +250,36 @@ public class BookingDaoDb implements BookingDao {
             }
         } catch (SQLException e) {
             throw new DatabaseException("System Error: ", e);
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // checkNoDuplicateBooking
+    // ----------------------------------------------------------------
+
+    /**
+     * Verifica che lo student non abbia già una booking attiva (Pending o Paid)
+     * con il tutor e la sottocategoria dati, per una lezione non ancora terminata.
+     *
+     * @throws DuplicateBookingException se esiste già una booking attiva
+     */
+    @Override
+    public void checkNoDuplicateBooking(Connection conn,
+                                        String studentUsername,
+                                        String tutorUsername,
+                                        String subcategoryName)
+            throws DatabaseException, DuplicateBookingException {
+        try (PreparedStatement ps = conn.prepareStatement(SQL_HAS_ACTIVE_BOOKING)) {
+            ps.setString(1, studentUsername);
+            ps.setString(2, tutorUsername);
+            ps.setString(3, subcategoryName);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    throw new DuplicateBookingException(studentUsername, tutorUsername, subcategoryName);
+                }
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Error checking active booking: ", e);
         }
     }
 

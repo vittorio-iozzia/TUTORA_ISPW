@@ -141,11 +141,8 @@ public class CreateLessonGfxController {
         if (startStr == null || endStr == null)     { showError("Please select a start and end time."); return; }
         if (priceStr.isBlank())                     { showError("Please enter a price."); return; }
 
-        BigDecimal price;
-        try {
-            price = new BigDecimal(priceStr);
-            if (price.compareTo(BigDecimal.ZERO) <= 0) throw new NumberFormatException();
-        } catch (NumberFormatException ex) {
+        BigDecimal price = parsePrice(priceStr);
+        if (price == null) {
             showError("Invalid price. Enter a positive number (e.g. 35.00).");
             return;
         }
@@ -204,6 +201,17 @@ public class CreateLessonGfxController {
 
     private void closeDialog() {
         ((Stage) submitBtn.getScene().getWindow()).close();
+    }
+
+    /** Parses and validates price string; returns null if invalid or non-positive. */
+    private BigDecimal parsePrice(String raw) {
+        try {
+            BigDecimal p = new BigDecimal(raw);
+            if (p.compareTo(BigDecimal.ZERO) <= 0) return null;
+            return p;
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private void showError(String msg) {

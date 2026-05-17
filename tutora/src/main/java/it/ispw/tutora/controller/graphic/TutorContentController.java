@@ -213,7 +213,7 @@ public class TutorContentController {
         header.getChildren().addAll(prevBtn, monthLabel, nextBtn);
 
         // Day-of-week header row
-        String[] DOW = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+        String[] dowHeaders = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
         GridPane dowRow = new GridPane();
         dowRow.setHgap(6);
         for (int i = 0; i < 7; i++) {
@@ -222,7 +222,7 @@ public class TutorContentController {
             cc.setFillWidth(true);
             cc.setHgrow(Priority.ALWAYS);
             dowRow.getColumnConstraints().add(cc);
-            Label d = new Label(DOW[i]);
+            Label d = new Label(dowHeaders[i]);
             d.getStyleClass().add("cal-day-header");
             d.setMaxWidth(Double.MAX_VALUE);
             d.setAlignment(Pos.CENTER);

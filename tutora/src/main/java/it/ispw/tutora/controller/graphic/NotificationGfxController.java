@@ -9,10 +9,7 @@ import it.ispw.tutora.controller.application.BookTutorController;
 import it.ispw.tutora.controller.application.GetNotificationsController;
 import it.ispw.tutora.enums.ApplicationStatus;
 import it.ispw.tutora.enums.NotificationType;
-import it.ispw.tutora.exception.ApplicationNotFoundException;
-import it.ispw.tutora.exception.DatabaseException;
 import it.ispw.tutora.model.Notification;
-import it.ispw.tutora.model.TutorApplication;
 import it.ispw.tutora.model.session.Session;
 import it.ispw.tutora.model.session.SessionManager;
 import it.ispw.tutora.view.SceneManager;
@@ -539,6 +536,8 @@ public class NotificationGfxController {
                 ApplicationReviewGfxController ctrl = loader.getController();
                 ctrl.initApplication(task.getValue());
                 ctrl.setOnEvaluated(() -> {
+                    // Marca come letta solo dopo che l'admin ha approvato/rifiutato
+                    markAsReadAsync(notif.getId());
                     if (applicationEvaluatedCallback != null) applicationEvaluatedCallback.run();
                     reload();
                 });
@@ -574,37 +573,20 @@ public class NotificationGfxController {
         t.start();
     }
 
-    private void doEvaluate(Notification notif, boolean accepted,
-                            VBox card, Button approveBtn, Button rejectBtn) {
-        ApplicationStatus status = accepted ? ApplicationStatus.ACCEPTED : ApplicationStatus.REJECTED;
-        ApplicationReviewBean bean = new ApplicationReviewBean();
-        bean.setApplicationId(notif.getTargetId());
-        bean.setStatus(status);
-        bean.setAdminNotes("");
-
+    /**
+     * Marca la notifica come letta in background (thread JavaFX non bloccato).
+     * Usato dopo che l'admin ha valutato una candidatura tramite il dialog di review.
+     */
+    private void markAsReadAsync(int notifId) {
         Task<Void> task = new Task<>() {
-            @Override
-            protected Void call() throws Exception {
-                appController.evaluateApplication(bean, token);
+            @Override protected Void call() {
                 NotificationBean nb = new NotificationBean();
-                nb.setNotificationId(notif.getId());
+                nb.setNotificationId(notifId);
                 notifController.markAsRead(nb, token);
                 return null;
             }
         };
-
-        task.setOnSucceeded(e -> Platform.runLater(() -> {
-            if (applicationEvaluatedCallback != null) applicationEvaluatedCallback.run();
-            reload();
-        }));
-        task.setOnFailed(e -> Platform.runLater(() -> {
-            Throwable ex = task.getException();
-            showCardError(card, ex != null ? ex.getMessage() : "Evaluation failed.");
-            approveBtn.setDisable(false);
-            rejectBtn.setDisable(false);
-        }));
-
-        Thread t = new Thread(task, accepted ? "notif-approve" : "notif-reject-app");
+        Thread t = new Thread(task, "notif-mark-read");
         t.setDaemon(true);
         t.start();
     }
@@ -700,6 +682,9 @@ public class NotificationGfxController {
                 // Non marcare LESSON_ACCEPTED dello student (deve ancora pagare,
                 // indipendentemente dallo stato del pagamento in background)
                 .filter(n -> !(session.isStudent() && n.getType() == NotificationType.LESSON_ACCEPTED))
+
+                // Non marcare APPLICATION_UPDATE dell'admin (richiede ancora approve/reject)
+                .filter(n -> !(session.isAdmin() && n.getType() == NotificationType.APPLICATION_UPDATE))
                 .toList();
         if (toMark.isEmpty()) return;
         Task<Void> task = new Task<>() {

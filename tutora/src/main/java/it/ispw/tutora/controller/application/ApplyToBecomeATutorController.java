@@ -299,12 +299,7 @@ public class ApplyToBecomeATutorController {
                     .orElse(new BigDecimal("30.00"));
 
             CategoryDao categoryDao = factory.createCategoryDao();
-            Category category;
-            try {
-                category = categoryDao.findByNameWithRequirements(categoryName);
-            } catch (CategoryNotFoundException e) {
-                category = new Category(categoryName, "");
-            }
+            Category category = resolveCategoryByName(categoryDao, categoryName);
 
             SubCategory subcategory = new SubCategory(subcategoryName, category, "");
             TutorExpertise expertise = new TutorExpertise(
@@ -315,6 +310,15 @@ public class ApplyToBecomeATutorController {
             LOGGER.info("Expertise already exists for this tutor/subcategory, skipping.");
         } catch (Exception e) {
             LOGGER.warning("Cannot create initial expertise: " + e.getMessage());
+        }
+    }
+
+    /** Risolve la categoria per nome; restituisce una categoria vuota se non trovata. */
+    private Category resolveCategoryByName(CategoryDao categoryDao, String categoryName) {
+        try {
+            return categoryDao.findByNameWithRequirements(categoryName);
+        } catch (CategoryNotFoundException e) {
+            return new Category(categoryName, "");
         }
     }
 

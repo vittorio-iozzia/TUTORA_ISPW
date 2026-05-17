@@ -44,7 +44,7 @@ public class ApplyToBecomeATutorCLI {
         if (catName == null) return;
 
         List<ApplicationItemBean> items = collectItems(sc, catName);
-        if (items == null) return;
+        if (items.isEmpty()) return;
 
         submitApplication(sc, token, catName, items);
         pressEnter(sc);
@@ -92,7 +92,7 @@ public class ApplyToBecomeATutorCLI {
     // Passo 2 — raccolta requisiti
     // ----------------------------------------------------------------
 
-    /** Raccoglie la risposta a ogni requisito. Restituisce null in caso di errore. */
+    /** Raccoglie la risposta a ogni requisito. Restituisce lista vuota in caso di errore. */
     private List<ApplicationItemBean> collectItems(Scanner sc, String catName) {
         List<RequirementBean> requisiti;
         try {
@@ -100,7 +100,7 @@ public class ApplyToBecomeATutorCLI {
         } catch (DatabaseException | CategoryNotFoundException e) {
             error("Impossibile caricare i requisiti: " + e.getMessage());
             pressEnter(sc);
-            return null;
+            return List.of();
         }
         printHeader("COMPILA CANDIDATURA — " + catName);
         System.out.println();
@@ -287,9 +287,8 @@ public class ApplyToBecomeATutorCLI {
     private void printCandidate(int n, String raw) {
         try {
             File f = new File(raw).getAbsoluteFile();
-            String note = f.exists()
-                    ? (f.isDirectory() ? " [ESISTE MA E' DIRECTORY]" : " [ESISTE]")
-                    : " [NON TROVATO]";
+            String existNote = f.isDirectory() ? " [ESISTE MA E' DIRECTORY]" : " [ESISTE]";
+            String note = f.exists() ? existNote : " [NON TROVATO]";
             System.out.println("    " + n + ") " + f.getPath() + note);
         } catch (Exception e) {
             System.out.println("    " + n + ") " + raw + " [percorso non valido]");
