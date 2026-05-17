@@ -5,7 +5,10 @@ import it.ispw.tutora.exception.DatabaseException;
 import it.ispw.tutora.exception.DuplicateReviewException;
 import it.ispw.tutora.exception.ReviewNotFoundException;
 import it.ispw.tutora.model.Review;
+import it.ispw.tutora.model.Tutor;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Connection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -55,7 +58,17 @@ public class ReviewDaoDemo implements ReviewDao {
                 .createdAt(rev.getCreatedAt())
                 .build();
         cache.put(id, stored);
+        recalcTutorRating(rev.getTutor());
         return id;
+    }
+
+    private void recalcTutorRating(Tutor tutor) {
+        List<Review> all = cache.values().stream()
+                .filter(r -> r.getTutor().getUsername().equals(tutor.getUsername()))
+                .toList();
+        if (all.isEmpty()) return;
+        double avg = all.stream().mapToInt(Review::getRating).average().orElse(0.0);
+        tutor.setRating(BigDecimal.valueOf(avg).setScale(1, RoundingMode.HALF_UP), all.size());
     }
 
     /**
@@ -68,6 +81,7 @@ public class ReviewDaoDemo implements ReviewDao {
         if (!cache.containsKey(rev.getId()))
             throw new ReviewNotFoundException(rev.getId());
         cache.put(rev.getId(), rev);
+        recalcTutorRating(rev.getTutor());
     }
 
     /**
@@ -76,9 +90,10 @@ public class ReviewDaoDemo implements ReviewDao {
     @Override
     public void deleteReview(Connection conn, int id)
             throws DatabaseException, ReviewNotFoundException {
-        if (!cache.containsKey(id))
-            throw new ReviewNotFoundException(id);
+        Review rev = cache.get(id);
+        if (rev == null) throw new ReviewNotFoundException(id);
         cache.remove(id);
+        recalcTutorRating(rev.getTutor());
     }
 
     /**

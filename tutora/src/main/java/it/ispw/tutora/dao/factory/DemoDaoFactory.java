@@ -56,24 +56,44 @@ public class DemoDaoFactory extends DaoFactory {
     private static final String REQ_BIOGRAPHY   = "Biography";
     private static final String USER_STUDENT    = "student_luigi";
     private static final String USER_TUTOR      = "tutor_vitto";
+    private static final String USER_TUTOR_MARCO = "tutor_marco";
+    private static final String USER_TUTOR_SARA  = "tutor_sara";
+    private static final String USER_TUTOR_LUCA  = "tutor_luca";
     private static final String DEMO_HASH_SEED  = "Demo1234"; // dato di esempio in-memory, non credenziale reale
     private static final String PRICE_40        = "40.00";
     private static final String PRICE_35        = "35.00";
     private static final String PRICE_30        = "30.00";
+    private static final String PRICE_25        = "25.00";
+    private static final String PRICE_45        = "45.00";
+    private static final String PRICE_50        = "50.00";
     private static final String REQ_SUBCATEGORY   = "subcategory";
     private static final String LABEL_SUBCATEGORY = "Subcategory";
     private static final String SUBCAT_GUITAR     = "Guitar";
 
-    // Reference to Category object so populateExpertises() can link SubCategories
+    // References to Category objects so populateExpertises() can link SubCategories
     private Category musicCategory;
+    private Category photographyCategory;
+    private Category sportCategory;
 
     // ----------------------------------------------------------------
     // Istanze condivise dei DAO demo
     // ----------------------------------------------------------------
 
-    private final UserDaoDemo userDao = new UserDaoDemo();
-    private final StudentDaoDemo studentDao = new StudentDaoDemo(userDao);
     private final TutorDaoDemo tutorDao = new TutorDaoDemo();
+    // userDao wraps the base impl; promoteToTutor() also registers the new Tutor
+    // into tutorDao.cache so selectAllTutors() finds promoted students immediately.
+    private final UserDaoDemo userDao = new UserDaoDemo() {
+        @Override
+        public it.ispw.tutora.model.Tutor promoteToTutor(java.sql.Connection conn, String studentUsername)
+                throws it.ispw.tutora.exception.DatabaseException,
+                       it.ispw.tutora.exception.UserNotFoundException {
+            it.ispw.tutora.model.Tutor t = super.promoteToTutor(conn, studentUsername);
+            try { tutorDao.insert(conn, t); }
+            catch (it.ispw.tutora.exception.DuplicateUserException ignored) { /* already there */ }
+            return t;
+        }
+    };
+    private final StudentDaoDemo studentDao = new StudentDaoDemo(userDao);
     private final CategoryDaoDemo categoryDao = new CategoryDaoDemo();
     private final TutorApplicationDaoDemo tutorApplicationDao = new TutorApplicationDaoDemo();
     private final ApplicationItemDaoDemo applicationItemDao = new ApplicationItemDaoDemo();
@@ -134,7 +154,7 @@ public class DemoDaoFactory extends DaoFactory {
         categoryDao.add(music);
 
         // Photography
-        Category photographyCategory = new Category(CAT_PHOTOGRAPHY,
+        photographyCategory = new Category(CAT_PHOTOGRAPHY,
                 "Photography technique and post-production");
         Category photography = photographyCategory;
         photography.addRequirement(new TextRequirement(
@@ -152,7 +172,7 @@ public class DemoDaoFactory extends DaoFactory {
         categoryDao.add(photography);
 
         // Sport
-        Category sportCategory = new Category(CAT_SPORT,
+        sportCategory = new Category(CAT_SPORT,
                 "Athletic training and sports coaching");
         Category sport = sportCategory;
         sport.addRequirement(new TextRequirement(
@@ -211,42 +231,127 @@ public class DemoDaoFactory extends DaoFactory {
                 .description("Professional saxophonist with 10 years of teaching experience")
                 .active(true)
                 .createdAt(LocalDateTime.now())
-                .rating(BigDecimal.ZERO)
-                .ratingCount(0)
+                .rating(new BigDecimal("4.8"))
+                .ratingCount(24)
                 .build();
         userDao.insert(null, tutor);
         tutorDao.insert(null, tutor);
+
+        Tutor marco = new Tutor.Builder()
+                .username(USER_TUTOR_MARCO)
+                .email("marco.rossi@tutora.it")
+                .name("Marco")
+                .surname("Rossi")
+                .passwordHash(hash)
+                .description("Classical and electric guitar teacher with conservatory degree")
+                .active(true)
+                .createdAt(LocalDateTime.now().minusDays(30))
+                .rating(new BigDecimal("4.6"))
+                .ratingCount(18)
+                .build();
+        userDao.insert(null, marco);
+        tutorDao.insert(null, marco);
+
+        Tutor sara = new Tutor.Builder()
+                .username(USER_TUTOR_SARA)
+                .email("sara.bianchi@tutora.it")
+                .name("Sara")
+                .surname("Bianchi")
+                .passwordHash(hash)
+                .description("Portrait and landscape photographer, 8 years of professional experience")
+                .active(true)
+                .createdAt(LocalDateTime.now().minusDays(60))
+                .rating(new BigDecimal("4.9"))
+                .ratingCount(31)
+                .build();
+        userDao.insert(null, sara);
+        tutorDao.insert(null, sara);
+
+        Tutor luca = new Tutor.Builder()
+                .username(USER_TUTOR_LUCA)
+                .email("luca.ferrari@tutora.it")
+                .name("Luca")
+                .surname("Ferrari")
+                .passwordHash(hash)
+                .description("Certified tennis coach, former regional champion")
+                .active(true)
+                .createdAt(LocalDateTime.now().minusDays(15))
+                .rating(new BigDecimal("4.7"))
+                .ratingCount(12)
+                .build();
+        userDao.insert(null, luca);
+        tutorDao.insert(null, luca);
     }
 
     private void populateExpertises()
             throws DatabaseException, DuplicateTutorExpertiseException {
 
-        Tutor vitto;
-        try {
-            vitto = tutorDao.selectTutor(null, USER_TUTOR);
-        } catch (Exception e) {
-            return; // tutor not found, skip
-        }
-
         LocalDateTime now = LocalDateTime.now();
 
-        // Saxophone – Music (APPROVED)
+        // ── tutor_vitto: Music ──────────────────────────────────────────
+        Tutor vitto;
+        try { vitto = tutorDao.selectTutor(null, USER_TUTOR); }
+        catch (Exception e) { return; }
+
         SubCategory saxophone = new SubCategory(
                 "Saxophone", musicCategory, "Saxophone lessons for all levels");
         tutorExpertiseDao.insertExpertise(null, new TutorExpertise(
                 vitto, saxophone, new BigDecimal(PRICE_35), Status.APPROVED, now));
 
-        // Guitar – Music (APPROVED)
-        SubCategory guitar = new SubCategory(
+        SubCategory guitarVitto = new SubCategory(
                 SUBCAT_GUITAR, musicCategory, "Classical and electric guitar");
         tutorExpertiseDao.insertExpertise(null, new TutorExpertise(
-                vitto, guitar, new BigDecimal(PRICE_30), Status.APPROVED, now));
+                vitto, guitarVitto, new BigDecimal(PRICE_30), Status.APPROVED, now));
 
-        // Blues Piano – Music (APPROVED)
         SubCategory piano = new SubCategory(
                 "Piano", musicCategory, "Piano from beginner to advanced");
         tutorExpertiseDao.insertExpertise(null, new TutorExpertise(
                 vitto, piano, new BigDecimal(PRICE_40), Status.APPROVED, now));
+
+        // ── tutor_marco: Guitar ─────────────────────────────────────────
+        Tutor marco;
+        try { marco = tutorDao.selectTutor(null, USER_TUTOR_MARCO); }
+        catch (Exception e) { return; }
+
+        SubCategory guitarMarco = new SubCategory(
+                SUBCAT_GUITAR, musicCategory, "Classical and rock guitar");
+        tutorExpertiseDao.insertExpertise(null, new TutorExpertise(
+                marco, guitarMarco, new BigDecimal(PRICE_25), Status.APPROVED, now.minusDays(30)));
+
+        SubCategory ukulele = new SubCategory(
+                "Ukulele", musicCategory, "Ukulele for beginners");
+        tutorExpertiseDao.insertExpertise(null, new TutorExpertise(
+                marco, ukulele, new BigDecimal(PRICE_25), Status.APPROVED, now.minusDays(30)));
+
+        // ── tutor_sara: Photography ─────────────────────────────────────
+        Tutor sara;
+        try { sara = tutorDao.selectTutor(null, USER_TUTOR_SARA); }
+        catch (Exception e) { return; }
+
+        SubCategory portrait = new SubCategory(
+                "Portrait", photographyCategory, "Portrait photography techniques");
+        tutorExpertiseDao.insertExpertise(null, new TutorExpertise(
+                sara, portrait, new BigDecimal(PRICE_45), Status.APPROVED, now.minusDays(60)));
+
+        SubCategory landscape = new SubCategory(
+                "Landscape", photographyCategory, "Landscape and nature photography");
+        tutorExpertiseDao.insertExpertise(null, new TutorExpertise(
+                sara, landscape, new BigDecimal(PRICE_40), Status.APPROVED, now.minusDays(60)));
+
+        // ── tutor_luca: Sport ───────────────────────────────────────────
+        Tutor luca;
+        try { luca = tutorDao.selectTutor(null, USER_TUTOR_LUCA); }
+        catch (Exception e) { return; }
+
+        SubCategory tennis = new SubCategory(
+                "Tennis", sportCategory, "Tennis coaching for all levels");
+        tutorExpertiseDao.insertExpertise(null, new TutorExpertise(
+                luca, tennis, new BigDecimal(PRICE_50), Status.APPROVED, now.minusDays(15)));
+
+        SubCategory padel = new SubCategory(
+                "Padel", sportCategory, "Padel technique and tactics");
+        tutorExpertiseDao.insertExpertise(null, new TutorExpertise(
+                luca, padel, new BigDecimal(PRICE_40), Status.APPROVED, now.minusDays(15)));
     }
 
     private void populateApplications() throws DatabaseException, DuplicateApplicationException {

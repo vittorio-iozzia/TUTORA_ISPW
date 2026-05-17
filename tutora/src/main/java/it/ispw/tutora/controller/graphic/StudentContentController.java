@@ -3,6 +3,7 @@ package it.ispw.tutora.controller.graphic;
 import it.ispw.tutora.controller.application.SearchTutorController;
 import it.ispw.tutora.controller.graphic.util.TutorBrowseUtil;
 import it.ispw.tutora.dao.BookingDao;
+import it.ispw.tutora.dao.ReviewDao;
 import it.ispw.tutora.dao.factory.DaoFactory;
 import it.ispw.tutora.enums.PaymentStatus;
 import it.ispw.tutora.exception.DatabaseException;
@@ -13,6 +14,7 @@ import it.ispw.tutora.model.session.Session;
 import it.ispw.tutora.model.session.SessionManager;
 import it.ispw.tutora.view.SceneManager;
 
+import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import javafx.animation.*;
 import javafx.application.Platform;
@@ -20,24 +22,35 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.effect.ColorAdjust;
+import javafx.scene.effect.GaussianBlur;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
  * Controller del frammento student_content.fxml.
  *
- * Carica i tutor dal datastore tramite {@link TutorDao}, popola la
+ * Carica i tutor dal datastore tramite {@link it.ispw.tutora.dao.TutorDao}, popola la
  * griglia con ricerca e filtri per categoria (reali da {@link it.ispw.tutora.dao.CategoryDao}),
  * gestisce le animazioni di conteggio e hover sulle stat card.
  */
@@ -104,7 +117,13 @@ public class StudentContentController {
 
     private static final Map<String, String> PHOTO_URLS = Map.of(
         "tutor_vitto",
-        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=280&h=200&fit=crop&crop=faces"
+        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=280&h=200&fit=crop&crop=faces",
+        "tutor_marco",
+        "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=280&h=200&fit=crop&crop=faces",
+        "tutor_sara",
+        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=280&h=200&fit=crop&crop=faces",
+        "tutor_luca",
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=280&h=200&fit=crop&crop=faces"
     );
 
     private static final List<String> PORTRAIT_POOL = List.of(
@@ -422,22 +441,38 @@ public class StudentContentController {
 
     private void buildLessonHistory() {
         try {
-            BookingDao dao = DaoFactory.getInstance().createBookingDao();
-            List<Booking> bookings = dao.findByStudent(
-                    DaoFactory.getInstance().getConnection(), username);
+            DaoFactory factory = DaoFactory.getInstance();
+            BookingDao bookingDao = factory.createBookingDao();
+            ReviewDao  reviewDao  = factory.createReviewDao();
+
             java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            List<Booking> bookings = bookingDao.findByStudent(factory.getConnection(), username);
             List<Booking> history = bookings.stream()
                     .filter(b -> b.getPaymentStatus() == PaymentStatus.PAID)
                     .filter(b -> !b.getLesson().getStartTime().isAfter(now))
                     .sorted(java.util.Comparator.comparing(
                             (Booking b) -> b.getLesson().getStartTime()).reversed())
                     .toList();
+
+            // Collect booking IDs that already have a review
+            Set<Integer> reviewedIds = new HashSet<>();
+            for (Booking b : history) {
+                String tutorUsername = b.getLesson().getExpertise().getTutor().getUsername();
+                reviewDao.findByTutor(factory.getConnection(), tutorUsername).stream()
+                        .filter(r -> r.getBooking().getId() == b.getId())
+                        .findFirst()
+                        .ifPresent(r -> reviewedIds.add(b.getId()));
+            }
+
             if (history.isEmpty()) {
                 Label empty = new Label("No past lessons.");
                 empty.setStyle(EMPTY_LESSON_STYLE);
                 historyList.getChildren().add(empty);
             } else {
-                for (Booking b : history) historyList.getChildren().add(buildLessonCard(b, false));
+                for (Booking b : history) {
+                    historyList.getChildren().add(
+                            buildLessonCard(b, false, reviewedIds.contains(b.getId())));
+                }
             }
         } catch (DatabaseException e) {
             LOGGER.warning("Cannot load lesson history: " + e.getMessage());
@@ -445,6 +480,10 @@ public class StudentContentController {
     }
 
     private HBox buildLessonCard(Booking booking, boolean upcoming) {
+        return buildLessonCard(booking, upcoming, false);
+    }
+
+    private HBox buildLessonCard(Booking booking, boolean upcoming, boolean isReviewed) {
         String subject  = booking.getLesson().getExpertise().getSubcategory().getName();
         String tutorName = booking.getLesson().getExpertise().getTutor().getFullName();
         if (tutorName == null || tutorName.isBlank())
@@ -493,8 +532,54 @@ public class StudentContentController {
             Button joinBtn = new Button("Join");
             joinBtn.getStyleClass().add("book-btn");
             card.getChildren().add(joinBtn);
+        } else {
+            Button reviewBtn = new Button(isReviewed ? "Reviewed ✓" : "Review");
+            reviewBtn.getStyleClass().add(isReviewed ? "lesson-reviewed-btn" : "book-btn");
+            reviewBtn.setDisable(isReviewed);
+            if (!isReviewed) {
+                reviewBtn.setOnAction(e -> openReviewDialog(booking, reviewBtn));
+            }
+            card.getChildren().add(reviewBtn);
         }
 
         return card;
+    }
+
+    private void openReviewDialog(Booking booking, Button reviewBtn) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/fxml/review_dialog.fxml"));
+            Parent root = loader.load();
+            ReviewGfxController ctrl = loader.getController();
+            ctrl.initBooking(booking, () -> {
+                reviewBtn.setText("Reviewed ✓");
+                reviewBtn.getStyleClass().remove("book-btn");
+                reviewBtn.getStyleClass().add("lesson-reviewed-btn");
+                reviewBtn.setDisable(true);
+                reviewBtn.setOnAction(null);
+            });
+
+            Parent parentRoot = reviewBtn.getScene().getRoot();
+            GaussianBlur blur = new GaussianBlur(10);
+            ColorAdjust dim  = new ColorAdjust();
+            dim.setBrightness(-0.35);
+            dim.setInput(blur);
+            parentRoot.setEffect(dim);
+
+            Stage stage = new Stage();
+            stage.initOwner(reviewBtn.getScene().getWindow());
+            stage.initModality(Modality.WINDOW_MODAL);
+            stage.initStyle(StageStyle.TRANSPARENT);
+            Scene scene = new Scene(root);
+            scene.setFill(Color.TRANSPARENT);
+            stage.setScene(scene);
+            stage.setMinWidth(460);
+            stage.setWidth(500);
+            stage.setHeight(500);
+            stage.setOnHiding(ev -> parentRoot.setEffect(null));
+            stage.show();
+        } catch (IOException e) {
+            LOGGER.warning("Cannot open review dialog: " + e.getMessage());
+        }
     }
 }

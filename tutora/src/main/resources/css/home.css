@@ -2123,11 +2123,78 @@
 }
 
 /* ================================================================
-   Admin – Analytics placeholder icon
+   Admin – Analytics charts
    ================================================================ */
-.analytics-placeholder-icon {
-    -fx-icon-color: #C8D8D0;
+.chart-card {
+    -fx-background-color: white;
+    -fx-background-radius: 14;
+    -fx-border-color: #E2EAE4;
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+    -fx-padding: 16 20 12 20;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.07), 10, 0, 0, 3);
 }
+
+.chart-card-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1C2621;
+    -fx-font-family: "Segoe UI";
+}
+
+/* Transparent chart background to blend with card */
+.chart {
+    -fx-background-color: transparent;
+    -fx-padding: 0 0 0 0;
+}
+.chart-plot-background {
+    -fx-background-color: #F8FAF9;
+    -fx-background-radius: 8;
+}
+.chart-horizontal-grid-lines {
+    -fx-stroke: #E8F0EB;
+    -fx-stroke-width: 1;
+}
+.chart-vertical-grid-lines {
+    -fx-stroke: transparent;
+}
+.chart-title { -fx-text-fill: transparent; -fx-font-size: 0; }
+.axis-label  { -fx-text-fill: #8FAF9A; -fx-font-size: 11px; }
+.axis        { -fx-tick-label-fill: #6B8F7A; -fx-font-size: 11px; }
+
+/* AreaChart – blue series */
+.default-color0.chart-series-area-line {
+    -fx-stroke: #3B82F6;
+    -fx-stroke-width: 2.5;
+}
+.default-color0.chart-series-area-fill {
+    -fx-fill: linear-gradient(from 0% 0% to 0% 100%,
+        rgba(59,130,246,0.28), rgba(59,130,246,0.03));
+}
+.default-color0.chart-area-symbol {
+    -fx-background-color: #3B82F6, white;
+    -fx-background-radius: 4;
+    -fx-background-insets: 0, 2;
+    -fx-padding: 4;
+}
+
+/* BarChart – amber bars */
+.default-color0.chart-bar {
+    -fx-bar-fill: #F59E0B;
+    -fx-background-radius: 4 4 0 0;
+}
+
+/* PieChart – full spectrum */
+.default-color0.chart-pie { -fx-pie-color: #2E7D50; }
+.default-color1.chart-pie { -fx-pie-color: #3B82F6; }
+.default-color2.chart-pie { -fx-pie-color: #8B5CF6; }
+.default-color3.chart-pie { -fx-pie-color: #F59E0B; }
+.default-color4.chart-pie { -fx-pie-color: #EF4444; }
+.default-color5.chart-pie { -fx-pie-color: #06B6D4; }
+
+.chart-pie-label         { -fx-fill: #374151; -fx-font-size: 11px; -fx-font-family: "Segoe UI"; }
+.chart-pie-label-line    { -fx-stroke: #9CA3AF; }
+.chart-legend-item-label { -fx-text-fill: #6B8F7A; -fx-font-size: 11px; }
 
 /* ================================================================
    My Lessons – Hero
@@ -3185,6 +3252,77 @@
     -fx-background-color: #D1D5DB;
     -fx-text-fill: #9CA3AF;
     -fx-cursor: default;
+}
+
+/* ── Star rating (review dialog) ── */
+.review-star {
+    -fx-font-size: 30px;
+    -fx-cursor: hand;
+    -fx-padding: 0 3;
+    -fx-background-color: transparent;
+}
+.review-star-on  { -fx-text-fill: #F59E0B; }
+.review-star-off { -fx-text-fill: #D1D5DB; }
+
+/* ── Budget edit field (student profile) ── */
+.profile-budget-field {
+    -fx-font-size: 13px;
+    -fx-font-family: "Segoe UI";
+    -fx-text-fill: #1C2621;
+    -fx-background-color: #F7FAF8;
+    -fx-background-radius: 8;
+    -fx-border-color: #C6DDD0;
+    -fx-border-radius: 8;
+    -fx-border-width: 1.5;
+    -fx-padding: 6 10;
+    -fx-pref-width: 120;
+}
+.profile-budget-field:focused {
+    -fx-border-color: #2A5C45;
+    -fx-background-color: white;
+}
+
+/* ── Budget confirm / cancel icon buttons ── */
+.budget-icon-btn {
+    -fx-background-radius: 7;
+    -fx-border-radius: 7;
+    -fx-border-width: 1.5;
+    -fx-min-width: 28;
+    -fx-min-height: 28;
+    -fx-max-width: 28;
+    -fx-max-height: 28;
+    -fx-cursor: hand;
+}
+.budget-confirm-btn {
+    -fx-background-color: #E8F5EC;
+    -fx-border-color: #A7D4B5;
+}
+.budget-confirm-btn:hover {
+    -fx-background-color: #C8E8D4;
+    -fx-border-color: #2A5C45;
+}
+.budget-confirm-icon { -fx-fill: #2A5C45; -fx-icon-color: #2A5C45; }
+.budget-cancel-btn {
+    -fx-background-color: #FEF2F2;
+    -fx-border-color: #FECACA;
+}
+.budget-cancel-btn:hover {
+    -fx-background-color: #FEE2E2;
+    -fx-border-color: #EF4444;
+}
+.budget-cancel-icon { -fx-fill: #DC2626; -fx-icon-color: #DC2626; }
+
+/* ── "Reviewed" disabled button on lesson card ── */
+.lesson-reviewed-btn {
+    -fx-background-color: #E8F5EC;
+    -fx-background-radius: 8;
+    -fx-text-fill: #2A5C45;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-font-family: "Segoe UI";
+    -fx-padding: 7 14;
+    -fx-cursor: default;
+    -fx-opacity: 1.0;
 }
 
 /* ── Messages nav badge ── */

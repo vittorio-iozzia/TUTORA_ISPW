@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="it.ispw.tutora.controller.graphic.ReviewGfxController"
+      fx:id="dialogRoot"
+      styleClass="app-dialog-root app-dialog-form"
+      stylesheets="@../css/home.css"
+      spacing="0" minWidth="460" prefWidth="500" prefHeight="500">
+
+    <!-- ── Header ── -->
+    <HBox styleClass="app-dialog-header" alignment="CENTER_LEFT" spacing="16">
+        <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+        <VBox spacing="4" HBox.hgrow="ALWAYS">
+            <Label text="Leave a Review" styleClass="app-header-title"/>
+            <Label fx:id="subtitleLabel" text="" styleClass="app-header-subtitle" wrapText="true"/>
+        </VBox>
+        <Button onAction="#handleClose" styleClass="app-dialog-close-btn" text="✕"/>
+    </HBox>
+
+    <!-- ── Form body ── -->
+    <VBox fx:id="formBody" VBox.vgrow="ALWAYS" spacing="20">
+        <padding><Insets top="24" right="24" bottom="8" left="24"/></padding>
+
+        <!-- Star rating -->
+        <VBox spacing="8">
+            <Label text="Your Rating" styleClass="profile-field-label"/>
+            <HBox fx:id="starsBox" spacing="6" alignment="CENTER_LEFT"/>
+        </VBox>
+
+        <!-- Comment -->
+        <VBox spacing="8">
+            <Label text="Comment (optional)" styleClass="profile-field-label"/>
+            <TextArea fx:id="commentArea" styleClass="profile-desc-editor"
+                      promptText="Tell others about your experience with this tutor..."
+                      wrapText="true" prefRowCount="4" minHeight="90"/>
+        </VBox>
+
+        <!-- Error label -->
+        <Label fx:id="errorLabel" text="" styleClass="app-error-label"
+               visible="false" managed="false" wrapText="true"/>
+    </VBox>
+
+    <!-- ── Success pane (hidden by default) ── -->
+    <VBox fx:id="successPane" visible="false" managed="false"
+          alignment="CENTER" spacing="12" VBox.vgrow="ALWAYS">
+        <padding><Insets top="40" right="36" bottom="40" left="36"/></padding>
+        <Label text="✓" style="-fx-font-size: 52px; -fx-text-fill: #2A5C45;"/>
+        <Label text="Review submitted!" styleClass="app-success-title"/>
+        <Label fx:id="successSubLabel" text="" styleClass="app-success-desc"
+               wrapText="true" textAlignment="CENTER" maxWidth="320"/>
+    </VBox>
+
+    <!-- ── Footer ── -->
+    <VBox styleClass="app-dialog-footer" spacing="8">
+        <padding><Insets top="14" right="20" bottom="14" left="20"/></padding>
+        <HBox spacing="10" alignment="CENTER_RIGHT">
+            <Button fx:id="cancelBtn" onAction="#handleClose"
+                    styleClass="profile-cancel-btn" text="Cancel"/>
+            <Button fx:id="submitBtn" onAction="#handleSubmit"
+                    styleClass="app-submit-btn" text="Submit Review" prefWidth="160"/>
+        </HBox>
+    </VBox>
+
+</VBox>

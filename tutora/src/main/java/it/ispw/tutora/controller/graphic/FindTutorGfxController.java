@@ -74,7 +74,13 @@ public class FindTutorGfxController {
 
     private static final Map<String, String> PHOTO_URLS = Map.of(
         "tutor_vitto",
-        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=200&fit=crop&crop=faces"
+        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=200&fit=crop&crop=faces",
+        "tutor_marco",
+        "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300&h=200&fit=crop&crop=faces",
+        "tutor_sara",
+        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&h=200&fit=crop&crop=faces",
+        "tutor_luca",
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=200&fit=crop&crop=faces"
     );
 
     private static final List<String> PORTRAIT_POOL = List.of(

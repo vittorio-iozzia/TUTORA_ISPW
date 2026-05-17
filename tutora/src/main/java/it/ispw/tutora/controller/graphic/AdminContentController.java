@@ -1,6 +1,6 @@
 package it.ispw.tutora.controller.graphic;
 
-import it.ispw.tutora.bean.ApplicationReviewBean;
+import it.ispw.tutora.bean.TutorApplicationBean;
 import it.ispw.tutora.controller.application.ApplyToBecomeATutorController;
 import it.ispw.tutora.dao.TutorApplicationDao;
 import it.ispw.tutora.dao.TutorDao;
@@ -20,10 +20,21 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.chart.*;
 import javafx.scene.control.*;
+import javafx.scene.effect.ColorAdjust;
+import javafx.scene.effect.GaussianBlur;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Duration;
+import javafx.util.StringConverter;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -52,6 +63,11 @@ public class AdminContentController {
     // Users tab
     @FXML private TextField userSearchField;
     @FXML private VBox usersList;
+
+    // Analytics tab
+    @FXML private AreaChart<String, Number> revenueChart;
+    @FXML private BarChart<String, Number>  bookingsChart;
+    @FXML private PieChart                  categoryChart;
 
     // State
     private List<TutorApplication> pendingApplications = List.of();
@@ -82,6 +98,9 @@ public class AdminContentController {
 
         buildApplicationsList();
         buildUsersList(allTutors);
+        buildRevenueChart();
+        buildBookingsChart();
+        buildCategoryChart();
 
         userSearchField.textProperty().addListener((obs, old, val) -> filterUsers(val));
 
@@ -187,14 +206,10 @@ public class AdminContentController {
         catLabel.getStyleClass().add("admin-app-category");
         info.getChildren().addAll(nameLabel, catLabel);
 
-        Button approveBtn = new Button("Approve");
-        approveBtn.getStyleClass().add("admin-approve-btn");
-        Button rejectBtn  = new Button("Reject");
-        rejectBtn.getStyleClass().add("admin-reject-btn");
+        Button viewBtn = new Button("View Application");
+        viewBtn.getStyleClass().add("admin-approve-btn");
 
         // Observer (Push Model): quando il model aggiorna lo status, la View si aggiorna automaticamente.
-        // Platform.runLater garantisce che la modifica al scene graph avvenga sempre sul FX thread,
-        // anche se firePropertyChange() viene invocato da un thread di background (es. notif-approve).
         app.addPropertyChangeListener(TutorApplication.PROP_STATUS, event -> Platform.runLater(() -> {
             applicationsList.getChildren().remove(card);
             int remaining = applicationsList.getChildren().size();
@@ -206,51 +221,60 @@ public class AdminContentController {
             }
         }));
 
-        approveBtn.setOnAction(e -> {
-            approveBtn.setDisable(true);
-            rejectBtn.setDisable(true);
-            doEvaluate(app, ApplicationStatus.ACCEPTED, approveBtn, rejectBtn);
-        });
-        rejectBtn.setOnAction(e -> {
-            approveBtn.setDisable(true);
-            rejectBtn.setDisable(true);
-            doEvaluate(app, ApplicationStatus.REJECTED, approveBtn, rejectBtn);
-        });
+        viewBtn.setOnAction(e -> openApplicationReviewDialog(app, card));
 
-        card.getChildren().addAll(avatar, info, approveBtn, rejectBtn);
+        card.getChildren().addAll(avatar, info, viewBtn);
         return card;
     }
 
-    private void doEvaluate(TutorApplication app, ApplicationStatus status,
-                            Button approveBtn, Button rejectBtn) {
+    private void openApplicationReviewDialog(TutorApplication app, HBox card) {
         String token = SceneManager.getInstance().getSessionToken();
 
-        ApplicationReviewBean bean = new ApplicationReviewBean();
-        bean.setApplicationId(app.getId());
-        bean.setStatus(status);
-        bean.setAdminNotes("");
-
-        Task<Void> task = new Task<>() {
+        Task<TutorApplicationBean> task = new Task<>() {
             @Override
-            protected Void call() throws Exception {
-                appController.evaluateApplication(bean, token);
-                return null;
+            protected TutorApplicationBean call() throws Exception {
+                return appController.loadApplicationDetail(app.getId(), token);
             }
         };
 
-        // Persisted successfully: update the model → the registered observer updates the UI
         task.setOnSucceeded(e -> Platform.runLater(() -> {
-            app.updateStatus(status);
-            HomeGfxController.refreshBadgeStatic();
+            try {
+                FXMLLoader loader = new FXMLLoader(
+                        getClass().getResource("/fxml/application_review.fxml"));
+                Parent root = loader.load();
+                ApplicationReviewGfxController ctrl = loader.getController();
+                ctrl.initApplication(task.getValue());
+                ctrl.setOnEvaluated(() -> {
+                    HomeGfxController.refreshBadgeStatic();
+                    reloadApplicationsList();
+                });
+
+                Parent parentRoot = card.getScene().getRoot();
+                GaussianBlur blur = new GaussianBlur(10);
+                ColorAdjust dim  = new ColorAdjust();
+                dim.setBrightness(-0.35);
+                dim.setInput(blur);
+                parentRoot.setEffect(dim);
+
+                Stage stage = new Stage();
+                stage.initOwner(card.getScene().getWindow());
+                stage.initModality(Modality.WINDOW_MODAL);
+                stage.initStyle(StageStyle.TRANSPARENT);
+                Scene scene = new Scene(root);
+                scene.setFill(Color.TRANSPARENT);
+                stage.setScene(scene);
+                stage.setMinWidth(560);
+                stage.setOnHiding(ev -> parentRoot.setEffect(null));
+                stage.show();
+            } catch (Exception ex) {
+                LOGGER.warning("Cannot open application review: " + ex.getMessage());
+            }
         }));
 
-        task.setOnFailed(e -> Platform.runLater(() -> {
-            approveBtn.setDisable(false);
-            rejectBtn.setDisable(false);
-            LOGGER.warning("Evaluation failed: " + task.getException().getMessage());
-        }));
+        task.setOnFailed(e -> LOGGER.warning("Cannot load application detail: " +
+                (task.getException() != null ? task.getException().getMessage() : "error")));
 
-        Thread t = new Thread(task, "admin-evaluate");
+        Thread t = new Thread(task, "admin-load-app");
         t.setDaemon(true);
         t.start();
     }
@@ -302,5 +326,77 @@ public class AdminContentController {
                           || t.getUsername().toLowerCase().contains(q))
                 .toList();
         buildUsersList(filtered);
+    }
+
+    // ----------------------------------------------------------------
+    // Analytics charts
+    // ----------------------------------------------------------------
+
+    private void buildRevenueChart() {
+        NumberAxis yAxis = (NumberAxis) revenueChart.getYAxis();
+        yAxis.setTickLabelFormatter(new StringConverter<>() {
+            @Override public String toString(Number n) {
+                return "€" + (int) (n.doubleValue() / 1000) + "k";
+            }
+            @Override public Number fromString(String s) { return 0; }
+        });
+
+        String[]  months  = {"Dec", "Jan", "Feb", "Mar", "Apr", "May"};
+        double[]  revenue = {9_800, 11_200, 10_500, 13_400, 15_600, 17_890};
+
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        for (int i = 0; i < months.length; i++) {
+            XYChart.Data<String, Number> d = new XYChart.Data<>(months[i], revenue[i]);
+            series.getData().add(d);
+            d.nodeProperty().addListener((obs, old, node) -> {
+                if (node == null) return;
+                String label = "€" + String.format("%.0f", d.getYValue().doubleValue());
+                Tooltip tip = new Tooltip(label);
+                tip.setStyle("-fx-font-size:12px;");
+                Tooltip.install(node, tip);
+                node.setOnMouseEntered(e -> node.setStyle("-fx-opacity:0.75;-fx-cursor:hand;"));
+                node.setOnMouseExited (e -> node.setStyle("-fx-opacity:1.0;"));
+            });
+        }
+        revenueChart.getData().add(series);
+    }
+
+    private void buildBookingsChart() {
+        String[] months   = {"Dec", "Jan", "Feb", "Mar", "Apr", "May"};
+        int[]    bookings = {42, 58, 51, 74, 89, 103};
+
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        for (int i = 0; i < months.length; i++) {
+            XYChart.Data<String, Number> d = new XYChart.Data<>(months[i], bookings[i]);
+            series.getData().add(d);
+            d.nodeProperty().addListener((obs, old, node) -> {
+                if (node == null) return;
+                Tooltip tip = new Tooltip(d.getYValue() + " bookings");
+                tip.setStyle("-fx-font-size:12px;");
+                Tooltip.install(node, tip);
+                node.setOnMouseEntered(e -> node.setStyle("-fx-bar-fill: #1B5E35;-fx-cursor:hand;"));
+                node.setOnMouseExited (e -> node.setStyle("-fx-bar-fill: #2E7D50;"));
+            });
+        }
+        bookingsChart.getData().add(series);
+    }
+
+    private void buildCategoryChart() {
+        String[] categories = {"Music", "Math", "Languages", "Science", "Sport", "Other"};
+        double[] values     = {28, 22, 18, 14, 10, 8};
+
+        for (int i = 0; i < categories.length; i++) {
+            PieChart.Data slice = new PieChart.Data(categories[i], values[i]);
+            categoryChart.getData().add(slice);
+            slice.nodeProperty().addListener((obs, old, node) -> {
+                if (node == null) return;
+                String label = slice.getName() + " — " + (int) slice.getPieValue() + " tutors";
+                Tooltip tip = new Tooltip(label);
+                tip.setStyle("-fx-font-size:12px;");
+                Tooltip.install(node, tip);
+                node.setOnMouseEntered(e -> node.setStyle("-fx-opacity:0.8;-fx-cursor:hand;"));
+                node.setOnMouseExited (e -> node.setStyle("-fx-opacity:1.0;"));
+            });
+        }
     }
 }

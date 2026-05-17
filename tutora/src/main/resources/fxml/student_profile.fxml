@@ -220,10 +220,24 @@
 
                         <HBox spacing="10" alignment="CENTER_LEFT">
                             <FontIcon iconLiteral="fas-wallet" iconSize="12" styleClass="profile-field-icon"/>
-                            <VBox spacing="2">
+                            <VBox spacing="4" HBox.hgrow="ALWAYS">
                                 <Label text="Budget" styleClass="profile-field-label"/>
                                 <Label fx:id="budgetDetailLabel" text="" styleClass="profile-field-value"/>
+                                <HBox fx:id="budgetEditBox" spacing="6" alignment="CENTER_LEFT"
+                                      visible="false" managed="false">
+                                    <TextField fx:id="budgetField" styleClass="profile-budget-field"
+                                               promptText="e.g. 150.00" prefWidth="95"/>
+                                    <Button onAction="#handleSaveBudget" styleClass="budget-icon-btn budget-confirm-btn">
+                                        <graphic><FontIcon iconLiteral="fas-check" iconSize="12" styleClass="budget-confirm-icon"/></graphic>
+                                    </Button>
+                                    <Button onAction="#handleCancelBudget" styleClass="budget-icon-btn budget-cancel-btn">
+                                        <graphic><FontIcon iconLiteral="fas-times" iconSize="12" styleClass="budget-cancel-icon"/></graphic>
+                                    </Button>
+                                </HBox>
                             </VBox>
+                            <Button fx:id="editBudgetBtn" onAction="#handleEditBudget" styleClass="profile-edit-btn">
+                                <graphic><FontIcon iconLiteral="fas-pencil-alt" iconSize="11" styleClass="profile-section-icon"/></graphic>
+                            </Button>
                         </HBox>
                     </VBox>
 

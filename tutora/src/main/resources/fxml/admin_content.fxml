@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
@@ -110,14 +111,48 @@
 
             <!-- Analytics -->
             <Tab text="Analytics">
-                <VBox spacing="20" styleClass="tab-content" alignment="CENTER">
-                    <padding><Insets top="60"/></padding>
-                    <FontIcon iconLiteral="fas-chart-bar" iconSize="52"
-                              styleClass="analytics-placeholder-icon"/>
-                    <Label text="Analytics" styleClass="section-card-title"/>
-                    <Label text="Chart visualizations coming soon."
-                           styleClass="tutor-tab-desc" wrapText="true"/>
-                </VBox>
+                <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="notif-scroll" VBox.vgrow="ALWAYS">
+                    <VBox spacing="20" styleClass="tab-content">
+                        <padding><Insets top="20" right="24" bottom="24" left="24"/></padding>
+
+                        <VBox spacing="4">
+                            <Label text="Platform Analytics" styleClass="section-card-title"/>
+                            <Label text="Overview of platform activity over the last 6 months"
+                                   styleClass="tutor-tab-desc"/>
+                        </VBox>
+
+                        <!-- Revenue trend -->
+                        <VBox styleClass="chart-card" spacing="10">
+                            <Label text="Monthly Revenue" styleClass="chart-card-title"/>
+                            <AreaChart fx:id="revenueChart" animated="true"
+                                       legendVisible="false" prefHeight="220">
+                                <xAxis><CategoryAxis/></xAxis>
+                                <yAxis><NumberAxis lowerBound="0" autoRanging="true"/></yAxis>
+                            </AreaChart>
+                        </VBox>
+
+                        <!-- Bookings + Category pie -->
+                        <HBox spacing="16">
+                            <VBox styleClass="chart-card" spacing="10"
+                                  HBox.hgrow="ALWAYS" maxWidth="Infinity">
+                                <Label text="Monthly Bookings" styleClass="chart-card-title"/>
+                                <BarChart fx:id="bookingsChart" animated="true"
+                                          legendVisible="false" prefHeight="210">
+                                    <xAxis><CategoryAxis/></xAxis>
+                                    <yAxis><NumberAxis lowerBound="0" autoRanging="true"/></yAxis>
+                                </BarChart>
+                            </VBox>
+                            <VBox styleClass="chart-card" spacing="10"
+                                  HBox.hgrow="ALWAYS" maxWidth="Infinity">
+                                <Label text="Tutors by Category" styleClass="chart-card-title"/>
+                                <PieChart fx:id="categoryChart" animated="true"
+                                          prefHeight="210" labelsVisible="true"
+                                          labelLineLength="12"/>
+                            </VBox>
+                        </HBox>
+
+                    </VBox>
+                </ScrollPane>
             </Tab>
 
         </TabPane>

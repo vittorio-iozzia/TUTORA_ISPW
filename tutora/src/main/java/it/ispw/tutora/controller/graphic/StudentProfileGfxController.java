@@ -1,6 +1,7 @@
 package it.ispw.tutora.controller.graphic;
 
 import it.ispw.tutora.dao.BookingDao;
+import it.ispw.tutora.dao.StudentDao;
 import it.ispw.tutora.dao.factory.DaoFactory;
 import it.ispw.tutora.enums.PaymentStatus;
 import it.ispw.tutora.model.Booking;
@@ -12,9 +13,15 @@ import it.ispw.tutora.view.SceneManager;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+
+import java.math.BigDecimal;
+import java.util.logging.Logger;
 
 import java.util.List;
 import java.util.Set;
@@ -26,6 +33,8 @@ import java.util.stream.Collectors;
  * è ereditato da {@link ProfileGfxController}.
  */
 public class StudentProfileGfxController extends ProfileGfxController {
+
+    private static final Logger LOGGER = Logger.getLogger(StudentProfileGfxController.class.getName());
 
     @FXML private VBox  budgetCard;
     @FXML private VBox  lessonsCard;
@@ -43,7 +52,10 @@ public class StudentProfileGfxController extends ProfileGfxController {
     @FXML private VBox  preferredTutorsBox;
     @FXML private Label preferredTutorsEmptyLabel;
 
-    @FXML private Label budgetDetailLabel;
+    @FXML private Label     budgetDetailLabel;
+    @FXML private HBox      budgetEditBox;
+    @FXML private TextField budgetField;
+    @FXML private Button    editBudgetBtn;
 
     @Override
     protected String getRoleLabel() { return "STUDENT"; }
@@ -118,6 +130,81 @@ public class StudentProfileGfxController extends ProfileGfxController {
                 ? "€" + student.getBudget().toPlainString()
                 : "—");
         ratingValueLabel.setText("—");
+    }
+
+    // ----------------------------------------------------------------
+    // Budget editing
+    // ----------------------------------------------------------------
+
+    @FXML
+    private void handleEditBudget() {
+        Student student = (Student) currentUser;
+        budgetField.setText(student.getBudget() != null
+                ? student.getBudget().toPlainString() : "0.00");
+        budgetDetailLabel.setVisible(false);
+        budgetDetailLabel.setManaged(false);
+        editBudgetBtn.setVisible(false);
+        editBudgetBtn.setManaged(false);
+        budgetEditBox.setVisible(true);
+        budgetEditBox.setManaged(true);
+        budgetField.requestFocus();
+        budgetField.selectAll();
+    }
+
+    @FXML
+    private void handleCancelBudget() {
+        budgetEditBox.setVisible(false);
+        budgetEditBox.setManaged(false);
+        budgetDetailLabel.setVisible(true);
+        budgetDetailLabel.setManaged(true);
+        editBudgetBtn.setVisible(true);
+        editBudgetBtn.setManaged(true);
+    }
+
+    @FXML
+    private void handleSaveBudget() {
+        String raw = budgetField.getText().trim();
+        BigDecimal newBudget;
+        try {
+            newBudget = new BigDecimal(raw);
+            if (newBudget.compareTo(BigDecimal.ZERO) < 0) {
+                budgetField.setStyle("-fx-border-color: #EF4444;");
+                return;
+            }
+        } catch (NumberFormatException ex) {
+            budgetField.setStyle("-fx-border-color: #EF4444;");
+            return;
+        }
+        budgetField.setStyle(null);
+
+        Student student = (Student) currentUser;
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                StudentDao dao = DaoFactory.getInstance().createStudentDao();
+                dao.updateStudentBudget(
+                        DaoFactory.getInstance().getConnection(),
+                        student.getUsername(), newBudget);
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(e -> Platform.runLater(() -> {
+            // Sync the in-memory session object
+            BigDecimal current = student.getBudget() != null ? student.getBudget() : BigDecimal.ZERO;
+            BigDecimal delta   = newBudget.subtract(current);
+            if (delta.compareTo(BigDecimal.ZERO) > 0) student.addBudget(delta);
+            else if (delta.compareTo(BigDecimal.ZERO) < 0) student.deductBudget(delta.abs());
+
+            budgetDetailLabel.setText("€" + newBudget.toPlainString());
+            animateStat(budgetValueLabel, newBudget.doubleValue(), "€%.2f");
+            handleCancelBudget();
+        }));
+
+        task.setOnFailed(e -> Platform.runLater(() ->
+                LOGGER.warning("Budget update failed: " + task.getException().getMessage())));
+
+        new Thread(task, "budget-update").start();
     }
 
     private void loadBookingStats(Student student) {

@@ -319,7 +319,7 @@ public class ApplyToBecomeATutorController {
     private Category resolveCategoryByName(CategoryDao categoryDao, String categoryName) {
         try {
             return categoryDao.findByNameWithRequirements(categoryName);
-        } catch (CategoryNotFoundException e) {
+        } catch (CategoryNotFoundException | DatabaseException e) {
             return new Category(categoryName, "");
         }
     }

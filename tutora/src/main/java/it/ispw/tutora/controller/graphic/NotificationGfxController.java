@@ -1,13 +1,11 @@
 package it.ispw.tutora.controller.graphic;
 
-import it.ispw.tutora.bean.ApplicationReviewBean;
 import it.ispw.tutora.bean.BookingBean;
 import it.ispw.tutora.bean.BookingTutorBean;
 import it.ispw.tutora.bean.NotificationBean;
 import it.ispw.tutora.controller.application.ApplyToBecomeATutorController;
 import it.ispw.tutora.controller.application.BookTutorController;
 import it.ispw.tutora.controller.application.GetNotificationsController;
-import it.ispw.tutora.enums.ApplicationStatus;
 import it.ispw.tutora.view.home.TutorDashboardDecorator;
 import it.ispw.tutora.enums.NotificationType;
 import it.ispw.tutora.model.Notification;

@@ -112,6 +112,8 @@ public class BookTutorController {
             String tutorName = less.getExpertise().getTutor().getUsername();
             String subcatName = less.getExpertise().getSubcategory().getName();
             booking.checkNoDuplicateBooking(conn, username, tutorName, subcatName);
+            // Also block duplicate requests that are still pending (no booking in cache yet)
+            checkNoPendingRequest(conn, less.getId(), tutorName, username, subcatName);
             Notification notify = new Notification.Builder()
                     .recipientUsername(less.getExpertise().getTutor().getUsername())
                     .senderUsername(stu.getUsername())
@@ -160,6 +162,18 @@ public class BookTutorController {
             handleRespondToRequest(conn, bean, tutorUsername);
         } catch (DatabaseException | SQLException e) {
             bean.setErrorMessage(ERR_SYSTEM);
+        }
+    }
+
+    private void checkNoPendingRequest(Connection conn, int lessonId, String tutorUsername,
+                                       String studentUsername, String subcatName)
+            throws DuplicateBookingException, DatabaseException {
+        for (Notification n : notification.findByRecipient(conn, tutorUsername)) {
+            if (n.getType() == NotificationType.LESSON_BOOKED
+                    && n.getTargetId() == lessonId
+                    && studentUsername.equals(n.getSenderUsername())) {
+                throw new DuplicateBookingException(studentUsername, tutorUsername, subcatName);
+            }
         }
     }
 

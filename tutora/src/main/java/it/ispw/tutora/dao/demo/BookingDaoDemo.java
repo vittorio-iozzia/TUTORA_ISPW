@@ -63,7 +63,18 @@ public class BookingDaoDemo implements BookingDao {
     public int insertBooking(Connection conn, Booking booking)
             throws DatabaseException {
         int id = nextId++;
-        cache.put(id, booking);
+        // Rebuild with the assigned id — Booking.id is final, so we must use the Builder.
+        // Without this, getId() returns 0 for every booking and duplicate-review checks break.
+        Booking stored = new Booking.Builder()
+                .id(id)
+                .lesson(booking.getLesson())
+                .student(booking.getStudent())
+                .bookedAt(booking.getBookedAt())
+                .pricePaid(booking.getPricePaid())
+                .paymentStatus(booking.getPaymentStatus())
+                .paymentRef(booking.getPaymentRef())
+                .build();
+        cache.put(id, stored);
         return id;
     }
 
