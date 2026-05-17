@@ -62,4 +62,12 @@ public interface NotificationDao {
      */
     int countUnread(Connection conn, String recipientUsername)
             throws DatabaseException;
+
+    /**
+     * Segna come lette tutte le notifiche non lette di un destinatario
+     * che hanno un determinato targetId.
+     * Idempotente: nessuna eccezione se non ci sono corrispondenze.
+     */
+    void markReadByTargetIdAndRecipient(Connection conn, int targetId, String recipientUsername)
+            throws DatabaseException;
 }

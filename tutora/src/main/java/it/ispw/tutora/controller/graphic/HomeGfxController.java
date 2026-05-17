@@ -141,6 +141,10 @@ public class HomeGfxController {
         instance = ctrl;
     }
 
+    public static void refreshBadgeStatic() {
+        if (instance != null) instance.refreshNotifBadge();
+    }
+
     // ----------------------------------------------------------------
     // Avatar — hover animation + dropdown menu
     // ----------------------------------------------------------------
@@ -433,9 +437,8 @@ public class HomeGfxController {
             Parent sceneRoot = notifBtn.getScene().getRoot();
             sceneRoot.setEffect(new GaussianBlur(8));
             dialog.setOnHiding(e -> {
-                notifCtrl.markVisibleAsRead();
+                notifCtrl.markVisibleAsRead(this::refreshNotifBadge);
                 sceneRoot.setEffect(null);
-                refreshNotifBadge();
             });
 
             dialog.show();
@@ -444,7 +447,7 @@ public class HomeGfxController {
         }
     }
 
-    private void refreshNotifBadge() {
+    public void refreshNotifBadge() {
         String tk = SceneManager.getInstance().getSessionToken();
         Task<Integer> task = new Task<>() {
             @Override protected Integer call() { return notifController.getUnreadCount(tk); }

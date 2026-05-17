@@ -235,8 +235,10 @@ public class ApplyToBecomeATutorController {
             application.setAdminNotes(bean.getAdminNotes());
             application.setEvaluatedAt(LocalDateTime.now());
             appDao.updateStatus(conn, application);
+            notifDao.markReadByTargetIdAndRecipient(conn, application.getId(), adminUsername);
             sendNotificationToStudent(conn, notifDao, adminUsername,
-                    application.getStudentUsername(), application.getId(), newStatus);
+                    application.getStudentUsername(), application.getId(),
+                    newStatus, application.getAdminNotes());
 
             if (newStatus == ApplicationStatus.ACCEPTED) {
                 Tutor promoted = promoteStudentToTutor(conn, application.getStudentUsername());
@@ -560,12 +562,16 @@ public class ApplyToBecomeATutorController {
                                            String adminUsername,
                                            String studentUsername,
                                            int applicationId,
-                                           ApplicationStatus status)
+                                           ApplicationStatus status,
+                                           String adminNotes)
             throws DatabaseException {
 
-        String message = status == ApplicationStatus.ACCEPTED
+        String base = status == ApplicationStatus.ACCEPTED
                 ? "Your tutor application has been accepted! Welcome to TUTORA."
-                : "Your tutor application has been rejected. Check the admin notes.";
+                : "Your tutor application has been rejected.";
+        String message = (adminNotes != null && !adminNotes.isBlank())
+                ? base + "\n\nAdmin notes: " + adminNotes.trim()
+                : base;
 
         Notification notification = new Notification.Builder()
                 .id(0)

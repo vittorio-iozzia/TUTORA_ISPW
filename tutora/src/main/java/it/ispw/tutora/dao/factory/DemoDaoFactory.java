@@ -447,6 +447,18 @@ public class DemoDaoFactory extends DaoFactory {
                 .build();
         notificationDao.insert(null, appNotif);
 
+        Notification adminAppNotif = new Notification.Builder()
+                .recipientUsername("admin")
+                .senderUsername(USER_STUDENT)
+                .message(USER_STUDENT + " has submitted a new tutor application for Music · Guitar."
+                        + " Please review and evaluate.")
+                .type(NotificationType.APPLICATION_UPDATE)
+                .targetId(1)
+                .timestamp(LocalDateTime.now().minusDays(2))
+                .read(false)
+                .build();
+        notificationDao.insert(null, adminAppNotif);
+
         if (availableLessonIds.length == 0) return;
 
         // targetId reale della prima lezione AVAILABLE (availSax),
@@ -464,6 +476,19 @@ public class DemoDaoFactory extends DaoFactory {
                 .read(false)
                 .build();
         notificationDao.insert(null, tutorNotif);
+
+        int availGuitarId = availableLessonIds[1];
+        Notification tutorNotif2 = new Notification.Builder()
+                .recipientUsername(USER_TUTOR)
+                .senderUsername(USER_STUDENT)
+                .message(USER_STUDENT + " has requested a lesson on "
+                        + "Guitar. Please review and respond.")
+                .type(NotificationType.LESSON_BOOKED)
+                .targetId(availGuitarId)
+                .timestamp(LocalDateTime.now().minusMinutes(20))
+                .read(false)
+                .build();
+        notificationDao.insert(null, tutorNotif2);
     }
 
     private void populateMessages() throws DatabaseException {
