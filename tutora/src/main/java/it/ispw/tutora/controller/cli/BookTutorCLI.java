@@ -28,6 +28,7 @@ import static it.ispw.tutora.controller.cli.CLIUtils.*;
  *  3. Vedere le lezioni disponibili
  *  4. Richiedere una prenotazione
  */
+@SuppressWarnings("java:S106") // System.out è intenzionale: classe boundary della CLI
 public class BookTutorCLI {
 
     private static final DateTimeFormatter DT_FMT =
@@ -39,70 +40,76 @@ public class BookTutorCLI {
     public void show(Scanner sc, String token) {
         while (true) {
             printHeader("CERCA TUTOR");
-
-            // Carica tutti i tutor
             List<Tutor> allTutors = loadAllTutors();
             if (allTutors.isEmpty()) {
                 info("Nessun tutor disponibile al momento.");
                 pressEnter(sc);
                 return;
             }
-
-            // Carica categorie per il filtro
-            List<Category> categories = new ArrayList<>();
-            try {
-                categories = searchCtrl.loadCategories();
-            } catch (DatabaseException e) {
-                warn("Impossibile caricare le categorie: " + e.getMessage());
-            }
-
-            // Menu filtro
-            System.out.println("  " + BOLD + "Filtra per categoria:" + RESET);
-            menuItem(0, "Tutti i tutor");
-            for (int i = 0; i < categories.size(); i++) {
-                menuItem(i + 1, categories.get(i).getName());
-            }
-            System.out.println();
-
-            int filtro = readInt(sc, "Categoria", 0, categories.size());
-            List<Tutor> filtered;
-            if (filtro == 0) {
-                filtered = allTutors;
-            } else {
-                String catName = categories.get(filtro - 1).getName();
-                filtered = searchCtrl.filterByCategory(allTutors, catName);
-            }
-
+            List<Category> categories = loadCategoriesQuietly();
+            printFilterMenu(categories);
+            int filtro = readInt(sc, "Categoria", 0, categories.size() + 1);
+            if (filtro == 0) return;
+            List<Tutor> filtered = filterTutors(allTutors, categories, filtro);
             if (filtered.isEmpty()) {
                 info("Nessun tutor trovato per la categoria selezionata.");
                 pressEnter(sc);
                 continue;
             }
-
-            // Lista tutor
-            separator();
-            System.out.println("  " + BOLD + filtered.size() + " tutor trovati:" + RESET);
-            System.out.println();
-            for (int i = 0; i < filtered.size(); i++) {
-                Tutor t = filtered.get(i);
-                String rating = (t.getRating() != null && t.getRating().doubleValue() > 0)
-                        ? String.format("%.1f ★ (%d rec.)", t.getRating().doubleValue(), t.getRatingCount())
-                        : "Nessuna recensione";
-                System.out.printf("  %s[%d]%s %-20s  %s%n",
-                        YELLOW + BOLD, i + 1, RESET,
-                        BOLD + t.getName() + " " + t.getSurname() + RESET,
-                        DIM + "@" + t.getUsername() + "  " + rating + RESET);
-            }
-
-            System.out.println();
-            menuItem(0, "Torna al menu principale");
-            System.out.println();
-
+            printTutorList(filtered);
             int scelta = readInt(sc, "Scegli tutor (0 per tornare)", 0, filtered.size());
             if (scelta == 0) return;
-
             showTutorDetail(sc, token, filtered.get(scelta - 1));
         }
+    }
+
+    private List<Category> loadCategoriesQuietly() {
+        try {
+            return searchCtrl.loadCategories();
+        } catch (DatabaseException e) {
+            warn("Impossibile caricare le categorie: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    private void printFilterMenu(List<Category> categories) {
+        System.out.println("  " + BOLD + "Filtra per categoria:" + RESET);
+        menuItem(0, "Torna al menu principale");
+        menuItem(1, "Tutti i tutor");
+        for (int i = 0; i < categories.size(); i++) {
+            menuItem(i + 2, categories.get(i).getName());
+        }
+        System.out.println();
+    }
+
+    private List<Tutor> filterTutors(List<Tutor> all, List<Category> categories, int filtro) {
+        if (filtro == 1) return all;
+        String catName = categories.get(filtro - 2).getName();
+        return searchCtrl.filterByCategory(all, catName);
+    }
+
+    private void printTutorList(List<Tutor> filtered) {
+        separator();
+        System.out.println("  " + BOLD + filtered.size() + " tutor trovati:" + RESET);
+        System.out.println();
+        for (int i = 0; i < filtered.size(); i++) {
+            Tutor t = filtered.get(i);
+            String rating = buildRatingLabel(t);
+            System.out.printf("  %s[%d]%s %-20s  %s%n",
+                    YELLOW + BOLD, i + 1, RESET,
+                    BOLD + t.getName() + " " + t.getSurname() + RESET,
+                    DIM + "@" + t.getUsername() + "  " + rating + RESET);
+        }
+        System.out.println();
+        menuItem(0, "Torna al menu principale");
+        System.out.println();
+    }
+
+    private String buildRatingLabel(Tutor t) {
+        if (t.getRating() != null && t.getRating().doubleValue() > 0) {
+            return String.format("%.1f ★ (%d rec.)", t.getRating().doubleValue(), t.getRatingCount());
+        }
+        return "Nessuna recensione";
     }
 
     // ----------------------------------------------------------------

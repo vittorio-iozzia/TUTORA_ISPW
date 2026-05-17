@@ -17,6 +17,7 @@ import static it.ispw.tutora.controller.cli.CLIUtils.*;
  *  3. Al logout ripresenta la schermata di autenticazione
  *  4. Se l'utente sceglie "Esci" il programma termina
  */
+@SuppressWarnings("java:S106") // System.out è intenzionale: classe boundary della CLI
 public class CLIRunner {
 
     private final Scanner     sc       = new Scanner(System.in);

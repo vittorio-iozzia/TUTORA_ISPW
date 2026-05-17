@@ -16,6 +16,7 @@ import static it.ispw.tutora.controller.cli.CLIUtils.*;
  * Schermata "Le mie lezioni" per lo studente.
  * Mostra l'elenco delle prenotazioni con stato e dettagli.
  */
+@SuppressWarnings("java:S106") // System.out è intenzionale: classe boundary della CLI
 public class MyLessonsCLI {
 
     private static final DateTimeFormatter DT_FMT =
@@ -45,36 +46,51 @@ public class MyLessonsCLI {
         System.out.println();
 
         for (int i = 0; i < bookings.size(); i++) {
-            Booking b = bookings.get(i);
-            Lesson  l = b.getLesson();
-
-            String payBadge = paymentBadge(b.getPaymentStatus());
-            String subcatName = (l != null && l.getExpertise() != null
-                    && l.getExpertise().getSubcategory() != null)
-                    ? l.getExpertise().getSubcategory().getName() : "—";
-            String tutorName  = (l != null && l.getExpertise() != null
-                    && l.getExpertise().getTutor() != null)
-                    ? l.getExpertise().getTutor().getUsername() : "—";
-            String start = (l != null && l.getStartTime() != null)
-                    ? l.getStartTime().format(DT_FMT) : "—";
-            String end   = (l != null && l.getEndTime() != null)
-                    ? l.getEndTime().format(DT_FMT) : "—";
-            String mode  = (l != null) ? (l.isRemote() ? "Remoto" : "In presenza") : "—";
-            String price = b.getPricePaid() != null
-                    ? "€" + b.getPricePaid().toPlainString() : "—";
-
-            System.out.printf("  %s── Prenotazione #%d %s%n", BOLD, i + 1, RESET);
-            field("Materia:",   subcatName);
-            field("Tutor:",     tutorName);
-            field("Inizio:",    start);
-            field("Fine:",      end);
-            field("Modalità:",  mode);
-            field("Prezzo:",    price);
-            field("Pagamento:", payBadge);
-            separator();
+            printBooking(bookings.get(i), i + 1);
         }
 
         pressEnter(sc);
+    }
+
+    // ----------------------------------------------------------------
+    // Stampa singola prenotazione
+    // ----------------------------------------------------------------
+
+    private void printBooking(Booking b, int n) {
+        Lesson l = b.getLesson();
+        String start = (l != null && l.getStartTime() != null) ? l.getStartTime().format(DT_FMT) : "—";
+        String end   = (l != null && l.getEndTime()   != null) ? l.getEndTime().format(DT_FMT)   : "—";
+        String price = b.getPricePaid() != null ? "€" + b.getPricePaid().toPlainString() : "—";
+
+        System.out.printf("  %s── Prenotazione #%d %s%n", BOLD, n, RESET);
+        field("Materia:",   extractSubcatName(l));
+        field("Tutor:",     extractTutorName(l));
+        field("Inizio:",    start);
+        field("Fine:",      end);
+        field("Modalità:",  extractMode(l));
+        field("Prezzo:",    price);
+        field("Pagamento:", paymentBadge(b.getPaymentStatus()));
+        separator();
+    }
+
+    private String extractSubcatName(Lesson l) {
+        if (l != null && l.getExpertise() != null && l.getExpertise().getSubcategory() != null) {
+            return l.getExpertise().getSubcategory().getName();
+        }
+        return "—";
+    }
+
+    private String extractTutorName(Lesson l) {
+        if (l != null && l.getExpertise() != null && l.getExpertise().getTutor() != null) {
+            return l.getExpertise().getTutor().getUsername();
+        }
+        return "—";
+    }
+
+    /** Modalità di erogazione — metodo dedicato per evitare ternario annidato (SonarQube S3358). */
+    private String extractMode(Lesson l) {
+        if (l == null) return "—";
+        return l.isRemote() ? "Remoto" : "In presenza";
     }
 
     // ----------------------------------------------------------------

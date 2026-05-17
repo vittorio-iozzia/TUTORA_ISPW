@@ -30,6 +30,7 @@ import static it.ispw.tutora.controller.cli.CLIUtils.*;
  *  - Profilo
  *  - Logout
  */
+@SuppressWarnings("java:S106") // System.out è intenzionale: classe boundary della CLI
 public class TutorCLI {
 
     private static final DateTimeFormatter DT_FMT =
@@ -71,7 +72,7 @@ public class TutorCLI {
 
             int scelta = readInt(sc, "Scelta", 0, 3);
             switch (scelta) {
-                case 1 -> showLessons(sc, token, tutor);
+                case 1 -> showLessons(sc, tutor);
                 case 2 -> notifCLI.show(sc, token);
                 case 3 -> showProfile(sc, tutor);
                 case 0 -> {
@@ -87,7 +88,7 @@ public class TutorCLI {
     // Lezioni del tutor (storico prenotazioni ricevute)
     // ----------------------------------------------------------------
 
-    private void showLessons(Scanner sc, String token, Tutor tutor) {
+    private void showLessons(Scanner sc, Tutor tutor) {
         printHeader("LE MIE LEZIONI");
 
         List<Booking> bookings = loadTutorBookings(tutor.getUsername());
@@ -101,43 +102,54 @@ public class TutorCLI {
         info(bookings.size() + " prenotazione/i trovata/e");
         System.out.println();
 
-        long paidCount = bookings.stream()
-                .filter(b -> b.getPaymentStatus() == PaymentStatus.PAID).count();
-        long pendingCount = bookings.stream()
-                .filter(b -> b.getPaymentStatus() == PaymentStatus.PENDING).count();
-        field("Lezioni pagate:",   String.valueOf(paidCount));
+        long paidCount    = bookings.stream().filter(b -> b.getPaymentStatus() == PaymentStatus.PAID).count();
+        long pendingCount = bookings.stream().filter(b -> b.getPaymentStatus() == PaymentStatus.PENDING).count();
+        field("Lezioni pagate:",      String.valueOf(paidCount));
         field("In attesa pagamento:", String.valueOf(pendingCount));
         System.out.println();
         separator();
 
         for (Booking b : bookings) {
-            Lesson l = b.getLesson();
-            String subcatName = (l != null && l.getExpertise() != null
-                    && l.getExpertise().getSubcategory() != null)
-                    ? l.getExpertise().getSubcategory().getName() : "—";
-            String studentName = (b.getStudent() != null)
-                    ? b.getStudent().getName() + " " + b.getStudent().getSurname()
-                    + " (@" + b.getStudent().getUsername() + ")"
-                    : "—";
-            String start = (l != null && l.getStartTime() != null)
-                    ? l.getStartTime().format(DT_FMT) : "—";
-            String end   = (l != null && l.getEndTime() != null)
-                    ? l.getEndTime().format(DT_FMT) : "—";
-            String lessonStatus = lessonStatusLabel(l);
-            String payStatus    = paymentStatusLabel(b.getPaymentStatus());
-
-            System.out.println();
-            field("Studente:",   studentName);
-            field("Materia:",    subcatName);
-            field("Orario:",     start + " – " + end);
-            field("Modalità:",   (l != null && l.isRemote()) ? CYAN + "Remoto" + RESET : "In presenza");
-            field("Lezione:",    lessonStatus);
-            field("Pagamento:",  payStatus);
-            field("Prezzo:",     b.getPricePaid() != null ? "€" + b.getPricePaid().toPlainString() : "—");
-            separator();
+            printTutorBooking(b);
         }
 
         pressEnter(sc);
+    }
+
+    private void printTutorBooking(Booking b) {
+        Lesson l   = b.getLesson();
+        String start = (l != null && l.getStartTime() != null) ? l.getStartTime().format(DT_FMT) : "—";
+        String end   = (l != null && l.getEndTime()   != null) ? l.getEndTime().format(DT_FMT)   : "—";
+        String price = b.getPricePaid() != null ? "€" + b.getPricePaid().toPlainString() : "—";
+
+        System.out.println();
+        field("Studente:",  extractStudentLabel(b));
+        field("Materia:",   extractSubcatName(l));
+        field("Orario:",    start + " – " + end);
+        field("Modalità:",  lessonModeLabel(l));
+        field("Lezione:",   lessonStatusLabel(l));
+        field("Pagamento:", paymentStatusLabel(b.getPaymentStatus()));
+        field("Prezzo:",    price);
+        separator();
+    }
+
+    private String extractSubcatName(Lesson l) {
+        if (l != null && l.getExpertise() != null && l.getExpertise().getSubcategory() != null) {
+            return l.getExpertise().getSubcategory().getName();
+        }
+        return "—";
+    }
+
+    private String extractStudentLabel(Booking b) {
+        if (b.getStudent() == null) return "—";
+        return b.getStudent().getName() + " " + b.getStudent().getSurname()
+                + " (@" + b.getStudent().getUsername() + ")";
+    }
+
+    /** Modalità di erogazione — metodo dedicato per evitare ternario annidato (SonarQube S3358). */
+    private String lessonModeLabel(Lesson l) {
+        if (l == null) return "In presenza";
+        return l.isRemote() ? CYAN + "Remoto" + RESET : "In presenza";
     }
 
     // ----------------------------------------------------------------

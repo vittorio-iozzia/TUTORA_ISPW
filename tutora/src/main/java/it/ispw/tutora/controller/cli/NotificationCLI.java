@@ -26,14 +26,19 @@ import static it.ispw.tutora.controller.cli.CLIUtils.*;
  *  - Tutor    : Accetta / Rifiuta richiesta di prenotazione
  *  - Admin    : Approva / Rifiuta candidatura tutor
  */
+@SuppressWarnings("java:S106") // System.out è intenzionale: classe boundary della CLI
 public class NotificationCLI {
 
     private static final DateTimeFormatter FMT =
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-    private final GetNotificationsController    notifCtrl  = new GetNotificationsController();
-    private final BookTutorController           bookCtrl   = new BookTutorController();
-    private final ApplyToBecomeATutorController appCtrl    = new ApplyToBecomeATutorController();
+    private static final String INDENT        = "       ";
+    private static final String PROMPT_SCELTA = "Scelta";
+    private static final String LABEL_ANNULLA = "Annulla";
+
+    private final GetNotificationsController    notifCtrl = new GetNotificationsController();
+    private final BookTutorController           bookCtrl  = new BookTutorController();
+    private final ApplyToBecomeATutorController appCtrl   = new ApplyToBecomeATutorController();
 
     public void show(Scanner sc, String token) {
         while (true) {
@@ -48,68 +53,67 @@ public class NotificationCLI {
                 return;
             }
 
-            List<Notification> all = bean.getList() != null ? bean.getList() : List.of();
+            List<Notification> all = resolvedList(bean);
             if (all.isEmpty()) {
                 info("Nessuna notifica.");
                 pressEnter(sc);
                 return;
             }
 
-            // --- Stampa lista ---
             Session session = SessionManager.getInstance().getSession(token);
-            long unread = all.stream().filter(n -> !n.isRead()).count();
-            if (unread > 0) info(unread + " notifiche non lette");
+            printNotificationList(all, session);
 
-            System.out.println();
-            for (int i = 0; i < all.size(); i++) {
-                Notification n = all.get(i);
-                String stato = n.isRead() ? DIM + "[letta]" + RESET : GREEN + BOLD + "[NUOVA]" + RESET;
-                System.out.printf("  %s[%d]%s %s  %s%s%s%n",
-                        YELLOW + BOLD, i + 1, RESET,
-                        stato,
-                        BOLD, typeName(n.getType()), RESET);
-                System.out.println("       " + DIM + n.getMessage() + RESET);
-                System.out.println("       " + DIM + n.getTimestamp().format(FMT) + RESET);
-                if (isActionable(n, session)) {
-                    System.out.println("       " + YELLOW + "→ Azione disponibile" + RESET);
-                }
-                System.out.println();
-            }
-
-            separator();
-            menuItem(1, "Apri notifica / esegui azione");
-            menuItem(2, "Segna tutte come lette");
-            menuItem(0, "Torna indietro");
-            System.out.println();
-
-            int scelta = readInt(sc, "Scelta", 0, 2);
-            switch (scelta) {
-                case 1 -> {
-                    int idx = readInt(sc, "Numero notifica", 1, all.size()) - 1;
-                    handleAction(sc, token, all.get(idx), session);
-                }
-                case 2 -> {
-                    notifCtrl.markAllAsRead(token);
-                    success("Tutte le notifiche segnate come lette.");
-                    pressEnter(sc);
-                }
-                case 0 -> { return; }
-                default -> { /* loop */ }
+            int scelta = readInt(sc, PROMPT_SCELTA, 0, 2);
+            if (scelta == 0) return;
+            if (scelta == 1) {
+                int idx = readInt(sc, "Numero notifica", 1, all.size()) - 1;
+                handleAction(sc, token, all.get(idx), session);
+            } else {
+                notifCtrl.markAllAsRead(token);
+                success("Tutte le notifiche segnate come lette.");
+                pressEnter(sc);
             }
         }
     }
 
+    private List<Notification> resolvedList(NotificationBean bean) {
+        return bean.getList() != null ? bean.getList() : List.of();
+    }
+
+    private void printNotificationList(List<Notification> all, Session session) {
+        long unread = all.stream().filter(n -> !n.isRead()).count();
+        if (unread > 0) info(unread + " notifiche non lette");
+        System.out.println();
+        for (int i = 0; i < all.size(); i++) {
+            printNotificationItem(all.get(i), i + 1, session);
+        }
+        separator();
+        menuItem(1, "Apri notifica / esegui azione");
+        menuItem(2, "Segna tutte come lette");
+        menuItem(0, "Torna indietro");
+        System.out.println();
+    }
+
+    private void printNotificationItem(Notification n, int index, Session session) {
+        String stato = n.isRead() ? DIM + "[letta]" + RESET : GREEN + BOLD + "[NUOVA]" + RESET;
+        System.out.printf("  %s[%d]%s %s  %s%s%s%n",
+                YELLOW + BOLD, index, RESET,
+                stato,
+                BOLD, typeName(n.getType()), RESET);
+        System.out.println(INDENT + DIM + n.getMessage() + RESET);
+        System.out.println(INDENT + DIM + n.getTimestamp().format(FMT) + RESET);
+        if (isActionable(n, session)) {
+            System.out.println(INDENT + YELLOW + "→ Azione disponibile" + RESET);
+        }
+        System.out.println();
+    }
+
     // ----------------------------------------------------------------
-    // Azione su singola notifica
+    // Dispatch azione su singola notifica
     // ----------------------------------------------------------------
 
     private void handleAction(Scanner sc, String token,
                               Notification notif, Session session) {
-        // Marca come letta
-        NotificationBean mb = new NotificationBean();
-        mb.setNotificationId(notif.getId());
-        notifCtrl.markAsRead(mb, token);
-
         printHeader(typeName(notif.getType()));
         System.out.println();
         System.out.println("  " + notif.getMessage());
@@ -117,77 +121,100 @@ public class NotificationCLI {
         System.out.println();
 
         if (!isActionable(notif, session)) {
+            markRead(token, notif);
             info("Nessuna azione disponibile per questa notifica.");
             pressEnter(sc);
             return;
         }
 
-        // ---- Studente: paga lezione accettata ----
         if (session.isStudent() && notif.getType() == NotificationType.LESSON_ACCEPTED) {
-            warn("Per confermare la prenotazione è richiesto il pagamento.");
-            System.out.println();
-            menuItem(1, "Paga ora (PayPal)");
-            menuItem(0, "Annulla");
-            int sc2 = readInt(sc, "Scelta", 0, 1);
-            if (sc2 == 1) {
-                BookingBean bean = new BookingBean();
-                bean.setLessonId(notif.getTargetId());
-                info("Elaborazione pagamento in corso...");
-                bookCtrl.payment(bean, token);
-                if (bean.getErrorMessage() == null) {
-                    success("Pagamento completato! Ref: " + bean.getPaymentRef());
-                } else {
-                    error("Pagamento fallito: " + bean.getErrorMessage());
-                }
-            }
-            pressEnter(sc);
+            handleStudentAction(sc, token, notif);
             return;
         }
-
-        // ---- Tutor: accetta/rifiuta prenotazione ----
         if (session.isTutor() && notif.getType() == NotificationType.LESSON_BOOKED) {
-            menuItem(1, "Accetta richiesta");
-            menuItem(2, "Rifiuta richiesta");
-            menuItem(0, "Annulla");
-            int sc2 = readInt(sc, "Scelta", 0, 2);
-            if (sc2 == 1 || sc2 == 2) {
-                BookingTutorBean bean = new BookingTutorBean();
-                bean.setLessonId(notif.getTargetId());
-                bean.setAccepted(sc2 == 1);
-                bean.setStudentUsername(notif.getSenderUsername());
-                bookCtrl.respondToRequest(bean, token);
-                if (bean.getErrorMessage() == null) {
-                    success(sc2 == 1 ? "Richiesta accettata!" : "Richiesta rifiutata.");
-                } else {
-                    error(bean.getErrorMessage());
-                }
-            }
-            pressEnter(sc);
+            handleTutorAction(sc, token, notif);
             return;
         }
-
-        // ---- Admin: approva/rifiuta candidatura ----
         if (session.isAdmin() && notif.getType() == NotificationType.APPLICATION_UPDATE) {
-            menuItem(1, "Approva candidatura");
-            menuItem(2, "Rifiuta candidatura");
-            menuItem(0, "Annulla");
-            int sc2 = readInt(sc, "Scelta", 0, 2);
-            if (sc2 == 1 || sc2 == 2) {
-                ApplicationReviewBean bean = new ApplicationReviewBean();
-                bean.setApplicationId(notif.getTargetId());
-                bean.setStatus(sc2 == 1
-                        ? ApplicationStatus.ACCEPTED : ApplicationStatus.REJECTED);
-                String notes = readOptionalLine(sc, "Note admin");
-                bean.setAdminNotes(notes.isEmpty() ? "" : notes);
-                try {
-                    appCtrl.evaluateApplication(bean, token);
-                    success(sc2 == 1 ? "Candidatura approvata!" : "Candidatura rifiutata.");
-                } catch (Exception e) {
-                    error("Errore: " + e.getMessage());
-                }
-            }
-            pressEnter(sc);
+            handleAdminAction(sc, token, notif);
         }
+    }
+
+    // ---- Studente: paga lezione accettata ----
+    private void handleStudentAction(Scanner sc, String token, Notification notif) {
+        warn("Per confermare la prenotazione è richiesto il pagamento.");
+        System.out.println();
+        menuItem(1, "Paga ora (PayPal)");
+        menuItem(0, LABEL_ANNULLA);
+        int scelta = readInt(sc, PROMPT_SCELTA, 0, 1);
+        if (scelta == 1) {
+            BookingBean bean = new BookingBean();
+            bean.setLessonId(notif.getTargetId());
+            info("Elaborazione pagamento in corso...");
+            bookCtrl.payment(bean, token);
+            if (bean.getErrorMessage() == null) {
+                markRead(token, notif);
+                success("Pagamento completato! Ref: " + bean.getPaymentRef());
+            } else {
+                error("Pagamento fallito: " + bean.getErrorMessage());
+                info("Puoi riprovare dalla lista notifiche.");
+            }
+        }
+        pressEnter(sc);
+    }
+
+    // ---- Tutor: accetta/rifiuta prenotazione ----
+    private void handleTutorAction(Scanner sc, String token, Notification notif) {
+        menuItem(1, "Accetta richiesta");
+        menuItem(2, "Rifiuta richiesta");
+        menuItem(0, LABEL_ANNULLA + " (decidi dopo)");
+        int scelta = readInt(sc, PROMPT_SCELTA, 0, 2);
+        if (scelta == 1 || scelta == 2) {
+            BookingTutorBean bean = new BookingTutorBean();
+            bean.setLessonId(notif.getTargetId());
+            bean.setAccepted(scelta == 1);
+            bean.setStudentUsername(notif.getSenderUsername());
+            bookCtrl.respondToRequest(bean, token);
+            if (bean.getErrorMessage() == null) {
+                markRead(token, notif);
+                success(scelta == 1 ? "Richiesta accettata!" : "Richiesta rifiutata.");
+            } else {
+                error(bean.getErrorMessage());
+                info("Puoi riprovare dalla lista notifiche.");
+            }
+        }
+        // Se scelta == 0 (Annulla) non si marca come letta: l'azione resta disponibile
+        pressEnter(sc);
+    }
+
+    // ---- Admin: approva/rifiuta candidatura ----
+    private void handleAdminAction(Scanner sc, String token, Notification notif) {
+        menuItem(1, "Approva candidatura");
+        menuItem(2, "Rifiuta candidatura");
+        menuItem(0, LABEL_ANNULLA);
+        int scelta = readInt(sc, PROMPT_SCELTA, 0, 2);
+        if (scelta == 1 || scelta == 2) {
+            ApplicationReviewBean bean = new ApplicationReviewBean();
+            bean.setApplicationId(notif.getTargetId());
+            bean.setStatus(scelta == 1 ? ApplicationStatus.ACCEPTED : ApplicationStatus.REJECTED);
+            String notes = readOptionalLine(sc, "Note admin");
+            bean.setAdminNotes(notes.isEmpty() ? "" : notes);
+            try {
+                appCtrl.evaluateApplication(bean, token);
+                markRead(token, notif);
+                success(scelta == 1 ? "Candidatura approvata!" : "Candidatura rifiutata.");
+            } catch (Exception e) {
+                error("Errore: " + e.getMessage());
+            }
+        }
+        pressEnter(sc);
+    }
+
+    /** Segna la notifica come letta tramite il controller. */
+    private void markRead(String token, Notification notif) {
+        NotificationBean mb = new NotificationBean();
+        mb.setNotificationId(notif.getId());
+        notifCtrl.markAsRead(mb, token);
     }
 
     // ----------------------------------------------------------------
@@ -195,13 +222,9 @@ public class NotificationCLI {
     // ----------------------------------------------------------------
 
     private boolean isActionable(Notification n, Session session) {
-        if (session.isStudent() && n.getType() == NotificationType.LESSON_ACCEPTED
-                && !n.isRead()) return true;
-        if (session.isTutor()   && n.getType() == NotificationType.LESSON_BOOKED
-                && !n.isRead()) return true;
-        if (session.isAdmin()   && n.getType() == NotificationType.APPLICATION_UPDATE
-                && !n.isRead()) return true;
-        return false;
+        return (session.isStudent() && n.getType() == NotificationType.LESSON_ACCEPTED   && !n.isRead())
+            || (session.isTutor()   && n.getType() == NotificationType.LESSON_BOOKED     && !n.isRead())
+            || (session.isAdmin()   && n.getType() == NotificationType.APPLICATION_UPDATE && !n.isRead());
     }
 
     private String typeName(NotificationType t) {

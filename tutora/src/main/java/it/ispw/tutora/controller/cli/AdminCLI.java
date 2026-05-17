@@ -24,6 +24,7 @@ import static it.ispw.tutora.controller.cli.CLIUtils.*;
  *  - Notifiche
  *  - Logout
  */
+@SuppressWarnings("java:S106") // System.out è intenzionale: classe boundary della CLI
 public class AdminCLI {
 
     private static final DateTimeFormatter DT_FMT =
