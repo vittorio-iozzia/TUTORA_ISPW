@@ -1,11 +1,11 @@
 package it.ispw.tutora.controller.graphic;
 
+import it.ispw.tutora.controller.graphic.util.TutorBrowseUtil;
 import it.ispw.tutora.dao.TutorExpertiseDao;
 import it.ispw.tutora.dao.factory.DaoFactory;
 import it.ispw.tutora.enums.Status;
 import it.ispw.tutora.model.Tutor;
 import it.ispw.tutora.model.TutorExpertise;
-import it.ispw.tutora.view.AvatarManager;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
@@ -21,7 +21,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 
-import java.io.File;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -186,10 +185,9 @@ public class TutorPublicProfileGfxController {
     // ----------------------------------------------------------------
 
     private void applyAvatarIfPresent(Tutor tutor) {
-        String path = AvatarManager.getAvatarPath(tutor.getUsername());
-        if (path == null || path.isBlank()) return;
-        String uri = new File(path).toURI().toString();
-        Image img = new Image(uri, 88, 88, false, true);
+        String url = TutorBrowseUtil.resolveProfileImageUrl(tutor.getUsername());
+        if (url == null) return;
+        Image img = new Image(url, 88, 88, false, true);
         heroAvatarImage.setImage(img);
         heroAvatarImage.setClip(new Circle(44, 44, 44));
         heroAvatarImage.setVisible(true);

@@ -41,6 +41,7 @@
         <plugin.surefire.version>3.2.5</plugin.surefire.version>
         <plugin.jar.version>3.3.0</plugin.jar.version>
         <plugin.sonar.version>3.11.0.3922</plugin.sonar.version>
+        <plugin.jacoco.version>0.8.12</plugin.jacoco.version>
 
         <!-- ======================================================== -->
         <!-- SonarQube Cloud                                           -->
@@ -50,6 +51,11 @@
         <sonar.projectKey>vittorio-iozzia_TUTORA_ISPW</sonar.projectKey>
         <!-- sonar.token va passato da riga di comando, MAI committato -->
         <!-- mvn sonar:sonar -Dsonar.token=IL_TUO_TOKEN                -->
+
+        <!-- JaCoCo XML report: percorso letto da SonarQube per la coverage -->
+        <sonar.coverage.jacoco.xmlReportPaths>
+            ${project.build.directory}/site/jacoco/jacoco.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
     <!-- ============================================================ -->
@@ -171,6 +177,14 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${plugin.surefire.version}</version>
+                <configuration>
+                    <!-- Evita il crash del JVM forked causato dai moduli JavaFX
+                         in ambiente headless: tutto rimane sul classpath. -->
+                    <useModulePath>false</useModulePath>
+                    <!-- @{argLine} late-bind: preserva l'agente JaCoCo iniettato
+                         da prepare-agent, altrimenti la coverage è 0. -->
+                    <argLine>@{argLine}</argLine>
+                </configuration>
             </plugin>
 
             <!-- JAR con manifest -->
@@ -185,6 +199,26 @@
                         </manifest>
                     </archive>
                 </configuration>
+            </plugin>
+
+            <!-- JaCoCo – genera jacoco.xml letto da SonarQube per la coverage -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${plugin.jacoco.version}</version>
+                <executions>
+                    <!-- Inietta l'agente JaCoCo prima di mvn test -->
+                    <execution>
+                        <id>jacoco-prepare-agent</id>
+                        <goals><goal>prepare-agent</goal></goals>
+                    </execution>
+                    <!-- Genera il report XML dopo mvn test -->
+                    <execution>
+                        <id>jacoco-report</id>
+                        <phase>test</phase>
+                        <goals><goal>report</goal></goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <!-- SonarQube – mvn sonar:sonar -Dsonar.token=TOKEN -->

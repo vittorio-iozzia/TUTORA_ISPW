@@ -137,12 +137,13 @@ public class BookingDaoDemo implements BookingDao {
         for (Booking b : cache.values()) {
             if (!isActiveBooking(b, studentUsername)) continue;
             TutorExpertise exp = b.getLesson().getExpertise();
-            if (exp == null) continue;
-            Tutor tutor = exp.getTutor();
-            SubCategory sub = exp.getSubcategory();
-            if (tutor != null && tutorUsername.equals(tutor.getUsername())
-                    && sub != null && subcategoryName.equals(sub.getName())) {
-                throw new DuplicateBookingException(studentUsername, tutorUsername, subcategoryName);
+            if (exp != null) {
+                Tutor tutor = exp.getTutor();
+                SubCategory sub = exp.getSubcategory();
+                if (tutor != null && tutorUsername.equals(tutor.getUsername())
+                        && sub != null && subcategoryName.equals(sub.getName())) {
+                    throw new DuplicateBookingException(studentUsername, tutorUsername, subcategoryName);
+                }
             }
         }
     }

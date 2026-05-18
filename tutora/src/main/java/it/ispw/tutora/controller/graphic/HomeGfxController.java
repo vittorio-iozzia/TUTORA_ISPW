@@ -270,7 +270,6 @@ public class HomeGfxController {
             mainArea.getChildren().setAll(content);
         } catch (Exception e) {
             LOGGER.severe("Cannot load main area fragment: " + fxmlPath + " — " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
@@ -494,7 +493,6 @@ public class HomeGfxController {
             }
         } catch (Exception e) {
             LOGGER.severe("Cannot load content fragment: " + fxmlPath + " — " + e.getMessage());
-            e.printStackTrace();
         }
     }
 

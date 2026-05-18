@@ -41,6 +41,7 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +60,9 @@ public class StudentContentController {
     private static final Logger LOGGER =
             Logger.getLogger(StudentContentController.class.getName());
     private static final String EMPTY_LESSON_STYLE = "-fx-text-fill:#9CA3AF;-fx-font-size:15px;";
-    private static final String BOOK_BTN           = "BOOK_BTN";
+    private static final String BOOK_BTN           = "book-btn";
+
+    private final Map<String, Label> tutorRatingLabels = new HashMap<>();
 
     // ----------------------------------------------------------------
     // FXML – Welcome
@@ -348,6 +351,7 @@ public class StudentContentController {
                 : "No reviews yet";
         Label ratingLabel = new Label(ratingText);
         ratingLabel.getStyleClass().add("tutor-rating");
+        tutorRatingLabels.put(tutor.getUsername(), ratingLabel);
         ratingRow.getChildren().addAll(star, ratingLabel);
 
         Label price = new Label("From €30/h");
@@ -558,6 +562,15 @@ public class StudentContentController {
                 reviewBtn.getStyleClass().add("lesson-reviewed-btn");
                 reviewBtn.setDisable(true);
                 reviewBtn.setOnAction(null);
+
+                Tutor t = booking.getLesson().getExpertise().getTutor();
+                Label lbl = tutorRatingLabels.get(t.getUsername());
+                if (lbl != null) {
+                    String updated = t.getRating() != null
+                            ? String.format("%.1f (%d reviews)", t.getRating(), t.getRatingCount())
+                            : "No reviews yet";
+                    lbl.setText(updated);
+                }
             });
 
             Parent parentRoot = reviewBtn.getScene().getRoot();

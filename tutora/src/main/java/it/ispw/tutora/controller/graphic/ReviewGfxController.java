@@ -1,9 +1,12 @@
 package it.ispw.tutora.controller.graphic;
 
+import it.ispw.tutora.dao.NotificationDao;
 import it.ispw.tutora.dao.ReviewDao;
 import it.ispw.tutora.dao.factory.DaoFactory;
+import it.ispw.tutora.enums.NotificationType;
 import it.ispw.tutora.exception.DuplicateReviewException;
 import it.ispw.tutora.model.Booking;
+import it.ispw.tutora.model.Notification;
 import it.ispw.tutora.model.Review;
 import it.ispw.tutora.model.Student;
 import it.ispw.tutora.model.Tutor;
@@ -125,6 +128,23 @@ public class ReviewGfxController {
             protected Void call() throws Exception {
                 ReviewDao dao = DaoFactory.getInstance().createReviewDao();
                 dao.insertReview(DaoFactory.getInstance().getConnection(), review);
+
+                String comment = review.getComment();
+                String truncated = (comment != null && comment.length() > 60)
+                        ? comment.substring(0, 60) + "…" : comment;
+                String preview = (comment != null && !comment.isBlank())
+                        ? " — \"" + truncated + "\"" : "";
+                Notification notify = new Notification.Builder()
+                        .recipientUsername(tutor.getUsername())
+                        .senderUsername(student.getUsername())
+                        .message(student.getUsername() + " left you a "
+                                + selectedRating + "★ review" + preview)
+                        .type(NotificationType.NEW_REVIEW)
+                        .targetId(booking.getId())
+                        .timestamp(LocalDateTime.now())
+                        .build();
+                NotificationDao notifDao = DaoFactory.getInstance().createNotificationDao();
+                notifDao.insert(DaoFactory.getInstance().getConnection(), notify);
                 return null;
             }
         };
@@ -137,6 +157,9 @@ public class ReviewGfxController {
             submitBtn.setVisible(false);
             submitBtn.setManaged(false);
             cancelBtn.setText("Close");
+            cancelBtn.getStyleClass().setAll("review-close-btn");
+            cancelBtn.setVisible(true);
+            cancelBtn.setManaged(true);
             cancelBtn.setDisable(false);
             successSubLabel.setText(
                     "Thank you! Your review for " + tutor.getFullName() + " has been saved.");

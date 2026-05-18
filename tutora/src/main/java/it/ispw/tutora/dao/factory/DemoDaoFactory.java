@@ -10,6 +10,7 @@ import it.ispw.tutora.enums.Status;
 import it.ispw.tutora.exception.DatabaseException;
 import it.ispw.tutora.exception.DuplicateApplicationException;
 import it.ispw.tutora.exception.DuplicateLessonException;
+import it.ispw.tutora.exception.DuplicateReviewException;
 import it.ispw.tutora.exception.DuplicateTutorExpertiseException;
 import it.ispw.tutora.exception.DuplicateUserException;
 import it.ispw.tutora.model.*;
@@ -75,6 +76,10 @@ public class DemoDaoFactory extends DaoFactory {
     private Category photographyCategory;
     private Category sportCategory;
 
+    // References kept for cross-populate use (e.g. seeding reviews)
+    private Tutor   tutorVitto;
+    private Student studentLuigi;
+
     // ----------------------------------------------------------------
     // Istanze condivise dei DAO demo
     // ----------------------------------------------------------------
@@ -115,8 +120,10 @@ public class DemoDaoFactory extends DaoFactory {
             int[] availableIds = populateLessonsAndBookings(); // cattura gli id assegnati da nextId
             populateNotifications(availableIds);              // usa gli id reali, zero hardcoding
             populateMessages();
+            populateReviews();
         } catch (DatabaseException | DuplicateUserException | DuplicateApplicationException
-                 | DuplicateTutorExpertiseException | DuplicateLessonException e) {
+                 | DuplicateTutorExpertiseException | DuplicateLessonException
+                 | DuplicateReviewException e) {
             throw new IllegalStateException("Failed to populate demo data", e);
         }
     }
@@ -208,7 +215,7 @@ public class DemoDaoFactory extends DaoFactory {
         userDao.insert(null, admin);
 
         // Student: studentDao.insert() scrive in entrambe le cache (userDao + studentDao)
-        Student student = new Student.Builder()
+        studentLuigi = new Student.Builder()
                 .username(USER_STUDENT)
                 .email("luigi.verdi@tutora.it")
                 .name("Luigi")
@@ -219,10 +226,10 @@ public class DemoDaoFactory extends DaoFactory {
                 .createdAt(LocalDateTime.now())
                 .budget(new BigDecimal("200.00"))
                 .build();
-        studentDao.insert(null, student);
+        studentDao.insert(null, studentLuigi);
 
         // Tutor: in userDao (per il login) + tutorDao (per operazioni tutor-specific)
-        Tutor tutor = new Tutor.Builder()
+        tutorVitto = new Tutor.Builder()
                 .username(USER_TUTOR)
                 .email("vitto.iozzia@tutora.it")
                 .name("Vittorio")
@@ -234,8 +241,8 @@ public class DemoDaoFactory extends DaoFactory {
                 .rating(new BigDecimal("4.8"))
                 .ratingCount(24)
                 .build();
-        userDao.insert(null, tutor);
-        tutorDao.insert(null, tutor);
+        userDao.insert(null, tutorVitto);
+        tutorDao.insert(null, tutorVitto);
 
         Tutor marco = new Tutor.Builder()
                 .username(USER_TUTOR_MARCO)
@@ -578,7 +585,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .type(NotificationType.LESSON_BOOKED)
                 .targetId(availSaxId)
                 .timestamp(LocalDateTime.now().minusHours(1))
-                .read(false)
+                .read(true)
                 .build();
         notificationDao.insert(null, tutorNotif);
 
@@ -601,28 +608,58 @@ public class DemoDaoFactory extends DaoFactory {
 
         messageDao.insert(null, new Message.Builder()
                 .senderUsername(USER_STUDENT).recipientUsername(USER_TUTOR)
-                .content("Ciao! Non vedo l'ora della nostra lezione di Guitar della prossima settimana.")
-                .sentAt(base).build());
+                .content("Hey! I can't wait for our Guitar lesson next week.")
+                .sentAt(base).read(true).build());
 
         messageDao.insert(null, new Message.Builder()
                 .senderUsername(USER_TUTOR).recipientUsername(USER_STUDENT)
-                .content("Ciao Luigi! Inizieremo con la scala di Do maggiore e gli accordi di base. Prepara la chitarra!")
-                .sentAt(base.plusMinutes(6)).build());
+                .content("Hey Luigi! We'll start with the C major scale and basic chords. Get your guitar ready!")
+                .sentAt(base.plusMinutes(6)).read(true).build());
 
         messageDao.insert(null, new Message.Builder()
                 .senderUsername(USER_STUDENT).recipientUsername(USER_TUTOR)
-                .content("Perfetto! Devo portare qualcosa di specifico?")
-                .sentAt(base.plusMinutes(14)).build());
+                .content("Perfect! Do I need to bring anything specific?")
+                .sentAt(base.plusMinutes(14)).read(true).build());
 
         messageDao.insert(null, new Message.Builder()
                 .senderUsername(USER_TUTOR).recipientUsername(USER_STUDENT)
-                .content("Solo la chitarra e un quaderno. Io porto gli spartiti. A martedì!")
-                .sentAt(base.plusMinutes(22)).build());
+                .content("Just your guitar and a notebook. I'll bring the sheet music. See you Tuesday!")
+                .sentAt(base.plusMinutes(22)).read(true).build());
 
+        // Luigi replied last — only this message is unread for the tutor
         messageDao.insert(null, new Message.Builder()
                 .senderUsername(USER_STUDENT).recipientUsername(USER_TUTOR)
-                .content("Ottimo, ci vediamo martedì allora. Grazie mille!")
-                .sentAt(base.plusMinutes(30)).build());
+                .content("Great, see you Tuesday then. Thanks a lot!")
+                .sentAt(base.plusMinutes(30)).read(false).build());
+    }
+
+    private void populateReviews() throws DatabaseException, DuplicateReviewException {
+        // Seed 24 historical reviews for tutorVitto so the pre-existing 4.8 / 24
+        // rating stays coherent when Luigi adds a new one via the UI.
+        // Ratings: 20×5 + 4×4 → avg 4.83 → displayed as 4.8
+        // Booking IDs start at 1000 to avoid any collision with real booking IDs.
+        LocalDateTime base = LocalDateTime.now().minusMonths(6);
+        int bookingId = 1000;
+        for (int i = 0; i < 20; i++) {
+            Booking stub = new Booking.Builder()
+                    .id(bookingId++)
+                    .pricePaid(new BigDecimal(PRICE_40))
+                    .paymentStatus(PaymentStatus.PAID)
+                    .build();
+            reviewDao.insertReview(null, new Review.Builder()
+                    .booking(stub).student(studentLuigi).tutor(tutorVitto)
+                    .rating(5).createdAt(base.plusDays(bookingId)).build());
+        }
+        for (int i = 0; i < 4; i++) {
+            Booking stub = new Booking.Builder()
+                    .id(bookingId++)
+                    .pricePaid(new BigDecimal(PRICE_40))
+                    .paymentStatus(PaymentStatus.PAID)
+                    .build();
+            reviewDao.insertReview(null, new Review.Builder()
+                    .booking(stub).student(studentLuigi).tutor(tutorVitto)
+                    .rating(4).createdAt(base.plusDays(bookingId)).build());
+        }
     }
 
     // ----------------------------------------------------------------

@@ -60,7 +60,8 @@
         <padding><Insets top="14" right="20" bottom="14" left="20"/></padding>
         <HBox spacing="10" alignment="CENTER_RIGHT">
             <Button fx:id="cancelBtn" onAction="#handleClose"
-                    styleClass="profile-cancel-btn" text="Cancel"/>
+                    styleClass="profile-cancel-btn" text="Close"
+                    visible="false" managed="false"/>
             <Button fx:id="submitBtn" onAction="#handleSubmit"
                     styleClass="app-submit-btn" text="Submit Review" prefWidth="160"/>
         </HBox>

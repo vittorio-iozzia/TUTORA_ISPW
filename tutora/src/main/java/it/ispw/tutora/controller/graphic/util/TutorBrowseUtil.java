@@ -26,16 +26,44 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+import it.ispw.tutora.view.AvatarManager;
+
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+
+// ── Photo URL registry ────────────────────────────────────────────────────────
+// Single source of truth for per-username Unsplash portraits.
+// All controllers (cards, chat, profile) derive their URLs from here so that
+// the same person always maps to the same face.
 
 /**
  * Utility condivisa tra {@link it.ispw.tutora.controller.graphic.FindTutorGfxController}
  * e {@link it.ispw.tutora.controller.graphic.StudentContentController}.
  */
 public final class TutorBrowseUtil {
+
+    /** Per-username Unsplash portrait, sized for profile hero (88 px diameter). */
+    public static final Map<String, String> PROFILE_PHOTO_URLS = Map.of(
+        "tutor_vitto", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=88&h=88&fit=crop&crop=faces",
+        "tutor_marco", "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=88&h=88&fit=crop&crop=faces",
+        "tutor_sara",  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=88&h=88&fit=crop&crop=faces",
+        "tutor_luca",  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=88&h=88&fit=crop&crop=faces"
+    );
+
+    /**
+     * Returns the best image URL for a profile avatar:
+     * 1. AvatarManager file path (user-uploaded) → converted to file:// URI
+     * 2. Per-username Unsplash portrait from PROFILE_PHOTO_URLS
+     * 3. null → caller should fall back to the initial letter
+     */
+    public static String resolveProfileImageUrl(String username) {
+        if (AvatarManager.hasAvatar(username))
+            return new File(AvatarManager.getAvatarPath(username)).toURI().toString();
+        return PROFILE_PHOTO_URLS.get(username);
+    }
 
     private TutorBrowseUtil() {}
 
@@ -107,8 +135,12 @@ public final class TutorBrowseUtil {
 
         pane.getChildren().addAll(featured, mode);
 
-        String photoUrl = photoUrls.getOrDefault(
-                tutor.getUsername(), pool.get(poolIndex % pool.size()));
+        String photoUrl;
+        if (AvatarManager.hasAvatar(tutor.getUsername())) {
+            photoUrl = new File(AvatarManager.getAvatarPath(tutor.getUsername())).toURI().toString();
+        } else {
+            photoUrl = photoUrls.getOrDefault(tutor.getUsername(), pool.get(poolIndex % pool.size()));
+        }
         Image img = new Image(photoUrl, width + 20, 200, false, true, true);
         img.progressProperty().addListener((obs, oldV, newV) -> {
             if (newV.doubleValue() >= 1.0 && !img.isError()) imgView.setImage(img);

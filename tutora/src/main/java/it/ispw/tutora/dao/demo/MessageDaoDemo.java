@@ -35,7 +35,7 @@ public class MessageDaoDemo implements MessageDao {
                 .recipientUsername(message.getRecipientUsername())
                 .content(message.getContent())
                 .sentAt(message.getSentAt())
-                .read(false)
+                .read(message.isRead())
                 .build());
         return id;
     }

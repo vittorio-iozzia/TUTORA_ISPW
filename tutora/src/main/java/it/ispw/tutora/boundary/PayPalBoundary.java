@@ -48,7 +48,7 @@ public class PayPalBoundary implements PaymentGateway {
     private static final Logger LOGGER = Logger.getLogger(
             PayPalBoundary.class.getName());
 
-    private static final long TIMEOUT_MINUTES = 10L;
+    private static final long TIMEOUT_MINUTES = 1L;
 
     // Adaptee — composizione come da pattern Adapter classico
     private final PayPalClient adaptee;

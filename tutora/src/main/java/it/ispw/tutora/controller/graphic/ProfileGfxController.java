@@ -1,5 +1,6 @@
 package it.ispw.tutora.controller.graphic;
 
+import it.ispw.tutora.controller.graphic.util.TutorBrowseUtil;
 import it.ispw.tutora.model.User;
 import it.ispw.tutora.view.AvatarManager;
 import javafx.animation.*;
@@ -111,14 +112,12 @@ public abstract class ProfileGfxController {
     // ----------------------------------------------------------------
 
     protected void applyStoredAvatar() {
-        if (AvatarManager.hasAvatar(username)) {
-            displayAvatar(AvatarManager.getAvatarPath(username));
-        }
+        String url = TutorBrowseUtil.resolveProfileImageUrl(username);
+        if (url != null) displayAvatar(url);
     }
 
-    protected void displayAvatar(String filePath) {
-        String uri = new File(filePath).toURI().toString();
-        Image img = new Image(uri, 88, 88, false, true);
+    protected void displayAvatar(String url) {
+        Image img = new Image(url, 88, 88, false, true);
         heroAvatarImage.setImage(img);
         Circle clip = new Circle(44, 44, 44);
         heroAvatarImage.setClip(clip);
@@ -153,7 +152,7 @@ public abstract class ProfileGfxController {
         if (file != null) {
             String path = file.getAbsolutePath();
             AvatarManager.setAvatarPath(username, path);
-            displayAvatar(path);
+            displayAvatar(new File(path).toURI().toString());
         }
     }
 

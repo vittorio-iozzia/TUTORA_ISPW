@@ -35,7 +35,7 @@ public class PayPalClient {
     private static final Logger LOGGER = Logger.getLogger(
             PayPalClient.class.getName());
 
-    private static final long MAX_SIMULATED_RESPONSE_MS = 900_000L;
+    private static final long MAX_SIMULATED_RESPONSE_MS = 60_000L;
     private static final double DECLINED_PROBABILITY = 0.10;
     private static final double ERROR_PROBABILITY    = 0.05;
 

@@ -1313,28 +1313,30 @@
     -fx-font-family: "Segoe UI";
     -fx-padding: 6 14;
     -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(39,174,96,0.40), 10, 0, 0, 3);
 }
 
 .accept-btn:hover {
     -fx-background-color: #1E8449;
+    -fx-effect: dropshadow(gaussian, rgba(39,174,96,0.55), 14, 0, 0, 4);
 }
 
 .decline-btn {
-    -fx-background-color: transparent;
+    -fx-background-color: #E74C3C;
     -fx-background-radius: 7;
-    -fx-border-color: #E74C3C;
-    -fx-border-radius: 7;
-    -fx-border-width: 1;
-    -fx-text-fill: #E74C3C;
+    -fx-border-width: 0;
+    -fx-text-fill: white;
     -fx-font-size: 12px;
     -fx-font-weight: 600;
     -fx-font-family: "Segoe UI";
     -fx-padding: 6 14;
     -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(231,76,60,0.40), 10, 0, 0, 3);
 }
 
 .decline-btn:hover {
-    -fx-background-color: #FEE2E2;
+    -fx-background-color: #C0392B;
+    -fx-effect: dropshadow(gaussian, rgba(231,76,60,0.55), 14, 0, 0, 4);
 }
 
 /* ================================================================
@@ -2090,10 +2092,12 @@
     -fx-font-family: "Segoe UI";
     -fx-padding: 9 22;
     -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(39,174,96,0.40), 10, 0, 0, 3);
 }
 
 .admin-approve-btn:hover {
     -fx-background-color: #1E8449;
+    -fx-effect: dropshadow(gaussian, rgba(39,174,96,0.55), 14, 0, 0, 4);
 }
 
 .admin-approve-btn:disabled {
@@ -2780,7 +2784,7 @@
 
 /* ── Contact avatar ── */
 .chat-contact-avatar {
-    -fx-background-color: #D1FAE5;
+    -fx-background-color: #2A5C45;
     -fx-background-radius: 50;
     -fx-min-width: 40;
     -fx-min-height: 40;
@@ -2792,7 +2796,7 @@
     -fx-font-size: 16px;
     -fx-font-weight: 700;
     -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
-    -fx-text-fill: #2A5C45;
+    -fx-text-fill: white;
 }
 
 .chat-contact-name {
@@ -3256,13 +3260,41 @@
 
 /* ── Star rating (review dialog) ── */
 .review-star {
-    -fx-font-size: 30px;
+    -fx-font-size: 38px;
     -fx-cursor: hand;
-    -fx-padding: 0 3;
+    -fx-padding: 0 4;
     -fx-background-color: transparent;
 }
 .review-star-on  { -fx-text-fill: #F59E0B; }
 .review-star-off { -fx-text-fill: #D1D5DB; }
+
+/* ── Close button after successful review submission ── */
+.review-close-btn {
+    -fx-background-color: #2A5C45;
+    -fx-background-radius: 10;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", sans-serif;
+    -fx-padding: 12 32;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(42,92,69,0.45), 12, 0, 0, 4);
+}
+.review-close-btn:hover {
+    -fx-background-color: #1E4433;
+    -fx-effect: dropshadow(gaussian, rgba(42,92,69,0.60), 16, 0, 0, 5);
+}
+
+/* ── Larger labels inside review/application dialogs ── */
+.app-dialog-form .profile-field-label {
+    -fx-font-size: 14px;
+}
+.app-dialog-form .app-header-title {
+    -fx-font-size: 22px;
+}
+.app-dialog-form .app-header-subtitle {
+    -fx-font-size: 15px;
+}
 
 /* ── Budget edit field (student profile) ── */
 .profile-budget-field {
@@ -3284,33 +3316,33 @@
 
 /* ── Budget confirm / cancel icon buttons ── */
 .budget-icon-btn {
-    -fx-background-radius: 7;
-    -fx-border-radius: 7;
-    -fx-border-width: 1.5;
     -fx-min-width: 28;
     -fx-min-height: 28;
     -fx-max-width: 28;
     -fx-max-height: 28;
     -fx-cursor: hand;
 }
-.budget-confirm-btn {
-    -fx-background-color: #E8F5EC;
-    -fx-border-color: #A7D4B5;
+/* specificità 3 classi → batte qualsiasi regola a 1 classe di modena */
+.button.budget-icon-btn.budget-confirm-btn {
+    -fx-background-color: #2A5C45;
+    -fx-background-insets: 0;
+    -fx-background-radius: 8;
+    -fx-border-width: 0;
 }
-.budget-confirm-btn:hover {
-    -fx-background-color: #C8E8D4;
-    -fx-border-color: #2A5C45;
+.button.budget-icon-btn.budget-confirm-btn:hover {
+    -fx-background-color: #1E4433;
 }
-.budget-confirm-icon { -fx-fill: #2A5C45; -fx-icon-color: #2A5C45; }
-.budget-cancel-btn {
-    -fx-background-color: #FEF2F2;
-    -fx-border-color: #FECACA;
+.budget-confirm-icon { -fx-fill: white; -fx-icon-color: white; }
+.button.budget-icon-btn.budget-cancel-btn {
+    -fx-background-color: #DC2626;
+    -fx-background-insets: 0;
+    -fx-background-radius: 8;
+    -fx-border-width: 0;
 }
-.budget-cancel-btn:hover {
-    -fx-background-color: #FEE2E2;
-    -fx-border-color: #EF4444;
+.button.budget-icon-btn.budget-cancel-btn:hover {
+    -fx-background-color: #B91C1C;
 }
-.budget-cancel-icon { -fx-fill: #DC2626; -fx-icon-color: #DC2626; }
+.budget-cancel-icon { -fx-fill: white; -fx-icon-color: white; }
 
 /* ── "Reviewed" disabled button on lesson card ── */
 .lesson-reviewed-btn {

@@ -227,11 +227,13 @@
                                       visible="false" managed="false">
                                     <TextField fx:id="budgetField" styleClass="profile-budget-field"
                                                promptText="e.g. 150.00" prefWidth="95"/>
-                                    <Button onAction="#handleSaveBudget" styleClass="budget-icon-btn budget-confirm-btn">
-                                        <graphic><FontIcon iconLiteral="fas-check" iconSize="12" styleClass="budget-confirm-icon"/></graphic>
-                                    </Button>
-                                    <Button onAction="#handleCancelBudget" styleClass="budget-icon-btn budget-cancel-btn">
+                                    <Button onAction="#handleCancelBudget"
+                                            style="-fx-background-color:#DC2626; -fx-background-insets:0; -fx-background-radius:8; -fx-border-width:0; -fx-padding:6; -fx-cursor:hand; -fx-min-width:28; -fx-min-height:28; -fx-max-width:28; -fx-max-height:28;">
                                         <graphic><FontIcon iconLiteral="fas-times" iconSize="12" styleClass="budget-cancel-icon"/></graphic>
+                                    </Button>
+                                    <Button onAction="#handleSaveBudget"
+                                            style="-fx-background-color:#2A5C45; -fx-background-insets:0; -fx-background-radius:8; -fx-border-width:0; -fx-padding:6; -fx-cursor:hand; -fx-min-width:28; -fx-min-height:28; -fx-max-width:28; -fx-max-height:28;">
+                                        <graphic><FontIcon iconLiteral="fas-check" iconSize="12" styleClass="budget-confirm-icon"/></graphic>
                                     </Button>
                                 </HBox>
                             </VBox>

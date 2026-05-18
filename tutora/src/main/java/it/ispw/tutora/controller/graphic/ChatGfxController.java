@@ -9,7 +9,10 @@ import it.ispw.tutora.model.Message;
 import it.ispw.tutora.model.User;
 import it.ispw.tutora.model.session.Session;
 import it.ispw.tutora.model.session.SessionManager;
+import it.ispw.tutora.view.AvatarManager;
 import it.ispw.tutora.view.SceneManager;
+
+import java.io.File;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -48,14 +51,6 @@ public class ChatGfxController {
     private static final Map<String, String> PHOTO_URLS = Map.of(
         "tutor_vitto",
         "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&h=120&fit=crop&crop=faces"
-    );
-
-    // Fallback pool for usernames not in PHOTO_URLS
-    private static final List<String> PORTRAIT_POOL = List.of(
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop&crop=faces",
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&h=120&fit=crop&crop=faces",
-        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&h=120&fit=crop&crop=faces",
-        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&h=120&fit=crop&crop=faces"
     );
 
     // ----------------------------------------------------------------
@@ -254,26 +249,33 @@ public class ChatGfxController {
 
         avatar.getChildren().add(imgView);
 
-        // Prefer the per-username photo; fall back to pool
-        String url = PHOTO_URLS.containsKey(username)
-                ? PHOTO_URLS.get(username)
-                : PORTRAIT_POOL.get(contactIndexMap.getOrDefault(username, 0) % PORTRAIT_POOL.size());
+        // Load photo only if the user has set one or has a dedicated URL — never use pool for real users
+        String url = null;
+        if (AvatarManager.hasAvatar(username)) {
+            url = new File(AvatarManager.getAvatarPath(username)).toURI().toString();
+        } else if (PHOTO_URLS.containsKey(username)) {
+            url = PHOTO_URLS.get(username);
+        }
 
-        Image img = new Image(url, size, size, false, true, true);
-        img.progressProperty().addListener((obs, oldV, newV) -> {
-            if (newV.doubleValue() >= 1.0 && !img.isError()) {
-                imgView.setImage(img);
-                imgView.setVisible(true);
-            }
-        });
+        if (url != null) {
+            Image img = new Image(url, size, size, false, true, true);
+            img.progressProperty().addListener((obs, oldV, newV) -> {
+                if (newV.doubleValue() >= 1.0 && !img.isError()) {
+                    imgView.setImage(img);
+                    imgView.setVisible(true);
+                }
+            });
+        }
 
         return avatar;
     }
 
     private String resolvePhotoUrl(String username) {
-        if (PHOTO_URLS.containsKey(username)) return PHOTO_URLS.get(username);
-        int idx = contactIndexMap.getOrDefault(username, 0) % PORTRAIT_POOL.size();
-        return PORTRAIT_POOL.get(idx);
+        if (AvatarManager.hasAvatar(username))
+            return new File(AvatarManager.getAvatarPath(username)).toURI().toString();
+        if (PHOTO_URLS.containsKey(username))
+            return PHOTO_URLS.get(username);
+        return null;
     }
 
     // ----------------------------------------------------------------
@@ -294,15 +296,18 @@ public class ChatGfxController {
 
         // Reload header avatar photo (use same URL logic as the contact list)
         chatHeaderImageView.setVisible(false);
+        chatHeaderInitial.setVisible(true);
         String url = resolvePhotoUrl(username);
-        Image img = new Image(url, 44, 44, false, true, true);
-        img.progressProperty().addListener((obs, oldV, newV) -> {
-            if (newV.doubleValue() >= 1.0 && !img.isError()) {
-                chatHeaderImageView.setImage(img);
-                chatHeaderImageView.setVisible(true);
-                chatHeaderInitial.setVisible(false);
-            }
-        });
+        if (url != null) {
+            Image img = new Image(url, 44, 44, false, true, true);
+            img.progressProperty().addListener((obs, oldV, newV) -> {
+                if (newV.doubleValue() >= 1.0 && !img.isError()) {
+                    chatHeaderImageView.setImage(img);
+                    chatHeaderImageView.setVisible(true);
+                    chatHeaderInitial.setVisible(false);
+                }
+            });
+        }
 
         // Clip header image to circle
         Rectangle clip = new Rectangle(44, 44);
