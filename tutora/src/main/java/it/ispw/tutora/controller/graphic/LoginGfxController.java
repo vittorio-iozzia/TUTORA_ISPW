@@ -8,13 +8,15 @@ import it.ispw.tutora.exception.DatabaseException;
 import it.ispw.tutora.model.session.Session;
 import it.ispw.tutora.model.session.SessionManager;
 import it.ispw.tutora.view.SceneManager;
-import javafx.animation.FadeTransition;
+import javafx.animation.*;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 public class LoginGfxController extends AuthGfxController {
@@ -28,6 +30,8 @@ public class LoginGfxController extends AuthGfxController {
     @FXML private TextField    usernameField;
     @FXML private PasswordField passwordField;
     @FXML private Button       loginButton;
+
+    private static final Set<String> promotionAcknowledged = new HashSet<>();
 
     private final LoginController       loginController       = new LoginController();
     private final SocialLoginController socialLoginController = new SocialLoginController();
@@ -59,11 +63,32 @@ public class LoginGfxController extends AuthGfxController {
             return;
         }
 
+        Toggle selected = roleGroup.getSelectedToggle();
+        if (selected == null) {
+            showError("Please select a role to continue.");
+            return;
+        }
+
         hideError();
 
         LoginBean bean = new LoginBean(username, password);
         try {
             String token = loginController.login(bean);
+            Session session = SessionManager.getInstance().getSession(token);
+
+            if (selected == studentTab && session.isTutor()) {
+                handlePromotedStudent(username, token);
+                return;
+            }
+
+            boolean roleMatch = (selected == studentTab && session.isStudent())
+                    || (selected == tutorTab && session.isTutor())
+                    || (selected == adminTab && session.isAdmin());
+            if (!roleMatch) {
+                showError("The selected role does not match your account.");
+                return;
+            }
+
             SceneManager.getInstance().setSessionToken(token);
             navigateByRole(token);
         } catch (AuthenticationException e) {
@@ -73,6 +98,16 @@ public class LoginGfxController extends AuthGfxController {
         } catch (DatabaseException e) {
             showError("Service unavailable. Please try again later.");
         }
+    }
+
+    private void handlePromotedStudent(String username, String token) {
+        if (promotionAcknowledged.contains(username)) {
+            showError("Your account has been upgraded. Please select the \"Tutor\" role.");
+            return;
+        }
+        promotionAcknowledged.add(username);
+        SceneManager.getInstance().setSessionToken(token);
+        navigateByRole(token);
     }
 
     @FXML
