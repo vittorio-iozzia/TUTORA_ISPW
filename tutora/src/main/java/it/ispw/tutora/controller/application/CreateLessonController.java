@@ -74,7 +74,7 @@ public class CreateLessonController {
             lessonDao.insertLesson(conn, lesson);
 
         } catch (DuplicateLessonException e) {
-            bean.setErrorMessage("Hai già una lezione in questo orario.");
+            bean.setErrorMessage("You already have a lesson scheduled in this time slot.");
         } catch (DatabaseException | SQLException e) {
             bean.setErrorMessage("Errore durante la creazione della lezione.");
         } catch (IllegalArgumentException e) {

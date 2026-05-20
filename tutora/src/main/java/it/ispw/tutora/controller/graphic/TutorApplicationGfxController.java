@@ -315,6 +315,12 @@ public class TutorApplicationGfxController extends DialogGfxController {
         t.start();
     }
 
+    @Override
+    protected void showSuccess() {
+        super.showSuccess();
+        HomeGfxController.refreshBadgeStatic();
+    }
+
     @FXML
     private void handleClose() {
         ((Stage) successPane.getScene().getWindow()).close();

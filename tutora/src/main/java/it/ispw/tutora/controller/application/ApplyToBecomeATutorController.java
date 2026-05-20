@@ -182,6 +182,8 @@ public class ApplyToBecomeATutorController {
             }
             sendNotificationToAdmin(conn, notifDao, studentUsername,
                     applicationId, bean.getCategoryName());
+            sendApplicationReceivedNotificationToStudent(conn, notifDao, studentUsername,
+                    applicationId, bean.getCategoryName());
             if (conn != null) conn.commit();
             return applicationId;
         } catch (DuplicateApplicationException | DatabaseException e) {
@@ -545,6 +547,28 @@ public class ApplyToBecomeATutorController {
                 .message("New tutor application from '"
                         + studentUsername + "' for category '"
                         + categoryName + "'.")
+                .type(NotificationType.APPLICATION_UPDATE)
+                .targetId(applicationId)
+                .timestamp(LocalDateTime.now())
+                .read(false)
+                .build();
+
+        notifDao.insert(conn, notification);
+    }
+
+    private void sendApplicationReceivedNotificationToStudent(Connection conn,
+                                                               NotificationDao notifDao,
+                                                               String studentUsername,
+                                                               int applicationId,
+                                                               String categoryName)
+            throws DatabaseException {
+
+        Notification notification = new Notification.Builder()
+                .id(0)
+                .recipientUsername(studentUsername)
+                .senderUsername("admin")
+                .message("Application update: your application for '"
+                        + categoryName + "' has been received and is under review.")
                 .type(NotificationType.APPLICATION_UPDATE)
                 .targetId(applicationId)
                 .timestamp(LocalDateTime.now())

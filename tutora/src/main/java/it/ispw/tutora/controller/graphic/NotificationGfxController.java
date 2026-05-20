@@ -103,7 +103,7 @@ public class NotificationGfxController {
     public void initialize() {
         token   = SceneManager.getInstance().getSessionToken();
         session = SessionManager.getInstance().getSession(token);
-        setupIconBox(headerIconWrap, headerIconView, "1f514", 22); // 🔔 bell
+        setupIconBox(headerIconWrap, headerIconView, "1f514", 22);
         applyRoundedClip(dialogRoot);
         reload();
     }
