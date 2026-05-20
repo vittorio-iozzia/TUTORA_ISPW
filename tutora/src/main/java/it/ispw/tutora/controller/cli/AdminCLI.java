@@ -19,12 +19,12 @@ import static it.ispw.tutora.controller.cli.CLIUtils.*;
 /**
  * Menu principale per il ruolo ADMIN.
  *
- * Funzionalità disponibili:
+ * Funzionalita' disponibili:
  *  - Candidature tutor in attesa (elenco + approva/rifiuta)
  *  - Notifiche
  *  - Logout
  */
-@SuppressWarnings("java:S106") // System.out è intenzionale: classe boundary della CLI
+@SuppressWarnings("java:S106") // System.out e' intenzionale: classe boundary della CLI
 public class AdminCLI {
 
     private static final DateTimeFormatter DT_FMT =
@@ -107,7 +107,7 @@ public class AdminCLI {
                     YELLOW + BOLD, i + 1, RESET,
                     BOLD + app.getStudentUsername() + RESET,
                     CYAN, app.getCategoryName(), RESET,
-                    app.getCreationDate() != null ? app.getCreationDate().format(DT_FMT) : "—");
+                    app.getCreationDate() != null ? app.getCreationDate().format(DT_FMT) : "-");
         }
 
         System.out.println();
@@ -131,14 +131,14 @@ public class AdminCLI {
         field("Categoria:",  app.getCategoryName());
         field("Stato:",      YELLOW + app.getStatus().toString() + RESET);
         field("Inviata il:", app.getCreationDate() != null
-                ? app.getCreationDate().format(DT_FMT) : "—");
+                ? app.getCreationDate().format(DT_FMT) : "-");
         if (app.getAdminNotes() != null && !app.getAdminNotes().isBlank()) {
             System.out.println();
             System.out.println("  " + BOLD + "Note admin:" + RESET);
             System.out.println("  " + DIM + app.getAdminNotes() + RESET);
         }
         System.out.println();
-        info("Per approvare o rifiutare usa la sezione Notifiche (più completa).");
+        info("Per approvare o rifiutare usa la sezione Notifiche (piu' completa).");
         pressEnter(sc);
     }
 

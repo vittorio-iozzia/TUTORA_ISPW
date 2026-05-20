@@ -17,17 +17,30 @@ import static it.ispw.tutora.controller.cli.CLIUtils.*;
  *  3. Al logout ripresenta la schermata di autenticazione
  *  4. Se l'utente sceglie "Esci" il programma termina
  */
-@SuppressWarnings("java:S106") // System.out è intenzionale: classe boundary della CLI
+@SuppressWarnings("java:S106") // System.out e' intenzionale: classe boundary della CLI
 public class CLIRunner {
 
-    private final Scanner     sc       = new Scanner(System.in);
-    private final LoginCLI    loginCLI = new LoginCLI();
+    private final Scanner     sc;
+    private final LoginCLI    loginCLI   = new LoginCLI();
     private final StudentCLI  studentCLI = new StudentCLI();
     private final TutorCLI    tutorCLI   = new TutorCLI();
     private final AdminCLI    adminCLI   = new AdminCLI();
 
-    /** Avvia il loop principale. Blocca finché l'utente non esce. */
+    /**
+     * Accetta lo Scanner gia' aperto su System.in.
+     * Usare sempre lo stesso Scanner evita il problema dei buffer multipli.
+     */
+    public CLIRunner(Scanner sc) {
+        this.sc = sc;
+    }
+
+    /** Avvia il loop principale. Blocca finche' l'utente non esce. */
     public void run() {
+        // Svuota eventuali byte rimasti in stdin (newline extra iniettato da Maven
+        // o dal prompt interattivo del Launcher) per evitare il doppio INVIO.
+        try {
+            while (System.in.available() > 0) System.in.read();
+        } catch (Exception ignored) { /* non critico */ }
         while (true) {
             String token = loginCLI.show(sc);
 

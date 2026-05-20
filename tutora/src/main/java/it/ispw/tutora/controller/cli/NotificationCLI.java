@@ -26,7 +26,7 @@ import static it.ispw.tutora.controller.cli.CLIUtils.*;
  *  - Tutor    : Accetta / Rifiuta richiesta di prenotazione
  *  - Admin    : Approva / Rifiuta candidatura tutor
  */
-@SuppressWarnings("java:S106") // System.out è intenzionale: classe boundary della CLI
+@SuppressWarnings("java:S106") // System.out e' intenzionale: classe boundary della CLI
 public class NotificationCLI {
 
     private static final DateTimeFormatter FMT =
@@ -103,7 +103,7 @@ public class NotificationCLI {
         System.out.println(INDENT + DIM + n.getMessage() + RESET);
         System.out.println(INDENT + DIM + n.getTimestamp().format(FMT) + RESET);
         if (isActionable(n, session)) {
-            System.out.println(INDENT + YELLOW + "→ Azione disponibile" + RESET);
+            System.out.println(INDENT + YELLOW + "-> Azione disponibile" + RESET);
         }
         System.out.println();
     }
@@ -142,7 +142,7 @@ public class NotificationCLI {
 
     // ---- Studente: paga lezione accettata ----
     private void handleStudentAction(Scanner sc, String token, Notification notif) {
-        warn("Per confermare la prenotazione è richiesto il pagamento.");
+        warn("Per confermare la prenotazione e' richiesto il pagamento.");
         System.out.println();
         menuItem(1, "Paga ora (PayPal)");
         menuItem(0, LABEL_ANNULLA);
@@ -230,7 +230,7 @@ public class NotificationCLI {
     private String typeName(NotificationType t) {
         return switch (t) {
             case LESSON_BOOKED      -> "Nuova richiesta prenotazione";
-            case LESSON_ACCEPTED    -> "Lezione accettata — pagamento richiesto";
+            case LESSON_ACCEPTED    -> "Lezione accettata - pagamento richiesto";
             case LESSON_REJECTED    -> "Lezione rifiutata";
             case APPLICATION_UPDATE -> "Candidatura tutor";
             case EXPERTISE_OFFER    -> "Nuova expertise";

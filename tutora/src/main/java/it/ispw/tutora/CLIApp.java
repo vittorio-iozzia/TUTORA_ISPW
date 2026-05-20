@@ -3,6 +3,8 @@ package it.ispw.tutora;
 import it.ispw.tutora.controller.cli.CLIRunner;
 import it.ispw.tutora.dao.factory.DaoFactory;
 
+import java.util.Scanner;
+
 /**
  * Entry point per la modalità CLI di TUTORA.
  *
@@ -25,6 +27,6 @@ public class CLIApp {
         // (Demo / JSON / DB in base alla configurazione corrente)
         DaoFactory.getInstance();
 
-        new CLIRunner().run();
+        new CLIRunner(new Scanner(System.in)).run();
     }
 }

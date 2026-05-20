@@ -20,17 +20,17 @@ import static it.ispw.tutora.controller.cli.CLIUtils.*;
 /**
  * Schermata "Diventa tutor" per lo studente.
  * Guida l'utente nella compilazione e invio della candidatura:
- *  1. Scelta categoria  → pickCategory()
- *  2. Compilazione requisiti → collectItems()
- *  3. Conferma e invio → submitApplication()
+ *  1. Scelta categoria  -> pickCategory()
+ *  2. Compilazione requisiti -> collectItems()
+ *  3. Conferma e invio -> submitApplication()
  */
-@SuppressWarnings("java:S106") // System.out è intenzionale: classe boundary della CLI
+@SuppressWarnings("java:S106") // System.out e' intenzionale: classe boundary della CLI
 public class ApplyToBecomeATutorCLI {
 
     private final ApplyToBecomeATutorController ctrl = new ApplyToBecomeATutorController();
 
     // ----------------------------------------------------------------
-    // Entry point — orchestrazione dei 3 passi
+    // Entry point - orchestrazione dei 3 passi
     // ----------------------------------------------------------------
 
     public void show(Scanner sc, String token) {
@@ -51,7 +51,7 @@ public class ApplyToBecomeATutorCLI {
     }
 
     // ----------------------------------------------------------------
-    // Passo 1 — selezione categoria
+    // Passo 1 - selezione categoria
     // ----------------------------------------------------------------
 
     /** Mostra le categorie e restituisce il nome scelto, o null se l'utente annulla. */
@@ -89,7 +89,7 @@ public class ApplyToBecomeATutorCLI {
     }
 
     // ----------------------------------------------------------------
-    // Passo 2 — raccolta requisiti
+    // Passo 2 - raccolta requisiti
     // ----------------------------------------------------------------
 
     /** Raccoglie la risposta a ogni requisito. Restituisce lista vuota in caso di errore. */
@@ -102,7 +102,7 @@ public class ApplyToBecomeATutorCLI {
             pressEnter(sc);
             return List.of();
         }
-        printHeader("COMPILA CANDIDATURA — " + catName);
+        printHeader("COMPILA CANDIDATURA - " + catName);
         System.out.println();
         List<ApplicationItemBean> items = new ArrayList<>();
         for (RequirementBean req : requisiti) {
@@ -222,7 +222,7 @@ public class ApplyToBecomeATutorCLI {
     }
 
     // ----------------------------------------------------------------
-    // Passo 3 — conferma e invio
+    // Passo 3 - conferma e invio
     // ----------------------------------------------------------------
 
     private void submitApplication(Scanner sc, String token,
@@ -247,13 +247,13 @@ public class ApplyToBecomeATutorCLI {
         try {
             int id = ctrl.submitApplication(bean, token);
             success("Candidatura inviata con successo! ID: " + id);
-            info("L'admin esaminerà la tua candidatura e riceverai una notifica.");
+            info("L'admin esaminera' la tua candidatura e riceverai una notifica.");
         } catch (InvalidDocumentException e) {
             error("Documenti non validi: " + e.getMessage());
         } catch (DuplicateApplicationException e) {
-            error("Hai già una candidatura attiva per questa categoria.");
+            error("Hai gia' una candidatura attiva per questa categoria.");
         } catch (ValidationTimeoutException e) {
-            error("Timeout validazione. Riprova più tardi.");
+            error("Timeout validazione. Riprova piu' tardi.");
         } catch (ValidationServiceException e) {
             error("Servizio di validazione non disponibile: " + e.getMessage());
         } catch (AuthenticationException e) {

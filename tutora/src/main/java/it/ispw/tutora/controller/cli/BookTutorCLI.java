@@ -28,7 +28,7 @@ import static it.ispw.tutora.controller.cli.CLIUtils.*;
  *  3. Vedere le lezioni disponibili
  *  4. Richiedere una prenotazione
  */
-@SuppressWarnings("java:S106") // System.out è intenzionale: classe boundary della CLI
+@SuppressWarnings("java:S106") // System.out e' intenzionale: classe boundary della CLI
 public class BookTutorCLI {
 
     private static final DateTimeFormatter DT_FMT =
@@ -107,7 +107,7 @@ public class BookTutorCLI {
 
     private String buildRatingLabel(Tutor t) {
         if (t.getRating() != null && t.getRating().doubleValue() > 0) {
-            return String.format("%.1f ★ (%d rec.)", t.getRating().doubleValue(), t.getRatingCount());
+            return String.format("%.1f * (%d rec.)", t.getRating().doubleValue(), t.getRatingCount());
         }
         return "Nessuna recensione";
     }
@@ -124,7 +124,7 @@ public class BookTutorCLI {
         field("Email:",       tutor.getEmail());
         field("Stato:",       tutor.isActive() ? GREEN + "Attivo" + RESET : RED + "Inattivo" + RESET);
         if (tutor.getRating() != null && tutor.getRating().doubleValue() > 0) {
-            field("Rating:",  String.format("%.1f ★  (%d recensioni)",
+            field("Rating:",  String.format("%.1f *  (%d recensioni)",
                     tutor.getRating().doubleValue(), tutor.getRatingCount()));
         } else {
             field("Rating:",  "Nessuna recensione ancora");
@@ -153,8 +153,8 @@ public class BookTutorCLI {
         for (int i = 0; i < lezioni.size(); i++) {
             Lesson l = lezioni.get(i);
             String subcatName = (l.getExpertise() != null && l.getExpertise().getSubcategory() != null)
-                    ? l.getExpertise().getSubcategory().getName() : "—";
-            System.out.printf("  %s[%d]%s %-20s  %s – %s  %s  €%s%n",
+                    ? l.getExpertise().getSubcategory().getName() : "-";
+            System.out.printf("  %s[%d]%s %-20s  %s - %s  %s  EUR%s%n",
                     YELLOW + BOLD, i + 1, RESET,
                     BOLD + subcatName + RESET,
                     l.getStartTime().format(DT_FMT),
@@ -181,14 +181,14 @@ public class BookTutorCLI {
         printHeader("PRENOTA LEZIONE");
         System.out.println();
         String subcatName = (lezione.getExpertise() != null && lezione.getExpertise().getSubcategory() != null)
-                ? lezione.getExpertise().getSubcategory().getName() : "—";
+                ? lezione.getExpertise().getSubcategory().getName() : "-";
         field("Materia:",   subcatName);
         field("Inizio:",    lezione.getStartTime().format(DT_FMT));
         field("Fine:",      lezione.getEndTime().format(DT_FMT));
-        field("Modalità:",  lezione.isRemote() ? "Remoto" : "In presenza");
-        field("Prezzo:",    "€" + lezione.getListedPrice().toPlainString());
+        field("Modalita':",  lezione.isRemote() ? "Remoto" : "In presenza");
+        field("Prezzo:",    "EUR" + lezione.getListedPrice().toPlainString());
         System.out.println();
-        warn("Il pagamento sarà richiesto solo dopo che il tutor accetta la richiesta.");
+        warn("Il pagamento sara' richiesto solo dopo che il tutor accetta la richiesta.");
         System.out.println();
 
         if (!confirm(sc, "Inviare la richiesta di prenotazione?")) {
@@ -202,7 +202,7 @@ public class BookTutorCLI {
         bookCtrl.requestBooking(bean, token);
 
         if (bean.getErrorMessage() == null) {
-            success("Richiesta inviata! Il tutor riceverà una notifica.");
+            success("Richiesta inviata! Il tutor ricevera' una notifica.");
         } else {
             error("Impossibile prenotare: " + bean.getErrorMessage());
         }

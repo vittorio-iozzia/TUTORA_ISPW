@@ -12,7 +12,7 @@ import static it.ispw.tutora.controller.cli.CLIUtils.*;
 /**
  * Menu principale per il ruolo STUDENTE.
  *
- * Funzionalità disponibili:
+ * Funzionalita' disponibili:
  *  - Dashboard (riepilogo account)
  *  - Cerca tutor e prenota lezione
  *  - Le mie lezioni (storico prenotazioni)
@@ -21,7 +21,7 @@ import static it.ispw.tutora.controller.cli.CLIUtils.*;
  *  - Profilo
  *  - Logout
  */
-@SuppressWarnings("java:S106") // System.out è intenzionale: classe boundary della CLI
+@SuppressWarnings("java:S106") // System.out e' intenzionale: classe boundary della CLI
 public class StudentCLI {
 
     private final BookTutorCLI              bookTutorCLI = new BookTutorCLI();
@@ -46,7 +46,7 @@ public class StudentCLI {
             System.out.println("  Ciao, " + BOLD + student.getName() + " " + student.getSurname() + RESET + "!");
             System.out.println("  " + DIM + "@" + student.getUsername() + "  |  " + student.getEmail() + RESET);
             System.out.println("  Budget: " + BOLD + GREEN
-                    + (student.getBudget() != null ? "€" + student.getBudget().toPlainString() : "€0,00")
+                    + (student.getBudget() != null ? "EUR" + student.getBudget().toPlainString() : "EUR0,00")
                     + RESET);
             System.out.println();
             separator();
@@ -91,9 +91,9 @@ public class StudentCLI {
         field("Stato:",       student.isActive()
                 ? GREEN + "Attivo" + RESET : RED + "Inattivo" + RESET);
         field("Budget:",      student.getBudget() != null
-                ? "€" + student.getBudget().toPlainString() : "€0,00");
+                ? "EUR" + student.getBudget().toPlainString() : "EUR0,00");
         field("Membro dal:", student.getCreatedAt() != null
-                ? student.getCreatedAt().toLocalDate().toString() : "—");
+                ? student.getCreatedAt().toLocalDate().toString() : "-");
 
         if (student.getDescription() != null && !student.getDescription().isBlank()) {
             System.out.println();
@@ -105,14 +105,14 @@ public class StudentCLI {
             System.out.println();
             System.out.println("  " + BOLD + "Interessi:" + RESET);
             student.getInterests().forEach(cat ->
-                    System.out.println("  " + CYAN + "• " + cat.getName() + RESET));
+                    System.out.println("  " + CYAN + "- " + cat.getName() + RESET));
         }
 
         if (!student.getPreferredTutors().isEmpty()) {
             System.out.println();
             System.out.println("  " + BOLD + "Tutor preferiti:" + RESET);
             student.getPreferredTutors().forEach(t ->
-                    System.out.println("  ⭐ " + t.getName() + " " + t.getSurname()
+                    System.out.println("  * " + t.getName() + " " + t.getSurname()
                             + DIM + " (@" + t.getUsername() + ")" + RESET));
         }
 

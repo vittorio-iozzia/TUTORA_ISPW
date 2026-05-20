@@ -63,6 +63,11 @@ public abstract class DaoFactory {
         }
 
         private static String readDaoType() {
+            // Priorità 1: system property settata da Launcher (avvio da terminale)
+            String sysProp = System.getProperty(KEY_DAO_TYPE);
+            if (sysProp != null && !sysProp.isBlank()) return sysProp;
+
+            // Priorità 2: app.properties nel classpath (avvio da IDE)
             try (InputStream in = DaoFactory.class
                     .getResourceAsStream(PROPERTIES_FILE)) {
                 if (in == null) return "";

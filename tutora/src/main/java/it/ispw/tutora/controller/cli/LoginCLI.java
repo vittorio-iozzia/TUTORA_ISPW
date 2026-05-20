@@ -15,7 +15,7 @@ import static it.ispw.tutora.controller.cli.CLIUtils.*;
  * Schermata di autenticazione CLI.
  * Gestisce login e registrazione studente.
  */
-@SuppressWarnings("java:S106") // System.out è intenzionale: classe boundary della CLI
+@SuppressWarnings("java:S106") // System.out e' intenzionale: classe boundary della CLI
 public class LoginCLI {
 
     private final LoginController        loginCtrl = new LoginController();
@@ -71,7 +71,7 @@ public class LoginCLI {
             pressEnter(sc);
             return null;
         } catch (DatabaseException e) {
-            error("Errore di sistema. Riprova più tardi.");
+            error("Errore di sistema. Riprova piu' tardi.");
             pressEnter(sc);
             return null;
         }

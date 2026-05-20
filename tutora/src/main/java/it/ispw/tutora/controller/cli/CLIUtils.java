@@ -7,11 +7,11 @@ import java.util.Scanner;
  * Utility statiche per la CLI di TUTORA.
  *
  * Gestisce:
- *  - Costanti ANSI (colori, stili) — ESC = \u001B
+ *  - Costanti ANSI (colori, stili) - ESC = \u001B
  *  - Output formattato (banner, header, separatori, messaggi)
  *  - Input da tastiera (testo, password, numeri interi)
  */
-@SuppressWarnings("java:S106") // System.out è intenzionale: CLIUtils è il layer di output della CLI
+@SuppressWarnings("java:S106") // System.out e' intenzionale: CLIUtils e' il layer di output della CLI
 public final class CLIUtils {
 
     // ----------------------------------------------------------------
@@ -39,19 +39,12 @@ public final class CLIUtils {
 
     public static void printBanner() {
         System.out.println();
-        System.out.println(BLUE + BOLD +
-            "  ████████╗██╗   ██╗████████╗ ██████╗ ██████╗  █████╗ " + RESET);
-        System.out.println(BLUE + BOLD +
-            "     ██╔══╝██║   ██║╚══██╔══╝██╔═══██╗██╔══██╗██╔══██╗" + RESET);
-        System.out.println(BLUE + BOLD +
-            "     ██║   ██║   ██║   ██║   ██║   ██║██████╔╝███████║" + RESET);
-        System.out.println(BLUE + BOLD +
-            "     ██║   ██║   ██║   ██║   ██║   ██║██╔══██╗██╔══██║" + RESET);
-        System.out.println(BLUE + BOLD +
-            "     ██║   ╚██████╔╝   ██║   ╚██████╔╝██║  ██║██║  ██║" + RESET);
-        System.out.println(BLUE + BOLD +
-            "     ╚═╝    ╚═════╝    ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝" + RESET);
-        System.out.println(DIM + "           Tutoring Platform — Command Line Interface" + RESET);
+        System.out.println(BLUE + BOLD + " _____  _   _  _____   ___   ____      _    " + RESET);
+        System.out.println(BLUE + BOLD + "|_   _|| | | ||_   _| / _ \\ |  _ \\    / \\   " + RESET);
+        System.out.println(BLUE + BOLD + "  | |  | | | |  | |  | | | || |_) |  / _ \\  " + RESET);
+        System.out.println(BLUE + BOLD + "  | |  | |_| |  | |  | |_| ||  _ <  / ___ \\ " + RESET);
+        System.out.println(BLUE + BOLD + "  |_|   \\___/   |_|   \\___/ |_| \\_\\/_/   \\_\\" + RESET);
+        System.out.println(DIM +  "  Tutoring Platform - Command Line Interface" + RESET);
         System.out.println();
     }
 
@@ -101,10 +94,10 @@ public final class CLIUtils {
     }
 
     // ----------------------------------------------------------------
-    // Input — testo
+    // Input - testo
     // ----------------------------------------------------------------
 
-    /** Legge una riga non vuota. Ripete il prompt finché l'input è blank. */
+    /** Legge una riga non vuota. Ripete il prompt finche' l'input e' blank. */
     public static String readLine(Scanner sc, String prompt) {
         String line;
         do {
@@ -116,7 +109,7 @@ public final class CLIUtils {
         return line;
     }
 
-    /** Legge una riga opzionale (può essere vuota). */
+    /** Legge una riga opzionale (puo' essere vuota). */
     public static String readOptionalLine(Scanner sc, String prompt) {
         System.out.print(CYAN + "  > " + RESET + prompt + " (invio per saltare): ");
         System.out.flush();
@@ -124,12 +117,12 @@ public final class CLIUtils {
     }
 
     // ----------------------------------------------------------------
-    // Input — password
+    // Input - password
     // ----------------------------------------------------------------
 
     /**
      * Legge una password usando Console (oscurata) se disponibile,
-     * altrimenti usa lo Scanner (visibile — tipico negli IDE).
+     * altrimenti usa lo Scanner (visibile - tipico negli IDE).
      */
     public static String readPassword(Scanner sc, String prompt) {
         Console console = System.console();
@@ -143,7 +136,7 @@ public final class CLIUtils {
     }
 
     // ----------------------------------------------------------------
-    // Input — numero intero
+    // Input - numero intero
     // ----------------------------------------------------------------
 
     /** Legge un intero nell'intervallo [min, max]. Ripete fino a input valido. */

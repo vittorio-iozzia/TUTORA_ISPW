@@ -23,14 +23,14 @@ import static it.ispw.tutora.controller.cli.CLIUtils.*;
 /**
  * Menu principale per il ruolo TUTOR.
  *
- * Funzionalità disponibili:
+ * Funzionalita' disponibili:
  *  - Dashboard (riepilogo lezioni e rating)
  *  - Le mie lezioni (calendario e prenotazioni)
  *  - Notifiche (accept/reject richieste)
  *  - Profilo
  *  - Logout
  */
-@SuppressWarnings("java:S106") // System.out è intenzionale: classe boundary della CLI
+@SuppressWarnings("java:S106") // System.out e' intenzionale: classe boundary della CLI
 public class TutorCLI {
 
     private static final DateTimeFormatter DT_FMT =
@@ -54,7 +54,7 @@ public class TutorCLI {
             System.out.println("  Ciao, " + BOLD + tutor.getName() + " " + tutor.getSurname() + RESET + "!");
             System.out.println("  " + DIM + "@" + tutor.getUsername() + "  |  " + tutor.getEmail() + RESET);
             if (tutor.getRating() != null && tutor.getRating().doubleValue() > 0) {
-                System.out.printf("  Rating: %s%.1f ★  (%d recensioni)%s%n",
+                System.out.printf("  Rating: %s%.1f *  (%d recensioni)%s%n",
                         BOLD + YELLOW, tutor.getRating().doubleValue(),
                         tutor.getRatingCount(), RESET);
             } else {
@@ -118,15 +118,15 @@ public class TutorCLI {
 
     private void printTutorBooking(Booking b) {
         Lesson l   = b.getLesson();
-        String start = (l != null && l.getStartTime() != null) ? l.getStartTime().format(DT_FMT) : "—";
-        String end   = (l != null && l.getEndTime()   != null) ? l.getEndTime().format(DT_FMT)   : "—";
-        String price = b.getPricePaid() != null ? "€" + b.getPricePaid().toPlainString() : "—";
+        String start = (l != null && l.getStartTime() != null) ? l.getStartTime().format(DT_FMT) : "-";
+        String end   = (l != null && l.getEndTime()   != null) ? l.getEndTime().format(DT_FMT)   : "-";
+        String price = b.getPricePaid() != null ? "EUR" + b.getPricePaid().toPlainString() : "-";
 
         System.out.println();
         field("Studente:",  extractStudentLabel(b));
         field("Materia:",   extractSubcatName(l));
-        field("Orario:",    start + " – " + end);
-        field("Modalità:",  lessonModeLabel(l));
+        field("Orario:",    start + " - " + end);
+        field("Modalita':",  lessonModeLabel(l));
         field("Lezione:",   lessonStatusLabel(l));
         field("Pagamento:", paymentStatusLabel(b.getPaymentStatus()));
         field("Prezzo:",    price);
@@ -137,16 +137,16 @@ public class TutorCLI {
         if (l != null && l.getExpertise() != null && l.getExpertise().getSubcategory() != null) {
             return l.getExpertise().getSubcategory().getName();
         }
-        return "—";
+        return "-";
     }
 
     private String extractStudentLabel(Booking b) {
-        if (b.getStudent() == null) return "—";
+        if (b.getStudent() == null) return "-";
         return b.getStudent().getName() + " " + b.getStudent().getSurname()
                 + " (@" + b.getStudent().getUsername() + ")";
     }
 
-    /** Modalità di erogazione — metodo dedicato per evitare ternario annidato (SonarQube S3358). */
+    /** Modalita' di erogazione - metodo dedicato per evitare ternario annidato (SonarQube S3358). */
     private String lessonModeLabel(Lesson l) {
         if (l == null) return "In presenza";
         return l.isRemote() ? CYAN + "Remoto" + RESET : "In presenza";
@@ -167,9 +167,9 @@ public class TutorCLI {
         field("Stato:",       tutor.isActive()
                 ? GREEN + "Attivo" + RESET : RED + "Inattivo" + RESET);
         field("Membro dal:",  tutor.getCreatedAt() != null
-                ? tutor.getCreatedAt().toLocalDate().toString() : "—");
+                ? tutor.getCreatedAt().toLocalDate().toString() : "-");
         if (tutor.getRating() != null && tutor.getRating().doubleValue() > 0) {
-            field("Rating:",  String.format("%.1f ★  (%d recensioni)",
+            field("Rating:",  String.format("%.1f *  (%d recensioni)",
                     tutor.getRating().doubleValue(), tutor.getRatingCount()));
         }
 
@@ -198,9 +198,9 @@ public class TutorCLI {
     }
 
     private String lessonStatusLabel(Lesson l) {
-        if (l == null) return DIM + "—" + RESET;
+        if (l == null) return DIM + "-" + RESET;
         LessonStatus s = l.getLessonStatus();
-        if (s == null) return DIM + "—" + RESET;
+        if (s == null) return DIM + "-" + RESET;
         return switch (s) {
             case AVAILABLE  -> GREEN  + "Disponibile" + RESET;
             case BOOKED     -> YELLOW + "Prenotata"   + RESET;
@@ -210,7 +210,7 @@ public class TutorCLI {
     }
 
     private String paymentStatusLabel(PaymentStatus ps) {
-        if (ps == null) return DIM + "—" + RESET;
+        if (ps == null) return DIM + "-" + RESET;
         return switch (ps) {
             case PENDING  -> YELLOW  + "In attesa"  + RESET;
             case PAID     -> GREEN   + "Pagato"      + RESET;

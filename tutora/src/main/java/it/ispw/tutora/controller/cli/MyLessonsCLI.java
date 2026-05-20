@@ -16,7 +16,7 @@ import static it.ispw.tutora.controller.cli.CLIUtils.*;
  * Schermata "Le mie lezioni" per lo studente.
  * Mostra l'elenco delle prenotazioni con stato e dettagli.
  */
-@SuppressWarnings("java:S106") // System.out è intenzionale: classe boundary della CLI
+@SuppressWarnings("java:S106") // System.out e' intenzionale: classe boundary della CLI
 public class MyLessonsCLI {
 
     private static final DateTimeFormatter DT_FMT =
@@ -58,16 +58,16 @@ public class MyLessonsCLI {
 
     private void printBooking(Booking b, int n) {
         Lesson l = b.getLesson();
-        String start = (l != null && l.getStartTime() != null) ? l.getStartTime().format(DT_FMT) : "—";
-        String end   = (l != null && l.getEndTime()   != null) ? l.getEndTime().format(DT_FMT)   : "—";
-        String price = b.getPricePaid() != null ? "€" + b.getPricePaid().toPlainString() : "—";
+        String start = (l != null && l.getStartTime() != null) ? l.getStartTime().format(DT_FMT) : "-";
+        String end   = (l != null && l.getEndTime()   != null) ? l.getEndTime().format(DT_FMT)   : "-";
+        String price = b.getPricePaid() != null ? "EUR" + b.getPricePaid().toPlainString() : "-";
 
-        System.out.printf("  %s── Prenotazione #%d %s%n", BOLD, n, RESET);
+        System.out.printf("  %s-- Prenotazione #%d %s%n", BOLD, n, RESET);
         field("Materia:",   extractSubcatName(l));
         field("Tutor:",     extractTutorName(l));
         field("Inizio:",    start);
         field("Fine:",      end);
-        field("Modalità:",  extractMode(l));
+        field("Modalita':",  extractMode(l));
         field("Prezzo:",    price);
         field("Pagamento:", paymentBadge(b.getPaymentStatus()));
         separator();
@@ -77,19 +77,19 @@ public class MyLessonsCLI {
         if (l != null && l.getExpertise() != null && l.getExpertise().getSubcategory() != null) {
             return l.getExpertise().getSubcategory().getName();
         }
-        return "—";
+        return "-";
     }
 
     private String extractTutorName(Lesson l) {
         if (l != null && l.getExpertise() != null && l.getExpertise().getTutor() != null) {
             return l.getExpertise().getTutor().getUsername();
         }
-        return "—";
+        return "-";
     }
 
-    /** Modalità di erogazione — metodo dedicato per evitare ternario annidato (SonarQube S3358). */
+    /** Modalita' di erogazione - metodo dedicato per evitare ternario annidato (SonarQube S3358). */
     private String extractMode(Lesson l) {
-        if (l == null) return "—";
+        if (l == null) return "-";
         return l.isRemote() ? "Remoto" : "In presenza";
     }
 
@@ -98,7 +98,7 @@ public class MyLessonsCLI {
     // ----------------------------------------------------------------
 
     private String paymentBadge(PaymentStatus ps) {
-        if (ps == null) return DIM + "—" + RESET;
+        if (ps == null) return DIM + "-" + RESET;
         return switch (ps) {
             case PENDING  -> YELLOW + "In attesa"   + RESET;
             case PAID     -> GREEN  + "Pagato"       + RESET;
