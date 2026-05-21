@@ -39,12 +39,13 @@ public final class CLIUtils {
 
     public static void printBanner() {
         System.out.println();
-        System.out.println(BLUE + BOLD + " _____  _   _  _____   ___   ____      _    " + RESET);
-        System.out.println(BLUE + BOLD + "|_   _|| | | ||_   _| / _ \\ |  _ \\    / \\   " + RESET);
-        System.out.println(BLUE + BOLD + "  | |  | | | |  | |  | | | || |_) |  / _ \\  " + RESET);
-        System.out.println(BLUE + BOLD + "  | |  | |_| |  | |  | |_| ||  _ <  / ___ \\ " + RESET);
-        System.out.println(BLUE + BOLD + "  |_|   \\___/   |_|   \\___/ |_| \\_\\/_/   \\_\\" + RESET);
-        System.out.println(DIM +  "  Tutoring Platform - Command Line Interface" + RESET);
+        System.out.println(BLUE + BOLD + "  ████████╗██╗   ██╗████████╗ ██████╗ ██████╗  █████╗ " + RESET);
+        System.out.println(BLUE + BOLD + "     ██╔══╝██║   ██║╚══██╔══╝██╔═══██╗██╔══██╗██╔══██╗" + RESET);
+        System.out.println(BLUE + BOLD + "     ██║   ██║   ██║   ██║   ██║   ██║██████╔╝███████║" + RESET);
+        System.out.println(BLUE + BOLD + "     ██║   ██║   ██║   ██║   ██║   ██║██╔══██╗██╔══██║" + RESET);
+        System.out.println(BLUE + BOLD + "     ██║   ╚██████╔╝   ██║   ╚██████╔╝██║  ██║██║  ██║" + RESET);
+        System.out.println(BLUE + BOLD + "     ╚═╝    ╚═════╝    ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝" + RESET);
+        System.out.println(DIM +  "           Tutoring Platform — Command Line Interface" + RESET);
         System.out.println();
     }
 

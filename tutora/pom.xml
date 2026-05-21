@@ -168,6 +168,8 @@
                         <option>--enable-native-access=ALL-UNNAMED</option>
                         <!-- Sopprime il warning di deprecazione di sun.misc.Unsafe (Marlin renderer) -->
                         <option>-Dsun.java2d.marlin=false</option>
+                        <!-- Forza stdout in UTF-8 per la CLI (caratteri Unicode nel banner) -->
+                        <option>-Dsun.stdout.encoding=UTF-8</option>
                     </options>
                 </configuration>
             </plugin>

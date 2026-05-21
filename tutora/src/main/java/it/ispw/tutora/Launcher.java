@@ -83,10 +83,9 @@ public class Launcher {
     // ANSI colors
     // ----------------------------------------------------------------
 
-    private static final String CYAN    = "[36m";
-    private static final String BOLD    = "[1m";
-    private static final String GREEN   = "[32m";
-    private static final String RESET   = "[0m";
+    private static final String CYAN    = "\u001B[36m";
+    private static final String GREEN   = "\u001B[32m";
+    private static final String RESET   = "\u001B[0m";
 
     // ----------------------------------------------------------------
     // Prompt interattivo
