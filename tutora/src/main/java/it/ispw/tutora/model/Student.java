@@ -114,6 +114,7 @@ public class Student extends User {
     // ----------------------------------------------------------------
 
     public boolean hasSufficientBudget(BigDecimal amount) {
+        if (budget == null) return false;
         return budget.compareTo(amount) >= 0;
     }
 
@@ -131,7 +132,7 @@ public class Student extends User {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Amount must be positive.");
         }
-        this.budget = budget.add(amount);
+        this.budget = (budget != null ? budget : BigDecimal.ZERO).add(amount);
     }
 
     // ----------------------------------------------------------------

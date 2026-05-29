@@ -3,11 +3,13 @@ package it.ispw.tutora.dao.json;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.ispw.tutora.dao.BookingDao;
+import it.ispw.tutora.enums.LessonStatus;
 import it.ispw.tutora.enums.PaymentStatus;
 import it.ispw.tutora.enums.Status;
 import it.ispw.tutora.exception.BookingNotFoundException;
 import it.ispw.tutora.exception.DatabaseException;
 import it.ispw.tutora.exception.DuplicateBookingException;
+import it.ispw.tutora.exception.LessonNotFoundException;
 import it.ispw.tutora.model.*;
 
 import java.io.File;
@@ -151,29 +153,39 @@ public class BookingDaoJson implements BookingDao {
 
     /**
      * Verifica che lo student non abbia già una booking attiva (Pending o Paid)
-     * con il tutor e la sottocategoria dati, per una lezione non ancora terminata.
-     * Sfrutta i campi denormalizzati tutorUsername, subjectName e lessonStatus.
-     * Record legacy senza lessonStatus (null) vengono trattati come attivi
-     * per sicurezza (approccio conservativo).
+     * il cui orario si sovrappone all'intervallo [newLessonStart, newLessonEnd).
+     * Il lesson status corrente viene letto in tempo reale da lessons.json
+     * tramite {@link #isActiveBooking} per evitare dati denormalizzati stale.
+     * Due intervalli si sovrappongono se: existingStart &lt; newEnd AND existingEnd &gt; newStart.
      *
-     * @throws DuplicateBookingException se esiste già una booking attiva
+     * @throws DuplicateBookingException se esiste già una booking con orario sovrapposto
      */
     @Override
     public void checkNoDuplicateBooking(Connection conn,
                                         String studentUsername,
-                                        String tutorUsername,
-                                        String subcategoryName)
+                                        LocalDateTime newLessonStart,
+                                        LocalDateTime newLessonEnd)
             throws DatabaseException, DuplicateBookingException {
+        LessonDaoJson lessonDao = new LessonDaoJson();
         for (BookingRecord r : readAll()) {
-            boolean inactive = REFUNDED.equals(r.paymentStatus)
-                    || "COMPLETED".equals(r.lessonStatus)
-                    || "CANCELLED".equals(r.lessonStatus);
-            if (inactive) continue;
-            if (studentUsername.equals(r.studentUsername)
-                    && tutorUsername.equals(r.tutorUsername)
-                    && subcategoryName.equals(r.subjectName)) {
-                throw new DuplicateBookingException(studentUsername, tutorUsername, subcategoryName);
+            if (!isActiveBooking(r, studentUsername, lessonDao)) continue;
+            LocalDateTime existingStart = LocalDateTime.parse(r.lessonStartTime);
+            LocalDateTime existingEnd   = LocalDateTime.parse(r.lessonEndTime);
+            if (existingStart.isBefore(newLessonEnd) && existingEnd.isAfter(newLessonStart)) {
+                throw new DuplicateBookingException(studentUsername, newLessonStart, newLessonEnd);
             }
+        }
+    }
+
+    private boolean isActiveBooking(BookingRecord r, String studentUsername, LessonDaoJson lessonDao) {
+        if (!studentUsername.equals(r.studentUsername)) return false;
+        if (r.lessonStartTime == null || r.lessonEndTime == null) return false;
+        if (REFUNDED.equals(r.paymentStatus)) return false;
+        try {
+            LessonStatus status = lessonDao.selectLesson(null, r.lessonId).getLessonStatus();
+            return status != LessonStatus.COMPLETED && status != LessonStatus.CANCELLED;
+        } catch (DatabaseException | LessonNotFoundException e) {
+            return false;
         }
     }
 
@@ -186,36 +198,43 @@ public class BookingDaoJson implements BookingDao {
      *
      * Se il record contiene i campi denormalizzati (subjectName, lessonStartTime
      * ecc.) costruisce una Lesson con TutorExpertise parziale ma sufficiente
-     * per la visualizzazione nella UI. I record legacy senza questi campi
-     * producono una Lesson con solo l'id (comportamento precedente).
+     * per la visualizzazione nella UI.
+     *
+     * Lesson.build() richiede listedPrice > 0 e startTime/endTime non null:
+     * i valori vengono risolti con fallback sicuri per i record legacy che
+     * non hanno lessonEndTime/lessonListedPrice persistiti.
      */
     private Booking toBooking(BookingRecord r) {
-        // Costruzione della Lesson — parziale o arricchita a seconda dei campi disponibili
+        // startTime — legacy records senza il campo: dummy passato (filtrato da isAfter)
+        LocalDateTime startTime = r.lessonStartTime != null
+                ? LocalDateTime.parse(r.lessonStartTime)
+                : LocalDateTime.of(2000, 1, 1, 0, 0);
+
+        // endTime — richiesto da Lesson.checkTime(); fallback startTime+1h
+        LocalDateTime endTime = r.lessonEndTime != null
+                ? LocalDateTime.parse(r.lessonEndTime)
+                : startTime.plusHours(1);
+
+        // listedPrice — richiesto da Lesson.checkPrice(); fallback pricePaid
+        String priceStr = r.lessonListedPrice != null ? r.lessonListedPrice : r.pricePaid;
+        BigDecimal listedPrice = priceStr != null ? new BigDecimal(priceStr) : BigDecimal.ONE;
+
         Lesson.Builder lessonBuilder = new Lesson.Builder()
                 .id(r.lessonId)
-                .remote(r.lessonRemote);
+                .remote(r.lessonRemote)
+                .startTime(startTime)
+                .endTime(endTime)
+                .listedPrice(listedPrice);
 
-        if (r.lessonStartTime != null) {
-            lessonBuilder.startTime(LocalDateTime.parse(r.lessonStartTime));
+        // Ripristina lessonStatus dal record — necessario per i filtri in MyLessonsGfxController
+        if (r.lessonStatus != null) {
+            try {
+                lessonBuilder.lessonStatus(LessonStatus.valueOf(r.lessonStatus));
+            } catch (IllegalArgumentException ignored) { /* valore sconosciuto — lascia null */ }
         }
 
         if (r.subjectName != null) {
-            // SubCategory con parentCategory null: toString() la gestisce con "N/A"
-            SubCategory sub = new SubCategory(r.subjectName, null, "");
-
-            // Tutor ricostruito con username, name e surname per getFullName()
-            Tutor tutor = null;
-            if (r.tutorUsername != null) {
-                tutor = new Tutor.Builder()
-                        .username(r.tutorUsername)
-                        .name(r.tutorName != null ? r.tutorName : "")
-                        .surname(r.tutorSurname != null ? r.tutorSurname : "")
-                        .build();
-            }
-            // TutorExpertise richiede price > 0: BigDecimal.ONE è un placeholder
-            TutorExpertise exp = new TutorExpertise(
-                    tutor, sub, BigDecimal.ONE, Status.APPROVED, LocalDateTime.now());
-            lessonBuilder.expertise(exp);
+            lessonBuilder.expertise(buildExpertiseFromRecord(r));
         }
         return new Booking.Builder()
                 .id(r.id)
@@ -247,25 +266,48 @@ public class BookingDaoJson implements BookingDao {
         // una Booking con Lesson completa (es. da BookTutorController.payment)
         Lesson lesson = booking.getLesson();
         if (lesson != null) {
-            if (lesson.getStartTime() != null)
-                b.lessonStartTime = lesson.getStartTime().toString();
-            b.lessonRemote = lesson.isRemote();
-            if (lesson.getLessonStatus() != null)
-                b.lessonStatus = lesson.getLessonStatus().name();
-
-            TutorExpertise exp = lesson.getExpertise();
-            if (exp != null) {
-                if (exp.getSubcategory() != null)
-                    b.subjectName = exp.getSubcategory().getName();
-                Tutor tutor = exp.getTutor();
-                if (tutor != null) {
-                    b.tutorUsername = tutor.getUsername();
-                    b.tutorName = tutor.getName();
-                    b.tutorSurname = tutor.getSurname();
-                }
-            }
+            populateLessonFields(b, lesson);
+            if (lesson.getExpertise() != null) populateExpertiseFields(b, lesson.getExpertise());
         }
         return b;
+    }
+
+    /** Popola i campi denormalizzati di tempo/prezzo/stato dalla Lesson. */
+    private static void populateLessonFields(BookingRecord b, Lesson lesson) {
+        if (lesson.getStartTime() != null)   b.lessonStartTime  = lesson.getStartTime().toString();
+        if (lesson.getEndTime() != null)     b.lessonEndTime    = lesson.getEndTime().toString();
+        if (lesson.getLessonStatus() != null) b.lessonStatus    = lesson.getLessonStatus().name();
+        if (lesson.getListedPrice() != null) b.lessonListedPrice = lesson.getListedPrice().toPlainString();
+        b.lessonRemote = lesson.isRemote();
+    }
+
+    /** Popola i campi denormalizzati relativi a tutor e sotto-categoria dall'expertise. */
+    private static void populateExpertiseFields(BookingRecord b, TutorExpertise exp) {
+        if (exp.getSubcategory() != null) b.subjectName = exp.getSubcategory().getName();
+        Tutor tutor = exp.getTutor();
+        if (tutor != null) {
+            b.tutorUsername = tutor.getUsername();
+            b.tutorName     = tutor.getName();
+            b.tutorSurname  = tutor.getSurname();
+        }
+    }
+
+    /**
+     * Ricostruisce la TutorExpertise denormalizzata da un record JSON.
+     * SubCategory con parentCategory null è accettabile per la visualizzazione.
+     * BigDecimal.ONE come hourlyPrice è un placeholder (il valore reale non è persistito).
+     */
+    private static TutorExpertise buildExpertiseFromRecord(BookingRecord r) {
+        SubCategory sub = new SubCategory(r.subjectName, null, "");
+        Tutor tutor = null;
+        if (r.tutorUsername != null) {
+            tutor = new Tutor.Builder()
+                    .username(r.tutorUsername)
+                    .name(r.tutorName != null ? r.tutorName : "")
+                    .surname(r.tutorSurname != null ? r.tutorSurname : "")
+                    .build();
+        }
+        return new TutorExpertise(tutor, sub, BigDecimal.ONE, Status.APPROVED, LocalDateTime.now());
     }
     // ----------------------------------------------------------------
     // POJO interno per la serializzazione Jackson
@@ -299,8 +341,10 @@ public class BookingDaoJson implements BookingDao {
         String  tutorSurname;
         String  subjectName;
         String  lessonStartTime;
+        String  lessonEndTime;      // null nei record legacy → fallback startTime+1h
         boolean lessonRemote;
-        String  lessonStatus;   // LessonStatus.name() — null nei record legacy
+        String  lessonStatus;       // LessonStatus.name() — null nei record legacy
+        String  lessonListedPrice;  // null nei record legacy → fallback pricePaid
     }
     // ----------------------------------------------------------------
     // I/O JSON

@@ -2,6 +2,7 @@ package it.ispw.tutora.controller.application;
 
 import it.ispw.tutora.bean.LessonTutorBean;
 import it.ispw.tutora.dao.LessonDao;
+import java.math.BigDecimal;
 import it.ispw.tutora.dao.TutorExpertiseDao;
 import it.ispw.tutora.dao.factory.DaoFactory;
 import it.ispw.tutora.enums.LessonStatus;
@@ -27,6 +28,29 @@ public class CreateLessonController {
         DaoFactory factory = DaoFactory.getInstance();
         this.lessonDao    = factory.createLessonDao();
         this.expertiseDao = factory.createTutorExpertiseDao();
+    }
+
+    /**
+     * Valida i dati di una lezione prima della creazione.
+     * Restituisce un messaggio di errore se i dati non sono validi, null se tutto è corretto.
+     *
+     * Regole di dominio:
+     *   - Il prezzo deve essere positivo (> 0)
+     *   - L'orario di fine deve essere successivo all'orario di inizio
+     *
+     * Spostato da CreateLessonGfxController per rispettare BCE:
+     * queste sono regole di business, non di presentazione.
+     */
+    public String validateLessonInput(LessonTutorBean bean) {
+        if (bean.getListedPrice() == null
+                || bean.getListedPrice().compareTo(BigDecimal.ZERO) <= 0) {
+            return "Invalid price. Enter a positive number (e.g. 35.00).";
+        }
+        if (bean.getStartTime() == null || bean.getEndTime() == null
+                || !bean.getEndTime().isAfter(bean.getStartTime())) {
+            return "End time must be after start time.";
+        }
+        return null;
     }
 
     public List<TutorExpertise> loadApprovedExpertises(String token) {

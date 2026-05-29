@@ -21,6 +21,16 @@ import java.time.LocalDateTime;
  *
  */
 public class Notification {
+
+    /**
+     * Separatore convenzionale usato dal layer applicativo per incorporare
+     * le note admin nel campo {@code message} delle notifiche APPLICATION_UPDATE.
+     * Definito qui perché {@code Notification} è il proprietario del formato
+     * del proprio campo — i consumer chiamano {@link #getMainMessage()} e
+     * {@link #getAdminNotes()} invece di parsare la stringa direttamente.
+     */
+    private static final String ADMIN_NOTES_SEPARATOR = "\n\nAdmin notes: ";
+
     private final int id;
     private final String recipientUsername;
     private final String senderUsername;
@@ -114,4 +124,24 @@ public class Notification {
     public LocalDateTime getTimestamp() { return timestamp; }
     public boolean isRead() { return read; }
     public void setRead(boolean read) { this.read = read; }
+
+    /**
+     * Restituisce la parte principale del messaggio, senza le eventuali note admin.
+     * Per notifiche senza note incorporates restituisce il messaggio intero.
+     */
+    public String getMainMessage() {
+        if (message == null) return null;
+        int idx = message.indexOf(ADMIN_NOTES_SEPARATOR);
+        return idx >= 0 ? message.substring(0, idx) : message;
+    }
+
+    /**
+     * Restituisce le note admin incorporate nel messaggio, oppure {@code null}
+     * se non sono presenti. Rilevante per le notifiche di tipo APPLICATION_UPDATE.
+     */
+    public String getAdminNotes() {
+        if (message == null) return null;
+        int idx = message.indexOf(ADMIN_NOTES_SEPARATOR);
+        return idx >= 0 ? message.substring(idx + ADMIN_NOTES_SEPARATOR.length()) : null;
+    }
 }

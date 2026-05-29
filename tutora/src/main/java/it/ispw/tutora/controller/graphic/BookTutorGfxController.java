@@ -17,7 +17,6 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -310,15 +309,9 @@ public class BookTutorGfxController extends DialogGfxController {
 
     private void updatePriceDisplay() {
         if (selectedLesson == null || priceValueLabel == null) return;
-        long totalMins = Duration.between(
-                selectedLesson.getStartTime(), selectedLesson.getEndTime()).toMinutes();
-        if (totalMins == 0) return;
-        BigDecimal hourlyRate = selectedLesson.getListedPrice()
-                .divide(BigDecimal.valueOf(totalMins).divide(BigDecimal.valueOf(60), 4, RoundingMode.HALF_UP),
-                        2, RoundingMode.HALF_UP);
-        BigDecimal cost = hourlyRate
-                .multiply(BigDecimal.valueOf(selectedDurationHours))
-                .setScale(2, RoundingMode.HALF_UP);
+        BigDecimal cost = bookTutorController.calculateProportionalPrice(
+                selectedLesson, selectedDurationHours);
+        if (BigDecimal.ZERO.compareTo(cost) == 0) return;
         priceValueLabel.setText("€" + cost.toPlainString());
     }
 

@@ -1,5 +1,5 @@
-// Vittorio Iozzia
-package it.ispw.tutora.StudentReviewDomain;
+// Alessio Dainelli
+package it.ispw.tutora.BookingDomain;
 
 import it.ispw.tutora.model.Student;
 import org.junit.jupiter.api.BeforeEach;

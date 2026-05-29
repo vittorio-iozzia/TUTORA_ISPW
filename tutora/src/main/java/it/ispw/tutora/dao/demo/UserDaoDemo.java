@@ -4,6 +4,7 @@ import it.ispw.tutora.dao.UserDao;
 import it.ispw.tutora.exception.DatabaseException;
 import it.ispw.tutora.exception.DuplicateUserException;
 import it.ispw.tutora.exception.UserNotFoundException;
+import it.ispw.tutora.model.Admin;
 import it.ispw.tutora.model.Student;
 import it.ispw.tutora.model.Tutor;
 import it.ispw.tutora.model.User;
@@ -113,6 +114,19 @@ public class UserDaoDemo implements UserDao {
                 .filter(u -> email.equalsIgnoreCase(u.getEmail()))
                 .findFirst()
                 .orElseThrow(() -> new UserNotFoundException("email: " + email));
+    }
+
+    // ----------------------------------------------------------------
+    // findFirstAdminUsername
+    // ----------------------------------------------------------------
+
+    @Override
+    public String findFirstAdminUsername(Connection conn) throws DatabaseException {
+        return cache.values().stream()
+                .filter(Admin.class::isInstance)
+                .map(User::getUsername)
+                .findFirst()
+                .orElse("admin");
     }
 
     // ----------------------------------------------------------------

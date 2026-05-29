@@ -2,15 +2,8 @@ package it.ispw.tutora.controller.graphic;
 
 import it.ispw.tutora.bean.TutorApplicationBean;
 import it.ispw.tutora.controller.application.ApplyToBecomeATutorController;
-import it.ispw.tutora.dao.TutorApplicationDao;
-import it.ispw.tutora.dao.TutorDao;
-import it.ispw.tutora.dao.factory.DaoFactory;
-import it.ispw.tutora.enums.ApplicationStatus;
-import it.ispw.tutora.exception.DatabaseException;
-import java.sql.Connection;
-import java.sql.SQLException;
+import it.ispw.tutora.controller.application.SearchTutorController;
 import it.ispw.tutora.model.Tutor;
-import it.ispw.tutora.model.TutorApplication;
 import it.ispw.tutora.model.session.Session;
 import it.ispw.tutora.model.session.SessionManager;
 import it.ispw.tutora.view.SceneManager;
@@ -45,6 +38,7 @@ public class AdminContentController {
     private static final String TOOLTIP_STYLE     = "-fx-font-size:12px;";
 
     private final ApplyToBecomeATutorController appController = new ApplyToBecomeATutorController();
+    private final SearchTutorController searchController = new SearchTutorController();
 
     // Stats
     @FXML private Label welcomeTitle;
@@ -71,7 +65,7 @@ public class AdminContentController {
     @FXML private PieChart                  categoryChart;
 
     // State
-    private List<TutorApplication> pendingApplications = List.of();
+    private List<TutorApplicationBean> pendingApplications = List.of();
     private List<Tutor> allTutors = List.of();
 
     // ----------------------------------------------------------------
@@ -84,8 +78,12 @@ public class AdminContentController {
         Session session = SessionManager.getInstance().getSession(token);
         welcomeTitle.setText("Welcome, " + session.getUser().getName() + "!");
 
-        pendingApplications = loadPendingApplications();
-        allTutors           = loadTutors();
+        try {
+            pendingApplications = appController.loadPendingApplications(token);
+        } catch (Exception e) {
+            LOGGER.warning("Cannot load applications: " + e.getMessage());
+        }
+        allTutors = searchController.loadAllTutors();
 
         animateStat(totalUsersLabel,   2847,             "%.0f");
         animateStat(activeTutorsLabel, allTutors.size(), "%.0f");
@@ -110,10 +108,16 @@ public class AdminContentController {
     }
 
     private void reloadApplicationsList() {
-        Task<List<TutorApplication>> task = new Task<>() {
+        String reloadToken = SceneManager.getInstance().getSessionToken();
+        Task<List<TutorApplicationBean>> task = new Task<>() {
             @Override
-            protected List<TutorApplication> call() {
-                return loadPendingApplications();
+            protected List<TutorApplicationBean> call() {
+                try {
+                    return appController.loadPendingApplications(reloadToken);
+                } catch (Exception e) {
+                    LOGGER.warning("Cannot reload applications: " + e.getMessage());
+                    return List.of();
+                }
             }
         };
         task.setOnSucceeded(e -> Platform.runLater(() -> {
@@ -124,30 +128,6 @@ public class AdminContentController {
         Thread t = new Thread(task, "admin-reload-apps");
         t.setDaemon(true);
         t.start();
-    }
-
-    // ----------------------------------------------------------------
-    // DAO
-    // ----------------------------------------------------------------
-
-    private List<TutorApplication> loadPendingApplications() {
-        TutorApplicationDao dao = DaoFactory.getInstance().createTutorApplicationDao();
-        try (Connection conn = DaoFactory.getInstance().getConnection()) {
-            return dao.findByStatus(conn, ApplicationStatus.SUBMITTED);
-        } catch (DatabaseException | SQLException e) {
-            LOGGER.warning("Cannot load applications: " + e.getMessage());
-            return List.of();
-        }
-    }
-
-    private List<Tutor> loadTutors() {
-        TutorDao dao = DaoFactory.getInstance().createTutorDao();
-        try (Connection conn = DaoFactory.getInstance().getConnection()) {
-            return dao.selectAllTutors(conn);
-        } catch (DatabaseException | SQLException e) {
-            LOGGER.warning("Cannot load tutors: " + e.getMessage());
-            return List.of();
-        }
     }
 
     // ----------------------------------------------------------------
@@ -183,12 +163,12 @@ public class AdminContentController {
             applicationsList.getChildren().add(empty);
             return;
         }
-        for (TutorApplication app : pendingApplications) {
+        for (TutorApplicationBean app : pendingApplications) {
             applicationsList.getChildren().add(buildApplicationCard(app));
         }
     }
 
-    private HBox buildApplicationCard(TutorApplication app) {
+    private HBox buildApplicationCard(TutorApplicationBean app) {
         HBox card = new HBox(16);
         card.getStyleClass().add("application-card");
         card.setAlignment(Pos.CENTER_LEFT);
@@ -210,31 +190,19 @@ public class AdminContentController {
         Button viewBtn = new Button("View Application");
         viewBtn.getStyleClass().add("admin-approve-btn");
 
-        // Observer (Push Model): quando il model aggiorna lo status, la View si aggiorna automaticamente.
-        app.addPropertyChangeListener(TutorApplication.PROP_STATUS, event -> Platform.runLater(() -> {
-            applicationsList.getChildren().remove(card);
-            int remaining = applicationsList.getChildren().size();
-            pendingCountLabel.setText(remaining + " pending");
-            if (remaining == 0) {
-                Label empty = new Label("No pending applications.");
-                empty.setStyle(EMPTY_LABEL_STYLE);
-                applicationsList.getChildren().add(empty);
-            }
-        }));
-
         viewBtn.setOnAction(e -> openApplicationReviewDialog(app, card));
 
         card.getChildren().addAll(avatar, info, viewBtn);
         return card;
     }
 
-    private void openApplicationReviewDialog(TutorApplication app, HBox card) {
+    private void openApplicationReviewDialog(TutorApplicationBean app, HBox card) {
         String token = SceneManager.getInstance().getSessionToken();
 
         Task<TutorApplicationBean> task = new Task<>() {
             @Override
             protected TutorApplicationBean call() throws Exception {
-                return appController.loadApplicationDetail(app.getId(), token);
+                return appController.loadApplicationDetail(app.getApplicationId(), token);
             }
         };
 
@@ -321,12 +289,7 @@ public class AdminContentController {
     }
 
     private void filterUsers(String query) {
-        String q = query.toLowerCase();
-        List<Tutor> filtered = allTutors.stream()
-                .filter(t -> t.getFullName().toLowerCase().contains(q)
-                          || t.getUsername().toLowerCase().contains(q))
-                .toList();
-        buildUsersList(filtered);
+        buildUsersList(searchController.filterByQuery(allTutors, query));
     }
 
     // ----------------------------------------------------------------

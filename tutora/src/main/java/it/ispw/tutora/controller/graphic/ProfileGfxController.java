@@ -1,8 +1,10 @@
 package it.ispw.tutora.controller.graphic;
 
+import it.ispw.tutora.controller.application.UserProfileController;
 import it.ispw.tutora.controller.graphic.util.TutorBrowseUtil;
 import it.ispw.tutora.model.User;
 import it.ispw.tutora.view.AvatarManager;
+import it.ispw.tutora.view.SceneManager;
 import javafx.animation.*;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -41,6 +43,8 @@ public abstract class ProfileGfxController {
             "-fx-background-color: #E74C3C; -fx-text-fill: white;";
 
     private static Runnable onBackCallback;
+
+    private final UserProfileController profileController = new UserProfileController();
 
     public static void setOnBackCallback(Runnable r) { onBackCallback = r; }
     public static Runnable getOnBackCallback()        { return onBackCallback; }
@@ -198,9 +202,20 @@ public abstract class ProfileGfxController {
     @FXML
     public void handleSaveDescription() {
         String newDesc = aboutTextArea.getText().trim();
-        currentUser.setDescription(newDesc.isBlank() ? null : newDesc);
-        aboutLabel.setText(newDesc.isBlank() ? getDefaultDescription() : newDesc);
+        String toSave  = newDesc.isBlank() ? null : newDesc;
+
+        persistDescription(toSave);
+        aboutLabel.setText(toSave != null ? toSave : getDefaultDescription());
         exitEditMode();
+    }
+
+    /**
+     * Salva la descrizione sul datastore tramite {@link UserProfileController#updateDescription}.
+     * Il controller applicativo aggiorna anche il modello in-memory.
+     */
+    private void persistDescription(String description) {
+        String token = SceneManager.getInstance().getSessionToken();
+        profileController.updateDescription(token, description);
     }
 
     @FXML

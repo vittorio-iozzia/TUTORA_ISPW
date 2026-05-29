@@ -47,6 +47,10 @@ import java.time.LocalDateTime;
  */
 public class DemoDaoFactory extends DaoFactory {
 
+    /** In modalità demo i dati sono in-memory: nessuna persistenza su disco. */
+    @Override
+    public boolean isDemo() { return true; }
+
     // ----------------------------------------------------------------
     // Costanti per i dati di esempio — evitano literal duplicati
     // ----------------------------------------------------------------
@@ -117,8 +121,8 @@ public class DemoDaoFactory extends DaoFactory {
             populateUsers();
             populateExpertises();
             populateApplications();
-            int[] availableIds = populateLessonsAndBookings(); // cattura gli id assegnati da nextId
-            populateNotifications(availableIds);              // usa gli id reali, zero hardcoding
+            int[] availableIds = populateLessonsAndBookings();
+            populateNotifications(availableIds);
             populateMessages();
             populateReviews();
         } catch (DatabaseException | DuplicateUserException | DuplicateApplicationException
@@ -391,13 +395,6 @@ public class DemoDaoFactory extends DaoFactory {
         applicationItemDao.insert(null, teachingExpItem);
     }
 
-    /**
-     * Inserisce lezioni e booking di esempio e restituisce gli id assegnati
-     * da nextId per le lezioni AVAILABLE, usati da populateNotifications()
-     * per costruire targetId senza hardcoding.
-     *
-     * @return array [availSaxId, availGuitarId, availPianoId]
-     */
     private int[] populateLessonsAndBookings() throws DatabaseException, DuplicateLessonException {
 
         Student luigi;
@@ -428,7 +425,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .lessonStatus(LessonStatus.BOOKED)
                 .createdAt(now.minusDays(3))
                 .build();
-        lessonDao.insertLesson(null, guitarLesson);
+        int guitarLessonId = lessonDao.insertLesson(null, guitarLesson);
 
         bookingDao.insertBooking(null, new Booking.Builder()
                 .lesson(guitarLesson)
@@ -449,7 +446,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .lessonStatus(LessonStatus.BOOKED)
                 .createdAt(now.minusDays(1))
                 .build();
-        lessonDao.insertLesson(null, saxLesson);
+        int saxLessonId = lessonDao.insertLesson(null, saxLesson);
 
         bookingDao.insertBooking(null, new Booking.Builder()
                 .lesson(saxLesson)
@@ -503,8 +500,6 @@ public class DemoDaoFactory extends DaoFactory {
                 .build());
 
         // ── Available lessons (for booking dialog demo) ─────────────────
-        // Gli id vengono catturati e passati a populateNotifications()
-        // per evitare targetId hardcoded dipendenti dall'ordine di inserzione.
         Lesson availSax = new Lesson.Builder()
                 .expertise(saxExpertise)
                 .startTime(now.plusDays(7).withHour(10).withMinute(0).withSecond(0).withNano(0))
@@ -514,7 +509,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .lessonStatus(LessonStatus.AVAILABLE)
                 .createdAt(now)
                 .build();
-        int availSaxId = lessonDao.insertLesson(null, availSax);
+        lessonDao.insertLesson(null, availSax);
 
         Lesson availGuitar = new Lesson.Builder()
                 .expertise(guitarExpertise)
@@ -525,7 +520,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .lessonStatus(LessonStatus.AVAILABLE)
                 .createdAt(now)
                 .build();
-        int availGuitarId = lessonDao.insertLesson(null, availGuitar);
+        lessonDao.insertLesson(null, availGuitar);
 
         Lesson availPiano = new Lesson.Builder()
                 .expertise(pianoExpertise)
@@ -536,16 +531,11 @@ public class DemoDaoFactory extends DaoFactory {
                 .lessonStatus(LessonStatus.AVAILABLE)
                 .createdAt(now)
                 .build();
-        int availPianoId = lessonDao.insertLesson(null, availPiano);
+        lessonDao.insertLesson(null, availPiano);
 
-        return new int[]{ availSaxId, availGuitarId, availPianoId };
+        return new int[]{ guitarLessonId, saxLessonId };
     }
 
-    /**
-     * @param availableLessonIds array [availSaxId, availGuitarId, availPianoId]
-     *                           restituito da populateLessonsAndBookings().
-     *                           Se vuoto (tutor/student non trovati) non inserisce notifiche.
-     */
     private void populateNotifications(int[] availableLessonIds) throws DatabaseException {
 
         Notification appNotif = new Notification.Builder()
@@ -573,9 +563,11 @@ public class DemoDaoFactory extends DaoFactory {
 
         if (availableLessonIds.length == 0) return;
 
-        // targetId reale della prima lezione AVAILABLE (availSax),
-        // ottenuto da insertLesson — nessun hardcoding dipendente dall'ordine.
-        int availSaxId = availableLessonIds[0];
+        // Le notifiche puntano alle lezioni già BOOKED (non alle AVAILABLE):
+        // rappresentano le richieste storiche di luigi, già accettate e pagate.
+        // Così checkNoPendingRequest non blocca le lezioni AVAILABLE.
+        int guitarLessonId = availableLessonIds[0];
+        int saxLessonId    = availableLessonIds[1];
 
         Notification tutorNotif = new Notification.Builder()
                 .recipientUsername(USER_TUTOR)
@@ -583,22 +575,21 @@ public class DemoDaoFactory extends DaoFactory {
                 .message(USER_STUDENT + " has requested a lesson on "
                         + "Saxophone. Please review and respond.")
                 .type(NotificationType.LESSON_BOOKED)
-                .targetId(availSaxId)
+                .targetId(saxLessonId)
                 .timestamp(LocalDateTime.now().minusHours(1))
                 .read(true)
                 .build();
         notificationDao.insert(null, tutorNotif);
 
-        int availGuitarId = availableLessonIds[1];
         Notification tutorNotif2 = new Notification.Builder()
                 .recipientUsername(USER_TUTOR)
                 .senderUsername(USER_STUDENT)
                 .message(USER_STUDENT + " has requested a lesson on "
                         + "Guitar. Please review and respond.")
                 .type(NotificationType.LESSON_BOOKED)
-                .targetId(availGuitarId)
+                .targetId(guitarLessonId)
                 .timestamp(LocalDateTime.now().minusMinutes(20))
-                .read(false)
+                .read(true)
                 .build();
         notificationDao.insert(null, tutorNotif2);
     }
@@ -626,7 +617,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .content("Just your guitar and a notebook. I'll bring the sheet music. See you Tuesday!")
                 .sentAt(base.plusMinutes(22)).read(true).build());
 
-        // Luigi replied last — only this message is unread for the tutor
+
         messageDao.insert(null, new Message.Builder()
                 .senderUsername(USER_STUDENT).recipientUsername(USER_TUTOR)
                 .content("Great, see you Tuesday then. Thanks a lot!")
@@ -634,10 +625,7 @@ public class DemoDaoFactory extends DaoFactory {
     }
 
     private void populateReviews() throws DatabaseException, DuplicateReviewException {
-        // Seed 24 historical reviews for tutorVitto so the pre-existing 4.8 / 24
-        // rating stays coherent when Luigi adds a new one via the UI.
-        // Ratings: 20×5 + 4×4 → avg 4.83 → displayed as 4.8
-        // Booking IDs start at 1000 to avoid any collision with real booking IDs.
+
         LocalDateTime base = LocalDateTime.now().minusMonths(6);
         int bookingId = 1000;
         for (int i = 0; i < 20; i++) {

@@ -91,8 +91,10 @@ public class StudentDaoDb extends UserDaoDb implements StudentDao {
             // executeUpdate() restituisce 0 se nessuna riga è stata aggiornata:
             // significa che lo username non esiste nella tabella student
             if (ps.executeUpdate() == 0) throw new UserNotFoundException("Unknown user.");
+        } catch (UserNotFoundException e) {
+            throw e;
         } catch (SQLException e) {
-            throw new DatabaseException("System Error. Try later.");
+            throw new DatabaseException("System Error. Try later.", e);
         }
     }
     /**
@@ -108,7 +110,7 @@ public class StudentDaoDb extends UserDaoDb implements StudentDao {
             ps.setString(1, user.getUsername());
             ps.executeUpdate();
         } catch (SQLException e) {
-            throw new DatabaseException("System Error. Try later.");
+            throw new DatabaseException("System Error. Try later.", e);
         }
     }
 
@@ -136,8 +138,10 @@ public class StudentDaoDb extends UserDaoDb implements StudentDao {
                 if (!rs.next()) throw new UserNotFoundException("Unknown user.");
                 return mapStudent(rs);
             }
+        } catch (UserNotFoundException e) {
+            throw e;
         } catch (SQLException e) {
-            throw new DatabaseException("System Error. Try later.");
+            throw new DatabaseException("System Error. Try later.", e);
         }
     }
 

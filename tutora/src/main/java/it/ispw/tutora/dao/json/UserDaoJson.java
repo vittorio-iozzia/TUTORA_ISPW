@@ -178,11 +178,60 @@ public class UserDaoJson implements UserDao {
                 r.rating = "0.00";
                 r.ratingCount = 0;
                 r.budget = null;
+                r.newlyPromoted = true;
                 writeAll(records);
                 return (Tutor) toUser(r);
             }
         }
         throw new UserNotFoundException(studentUsername);
+    }
+
+    // ----------------------------------------------------------------
+    // updateTutorRating
+    // ----------------------------------------------------------------
+
+    /**
+     * Controlla se il tutor ha ancora il flag newlyPromoted attivo.
+     * Chiamato da JsonDaoFactory per popolare il SessionManager al login.
+     */
+    public boolean isNewlyPromoted(String username) throws DatabaseException {
+        for (UserRecord r : readAll()) {
+            if (r.username.equals(username)) return r.newlyPromoted;
+        }
+        return false;
+    }
+
+    /**
+     * Azzera il flag newlyPromoted dopo che il popup di benvenuto è stato mostrato.
+     * Chiamato da JsonDaoFactory.
+     */
+    public void clearNewlyPromoted(String username) throws DatabaseException {
+        List<UserRecord> records = readAll();
+        for (UserRecord r : records) {
+            if (r.username.equals(username)) {
+                r.newlyPromoted = false;
+                writeAll(records);
+                return;
+            }
+        }
+    }
+
+    /**
+     * Aggiorna rating e ratingCount del tutor in users.json.
+     * Package-private: chiamato da ReviewDaoJson dopo ogni operazione su review,
+     * in sostituzione dei trigger SQL assenti nel layer JSON.
+     */
+    void updateTutorRating(String username, BigDecimal rating, int ratingCount)
+            throws DatabaseException {
+        List<UserRecord> records = readAll();
+        for (UserRecord r : records) {
+            if (r.username.equals(username)) {
+                r.rating = rating.toPlainString();
+                r.ratingCount = ratingCount;
+                writeAll(records);
+                return;
+            }
+        }
     }
 
     // ----------------------------------------------------------------
@@ -291,8 +340,9 @@ public class UserDaoJson implements UserDao {
         String  createdAt;
 
         // Campi specifici del ruolo — null se non applicabili
-        String budget;       // STUDENT
-        String rating;       // TUTOR
-        int ratingCount;  // TUTOR
+        String  budget;          // STUDENT
+        String  rating;          // TUTOR
+        int     ratingCount;     // TUTOR
+        boolean newlyPromoted;   // TUTOR — true dopo la prima promozione, false dopo il primo login
     }
 }

@@ -5,6 +5,7 @@ import it.ispw.tutora.bean.CategoryBean;
 import it.ispw.tutora.bean.RequirementBean;
 import it.ispw.tutora.bean.TutorApplicationBean;
 import it.ispw.tutora.controller.application.ApplyToBecomeATutorController;
+import it.ispw.tutora.controller.application.SearchTutorController;
 import it.ispw.tutora.enums.ItemType;
 import it.ispw.tutora.exception.*;
 import it.ispw.tutora.view.SceneManager;
@@ -82,6 +83,8 @@ public class ApplyToBecomeATutorGfxController {
 
     private final ApplyToBecomeATutorController controller =
             new ApplyToBecomeATutorController();
+    private final SearchTutorController searchTutorController =
+            new SearchTutorController();
 
     private List<RequirementBean> requirements;
 
@@ -109,7 +112,7 @@ public class ApplyToBecomeATutorGfxController {
 
     private void loadCategories() {
         try {
-            List<CategoryBean> categories = controller.loadCategories();
+            List<CategoryBean> categories = searchTutorController.loadCategoriesAsBean();
             List<String> names = categories.stream()
                     .map(CategoryBean::getName)
                     .toList();

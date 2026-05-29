@@ -67,11 +67,7 @@ public class TutorApplicationDaoJson implements TutorApplicationDao {
         }
 
         // Simulo in Json un ID auto-incremented
-        int id = records.stream()                   // Crea uno stream di AppRecord
-                .mapToInt(r -> r.id)      // Trasforma ogni AppRecord nel suo id (IntStream)
-                .max()                              // Trova il valore massimo
-                .orElse(0)                    // Se la lista è vuota restituisce zero
-                + 1;                                // Aggiunge uno per otterene il prossimo id
+        int id = records.stream().mapToInt(r -> r.id).max().orElse(0) + 1;
 
         AppRecord newRecord = new AppRecord();
         newRecord.id = id;

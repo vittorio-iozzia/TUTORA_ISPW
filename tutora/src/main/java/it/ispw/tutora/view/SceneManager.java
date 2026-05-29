@@ -5,7 +5,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-import java.io.IOException;
 import java.util.logging.Logger;
 
 /**
@@ -129,7 +128,7 @@ public class SceneManager {
                 primaryStage.setScene(new Scene(root, width, height));
             }
             primaryStage.show();
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOGGER.severe("Cannot load scene: " + fxmlFile + " — " + e.getMessage());
         }
     }

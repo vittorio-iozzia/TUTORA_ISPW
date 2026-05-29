@@ -165,11 +165,10 @@ public class NotificationGfxController {
      * Restituisce true se la notifica ha ancora un'azione pendente che
      * l'utente deve compiere (Accept/Reject o Pay Now).
      * Queste notifiche vengono escluse dal "Mark all as read".
+     * Logica applicativa delegata a GetNotificationsController (BCE).
      */
     private boolean isActionable(Notification n) {
-        return (session.isTutor() && n.getType() == NotificationType.LESSON_BOOKED)
-            || (session.isStudent() && n.getType() == NotificationType.LESSON_ACCEPTED)
-            || (session.isAdmin() && n.getType() == NotificationType.APPLICATION_UPDATE);
+        return notifController.isActionable(n, session);
     }
 
     // ----------------------------------------------------------------
@@ -187,18 +186,6 @@ public class NotificationGfxController {
             protected NotificationBean call() {
                 NotificationBean bean = new NotificationBean();
                 notifController.loadNotifications(bean, token);
-
-                // Auto-mark LESSON_REJECTED as read for students (no action needed)
-                if (session.isStudent() && bean.getList() != null) {
-                    for (Notification n : bean.getList()) {
-                        if (n.getType() == NotificationType.LESSON_REJECTED && !n.isRead()) {
-                            NotificationBean mb = new NotificationBean();
-                            mb.setNotificationId(n.getId());
-                            notifController.markAsRead(mb, token);
-                            n.setRead(true);
-                        }
-                    }
-                }
                 return bean;
             }
         };
@@ -397,21 +384,19 @@ public class NotificationGfxController {
 
         info.getChildren().addAll(titleLbl, msgLbl);
 
-        // Show admin notes for students reviewing their application result
+        // Show admin notes for students reviewing their application result.
+        // Notification.getAdminNotes() / getMainMessage() encapsulate the message format (BCE).
         if (session.isStudent() && notif.getType() == NotificationType.APPLICATION_UPDATE) {
-            String fullMsg = notif.getMessage();
-            final String SEPARATOR = "\n\nAdmin notes: ";
-            int notesIdx = fullMsg.indexOf(SEPARATOR);
-            if (notesIdx >= 0) {
-                msgLbl.setText(fullMsg.substring(0, notesIdx));
-                String notes = fullMsg.substring(notesIdx + SEPARATOR.length());
+            String adminNotes = notif.getAdminNotes();
+            if (adminNotes != null) {
+                msgLbl.setText(notif.getMainMessage());
 
                 VBox notesBox = new VBox(4);
                 notesBox.getStyleClass().add("notif-notes-box");
                 VBox.setMargin(notesBox, new Insets(8, 0, 0, 0));
                 Label notesTitleLbl = new Label("Admin notes");
                 notesTitleLbl.getStyleClass().add("notif-notes-title");
-                Label notesLbl = new Label(notes);
+                Label notesLbl = new Label(adminNotes);
                 notesLbl.getStyleClass().add("notif-notes-content");
                 notesLbl.setWrapText(true);
                 notesBox.getChildren().addAll(notesTitleLbl, notesLbl);
@@ -698,17 +683,7 @@ public class NotificationGfxController {
      */
     public void markVisibleAsRead(Runnable onComplete) {
         List<Notification> toMark = currentNotifications.stream()
-                .filter(n -> !n.isRead())
-
-                // Non marcare LESSON_BOOKED del tutor (richiede ancora accept/reject)
-                .filter(n -> !(session.isTutor() && n.getType() == NotificationType.LESSON_BOOKED))
-
-                // Non marcare LESSON_ACCEPTED dello student (deve ancora pagare,
-                // indipendentemente dallo stato del pagamento in background)
-                .filter(n -> !(session.isStudent() && n.getType() == NotificationType.LESSON_ACCEPTED))
-
-                // Non marcare APPLICATION_UPDATE dell'admin (richiede valutazione esplicita)
-                .filter(n -> !(session.isAdmin() && n.getType() == NotificationType.APPLICATION_UPDATE))
+                .filter(n -> !n.isRead() && !isActionable(n))
                 .toList();
         if (toMark.isEmpty()) {
             if (onComplete != null) Platform.runLater(onComplete);

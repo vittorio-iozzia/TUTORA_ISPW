@@ -167,8 +167,8 @@ public class Booking {
     // ----------------------------------------------------------------
 
     private void checkPayment(BigDecimal pricePaidToCheck) {
-        if (pricePaidToCheck == null
-                || pricePaidToCheck.compareTo(BigDecimal.ZERO) <= 0) {
+        // pricePaid may be null for partial Booking objects (e.g. built by ReviewDaoDb with only id)
+        if (pricePaidToCheck != null && pricePaidToCheck.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Invalid price.");
         }
     }

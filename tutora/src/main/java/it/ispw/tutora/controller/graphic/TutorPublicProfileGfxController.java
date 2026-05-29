@@ -1,9 +1,7 @@
 package it.ispw.tutora.controller.graphic;
 
+import it.ispw.tutora.controller.application.UserProfileController;
 import it.ispw.tutora.controller.graphic.util.TutorBrowseUtil;
-import it.ispw.tutora.dao.TutorExpertiseDao;
-import it.ispw.tutora.dao.factory.DaoFactory;
-import it.ispw.tutora.enums.Status;
 import it.ispw.tutora.model.Tutor;
 import it.ispw.tutora.model.TutorExpertise;
 import javafx.animation.*;
@@ -42,6 +40,8 @@ public class TutorPublicProfileGfxController {
 
     private static Tutor targetTutor;
     private static Runnable onBackCallback;
+
+    private final UserProfileController profileController = new UserProfileController();
 
     public static void setTargetTutor(Tutor t) { targetTutor = t; }
     public static void setOnBackCallback(Runnable r) { onBackCallback = r; }
@@ -148,12 +148,8 @@ public class TutorPublicProfileGfxController {
         String uname = tutor.getUsername();
         Task<List<TutorExpertise>> task = new Task<>() {
             @Override
-            protected List<TutorExpertise> call() throws Exception {
-                TutorExpertiseDao dao = DaoFactory.getInstance().createTutorExpertiseDao();
-                List<TutorExpertise> all = dao.findByTutor(null, uname);
-                return all.stream()
-                        .filter(e -> e.getStatus() == Status.APPROVED)
-                        .toList();
+            protected List<TutorExpertise> call() {
+                return profileController.getPublicExpertises(uname);
             }
         };
         task.setOnSucceeded(e -> Platform.runLater(() -> {

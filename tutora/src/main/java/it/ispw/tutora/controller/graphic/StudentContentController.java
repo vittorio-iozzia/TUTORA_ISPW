@@ -1,15 +1,12 @@
 package it.ispw.tutora.controller.graphic;
 
+import it.ispw.tutora.controller.application.GetStudentLessonsController;
 import it.ispw.tutora.controller.application.SearchTutorController;
 import it.ispw.tutora.controller.graphic.util.TutorBrowseUtil;
-import it.ispw.tutora.dao.BookingDao;
-import it.ispw.tutora.dao.ReviewDao;
-import it.ispw.tutora.dao.factory.DaoFactory;
-import it.ispw.tutora.enums.PaymentStatus;
-import it.ispw.tutora.exception.DatabaseException;
 import it.ispw.tutora.model.Booking;
 import it.ispw.tutora.model.Category;
 import it.ispw.tutora.model.Tutor;
+
 import it.ispw.tutora.model.session.Session;
 import it.ispw.tutora.model.session.SessionManager;
 import it.ispw.tutora.view.SceneManager;
@@ -42,7 +39,6 @@ import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -108,9 +104,11 @@ public class StudentContentController {
     private List<Tutor>    allTutors     = List.of();
     private List<Category> allCategories = List.of();
 
-    private final SearchTutorController searchController = new SearchTutorController();
+    /** username → lista nomi subcategory APPROVED (max 3), usata per card pills e ricerca */
+    private Map<String, List<String>> expertiseNames = new HashMap<>();
 
-    private String username;
+    private final SearchTutorController      searchController      = new SearchTutorController();
+    private final GetStudentLessonsController lessonsController     = new GetStudentLessonsController();
 
     private static final DateTimeFormatter CARD_FMT =
             DateTimeFormatter.ofPattern("EEE d MMM · HH:mm", java.util.Locale.ENGLISH);
@@ -130,12 +128,6 @@ public class StudentContentController {
         "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=280&h=200&fit=crop&crop=faces"
     );
 
-    private static final List<String> PORTRAIT_POOL = List.of(
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=280&h=200&fit=crop&crop=faces",
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=280&h=200&fit=crop&crop=faces",
-        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=280&h=200&fit=crop&crop=faces",
-        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=280&h=200&fit=crop&crop=faces"
-    );
 
     // ----------------------------------------------------------------
     // Inizializzazione
@@ -145,12 +137,16 @@ public class StudentContentController {
     public void initialize() {
         String token = SceneManager.getInstance().getSessionToken();
         Session session = SessionManager.getInstance().getSession(token);
-        this.username = session.getUser().getUsername();
+        if (session == null) {
+            Platform.runLater(() -> SceneManager.getInstance().showLogin());
+            return;
+        }
         welcomeTitle.setText("Welcome back, " + session.getUser().getName() + "!");
         loadHeroImage();
 
-        allTutors     = loadTutors();
-        allCategories = loadCategories();
+        allTutors     = searchController.loadAllTutors();
+        allCategories = TutorBrowseUtil.loadCategories(searchController, LOGGER);
+        expertiseNames = searchController.loadExpertisesForTutors(allTutors);
 
         animateStat(totalLessonsLabel,24,"%.0f");
         animateStat(hoursLearnedLabel, 36,"%.0fh");
@@ -198,18 +194,6 @@ public class StudentContentController {
                 heroBgImageView.setImage(img);
             }
         });
-    }
-
-    // ----------------------------------------------------------------
-    // DAO
-    // ----------------------------------------------------------------
-
-    private List<Tutor> loadTutors() {
-        return TutorBrowseUtil.loadTutors(LOGGER);
-    }
-
-    private List<Category> loadCategories() {
-        return TutorBrowseUtil.loadCategories(searchController, LOGGER);
     }
 
     // ----------------------------------------------------------------
@@ -273,14 +257,7 @@ public class StudentContentController {
     }
 
     private void filterTutors(String query) {
-        String q = query.toLowerCase();
-        List<Tutor> filtered = allTutors.stream()
-                .filter(t -> t.getFullName().toLowerCase().contains(q)
-                          || t.getUsername().toLowerCase().contains(q)
-                          || (t.getDescription() != null
-                              && t.getDescription().toLowerCase().contains(q)))
-                .toList();
-        buildTutorGrid(filtered);
+        buildTutorGrid(searchController.filterByQuery(allTutors, expertiseNames, query));
     }
 
     // ----------------------------------------------------------------
@@ -327,7 +304,7 @@ public class StudentContentController {
         card.setPrefWidth(260);
 
         // Top half: cover photo with badge overlays
-        StackPane photoPane = TutorBrowseUtil.buildPhotoHalf(tutor, poolIndex, 260, PHOTO_URLS, PORTRAIT_POOL);
+        StackPane photoPane = TutorBrowseUtil.buildPhotoHalf(tutor, poolIndex, 260, PHOTO_URLS);
 
         // Body section
         VBox body = new VBox(10);
@@ -336,11 +313,29 @@ public class StudentContentController {
         Label name = new Label(tutor.getFullName());
         name.getStyleClass().add("tutor-name");
 
-        Label desc = new Label(tutor.getDescription() != null
-                ? TutorBrowseUtil.truncate(tutor.getDescription(), 55)
-                : tutor.getUsername());
+        // Descrizione: bio truncata, oppure nomi expertise come fallback
+        List<String> tags = expertiseNames.getOrDefault(tutor.getUsername(), List.of());
+        String descText;
+        if (tutor.getDescription() != null && !tutor.getDescription().isBlank()) {
+            descText = TutorBrowseUtil.truncate(tutor.getDescription(), 60);
+        } else if (!tags.isEmpty()) {
+            descText = String.join(" · ", tags);
+        } else {
+            descText = "Tutor";
+        }
+        Label desc = new Label(descText);
         desc.getStyleClass().add("tutor-subject");
         desc.setWrapText(true);
+
+        // Expertise tag pills
+        HBox pillBox = new HBox(6);
+        pillBox.setAlignment(Pos.CENTER_LEFT);
+        pillBox.setPadding(new Insets(2, 0, 0, 0));
+        for (String tag : tags) {
+            Label pill = new Label(tag);
+            pill.getStyleClass().add("interest-pill");
+            pillBox.getChildren().add(pill);
+        }
 
         HBox ratingRow = new HBox(5);
         ratingRow.setAlignment(Pos.CENTER_LEFT);
@@ -371,7 +366,7 @@ public class StudentContentController {
         bookBtn.setOnAction(e -> TutorBrowseUtil.openBookingDialog(tutor, tutorGrid, LOGGER));
         buttons.getChildren().addAll(profileBtn, bookBtn);
 
-        body.getChildren().addAll(name, desc, ratingRow, price, buttons);
+        body.getChildren().addAll(name, desc, pillBox, ratingRow, price, buttons);
         card.getChildren().addAll(photoPane, body);
         return card;
     }
@@ -381,25 +376,14 @@ public class StudentContentController {
     // ----------------------------------------------------------------
 
     private void buildUpcomingLessons() {
-        try {
-            BookingDao dao = DaoFactory.getInstance().createBookingDao();
-            List<Booking> bookings = dao.findByStudent(
-                    DaoFactory.getInstance().getConnection(), username);
-            java.time.LocalDateTime now = java.time.LocalDateTime.now();
-            List<Booking> upcoming = bookings.stream()
-                    .filter(b -> b.getPaymentStatus() == PaymentStatus.PAID)
-                    .filter(b -> b.getLesson().getStartTime().isAfter(now))
-                    .sorted(java.util.Comparator.comparing(b -> b.getLesson().getStartTime()))
-                    .toList();
-            if (upcoming.isEmpty()) {
-                Label empty = new Label("No upcoming lessons.");
-                empty.setStyle(EMPTY_LESSON_STYLE);
-                upcomingList.getChildren().add(empty);
-            } else {
-                for (Booking b : upcoming) upcomingList.getChildren().add(buildLessonCard(b, true));
-            }
-        } catch (DatabaseException e) {
-            LOGGER.warning("Cannot load upcoming lessons: " + e.getMessage());
+        String token = SceneManager.getInstance().getSessionToken();
+        List<Booking> upcoming = lessonsController.loadUpcomingLessons(token);
+        if (upcoming.isEmpty()) {
+            Label empty = new Label("No upcoming lessons.");
+            empty.setStyle(EMPTY_LESSON_STYLE);
+            upcomingList.getChildren().add(empty);
+        } else {
+            for (Booking b : upcoming) upcomingList.getChildren().add(buildLessonCard(b, true));
         }
     }
 
@@ -409,18 +393,12 @@ public class StudentContentController {
      */
     public void refreshUpcomingLessons() {
         upcomingList.getChildren().clear();
+        String token = SceneManager.getInstance().getSessionToken();
 
         Task<List<Booking>> task = new Task<>() {
             @Override
-            protected List<Booking> call() throws Exception {
-                BookingDao dao = DaoFactory.getInstance().createBookingDao();
-                java.time.LocalDateTime now = java.time.LocalDateTime.now();
-                return dao.findByStudent(DaoFactory.getInstance().getConnection(), username)
-                        .stream()
-                        .filter(b -> b.getPaymentStatus() == PaymentStatus.PAID)
-                        .filter(b -> b.getLesson().getStartTime().isAfter(now))
-                        .sorted(java.util.Comparator.comparing(b -> b.getLesson().getStartTime()))
-                        .toList();
+            protected List<Booking> call() {
+                return lessonsController.loadUpcomingLessons(token);
             }
         };
 
@@ -439,48 +417,25 @@ public class StudentContentController {
         task.setOnFailed(e ->
                 LOGGER.warning("Cannot refresh upcoming lessons: " + task.getException().getMessage()));
 
-        Thread t = new Thread(task, "student-upcoming-refresh");
-        t.setDaemon(true);
-        t.start();
+        Thread thread = new Thread(task, "student-upcoming-refresh");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     private void buildLessonHistory() {
-        try {
-            DaoFactory factory = DaoFactory.getInstance();
-            BookingDao bookingDao = factory.createBookingDao();
-            ReviewDao  reviewDao  = factory.createReviewDao();
+        String token = SceneManager.getInstance().getSessionToken();
+        List<Booking> history    = lessonsController.loadLessonHistory(token);
+        Set<Integer>  reviewedIds = lessonsController.getReviewedBookingIds(history, token);
 
-            java.time.LocalDateTime now = java.time.LocalDateTime.now();
-            List<Booking> bookings = bookingDao.findByStudent(factory.getConnection(), username);
-            List<Booking> history = bookings.stream()
-                    .filter(b -> b.getPaymentStatus() == PaymentStatus.PAID)
-                    .filter(b -> !b.getLesson().getStartTime().isAfter(now))
-                    .sorted(java.util.Comparator.comparing(
-                            (Booking b) -> b.getLesson().getStartTime()).reversed())
-                    .toList();
-
-            // Collect booking IDs that already have a review
-            Set<Integer> reviewedIds = new HashSet<>();
+        if (history.isEmpty()) {
+            Label empty = new Label("No past lessons.");
+            empty.setStyle(EMPTY_LESSON_STYLE);
+            historyList.getChildren().add(empty);
+        } else {
             for (Booking b : history) {
-                String tutorUsername = b.getLesson().getExpertise().getTutor().getUsername();
-                reviewDao.findByTutor(factory.getConnection(), tutorUsername).stream()
-                        .filter(r -> r.getBooking().getId() == b.getId())
-                        .findFirst()
-                        .ifPresent(r -> reviewedIds.add(b.getId()));
+                historyList.getChildren().add(
+                        buildLessonCard(b, false, reviewedIds.contains(b.getId())));
             }
-
-            if (history.isEmpty()) {
-                Label empty = new Label("No past lessons.");
-                empty.setStyle(EMPTY_LESSON_STYLE);
-                historyList.getChildren().add(empty);
-            } else {
-                for (Booking b : history) {
-                    historyList.getChildren().add(
-                            buildLessonCard(b, false, reviewedIds.contains(b.getId())));
-                }
-            }
-        } catch (DatabaseException e) {
-            LOGGER.warning("Cannot load lesson history: " + e.getMessage());
         }
     }
 

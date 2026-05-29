@@ -170,6 +170,9 @@ public abstract class User {
      * nei Controller e nella View.
      */
     public String getFullName() {
+        if (name == null && surname == null) return username;
+        if (name == null) return surname;
+        if (surname == null) return name;
         return name + " " + surname;
     }
 

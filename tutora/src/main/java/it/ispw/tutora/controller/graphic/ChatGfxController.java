@@ -1,12 +1,8 @@
 package it.ispw.tutora.controller.graphic;
 
-import it.ispw.tutora.dao.BookingDao;
-import it.ispw.tutora.dao.MessageDao;
-import it.ispw.tutora.dao.factory.DaoFactory;
-import it.ispw.tutora.exception.DatabaseException;
-import it.ispw.tutora.model.Booking;
+import it.ispw.tutora.bean.ChatContactBean;
+import it.ispw.tutora.controller.application.ChatController;
 import it.ispw.tutora.model.Message;
-import it.ispw.tutora.model.User;
 import it.ispw.tutora.model.session.Session;
 import it.ispw.tutora.model.session.SessionManager;
 import it.ispw.tutora.view.AvatarManager;
@@ -38,7 +34,7 @@ import java.util.logging.Logger;
  *
  * Gestisce la chat locale tra studenti e tutor.
  * I contatti provengono dalle prenotazioni esistenti.
- * Le immagini dei profili vengono caricate da Unsplash in modo asincrono.
+ * Tutta la logica di accesso ai dati è delegata a {@link ChatController}.
  */
 public class ChatGfxController {
 
@@ -47,7 +43,7 @@ public class ChatGfxController {
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("d MMM · HH:mm", Locale.ENGLISH);
 
-    // Per-username portrait URLs — must match StudentContentController.PHOTO_URLS (same person, same photo)
+    // Per-username portrait URLs — must match StudentContentController.PHOTO_URLS
     private static final Map<String, String> PHOTO_URLS = Map.of(
         "tutor_vitto",
         "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&h=120&fit=crop&crop=faces"
@@ -79,14 +75,15 @@ public class ChatGfxController {
     // State
     // ----------------------------------------------------------------
 
-    private String  currentUsername;
-
+    private String currentUsername;
+    private String sessionToken;
     private String selectedContactUsername;
-
     private Button activeContactBtn;
 
-    // Maps contact username → Unsplash pool index (stable per session)
+    // Maps contact username → pool index (stable per session, reserved for future use)
     private final Map<String, Integer> contactIndexMap = new LinkedHashMap<>();
+
+    private final ChatController chatController = new ChatController();
 
     // ----------------------------------------------------------------
     // Initialize
@@ -94,8 +91,8 @@ public class ChatGfxController {
 
     @FXML
     public void initialize() {
-        String token    = SceneManager.getInstance().getSessionToken();
-        Session session = SessionManager.getInstance().getSession(token);
+        sessionToken    = SceneManager.getInstance().getSessionToken();
+        Session session = SessionManager.getInstance().getSession(sessionToken);
         currentUsername = session.getUser().getUsername();
 
         clipToRoundedRect(chatSidebar, 12);
@@ -104,8 +101,7 @@ public class ChatGfxController {
     }
 
     // ----------------------------------------------------------------
-    // Clip a Region to a rounded rectangle so hover states don't bleed
-    // outside the card corners
+    // Clip a Region to a rounded rectangle
     // ----------------------------------------------------------------
 
     private void clipToRoundedRect(javafx.scene.layout.Region node, double radius) {
@@ -121,51 +117,30 @@ public class ChatGfxController {
     }
 
     // ----------------------------------------------------------------
-    // Load contacts from bookings
+    // Load contacts — delegated to ChatController
     // ----------------------------------------------------------------
 
     private void loadContacts() {
-        BookingDao bookingDao = DaoFactory.getInstance().createBookingDao();
+        List<ChatContactBean> contacts = chatController.getContactsForUser(sessionToken);
 
-            // Load from both student and tutor bookings — handles users who changed role
-            LinkedHashMap<String, User>   contacts = new LinkedHashMap<>();
-            LinkedHashMap<String, String> roles    = new LinkedHashMap<>();
+        if (contacts.isEmpty()) {
+            Label empty = new Label("No conversations yet.\nBook a lesson to start chatting!");
+            empty.setStyle("-fx-text-fill:#9CA3AF;-fx-font-size:14px;-fx-padding:24;" +
+                           "-fx-wrap-text:true;-fx-text-alignment:center;");
+            empty.setWrapText(true);
+            contactList.getChildren().add(empty);
+            return;
+        }
 
-            try {
-                for (Booking b : bookingDao.findByStudent(
-                        DaoFactory.getInstance().getConnection(), currentUsername)) {
-                    User contact = b.getLesson().getExpertise().getTutor();
-                    if (contacts.putIfAbsent(contact.getUsername(), contact) == null)
-                        roles.put(contact.getUsername(), "Tutor");
-                }
-            } catch (DatabaseException ignored) { /* contact load is best-effort: partial failures are acceptable */ }
-
-            try {
-                for (Booking b : bookingDao.findByTutor(
-                        DaoFactory.getInstance().getConnection(), currentUsername)) {
-                    User contact = b.getStudent();
-                    if (contacts.putIfAbsent(contact.getUsername(), contact) == null)
-                        roles.put(contact.getUsername(), "Student");
-                }
-            } catch (DatabaseException ignored) { /* contact load is best-effort: partial failures are acceptable */ }
-
-            if (contacts.isEmpty()) {
-                Label empty = new Label("No conversations yet.\nBook a lesson to start chatting!");
-                empty.setStyle("-fx-text-fill:#9CA3AF;-fx-font-size:14px;-fx-padding:24;-fx-wrap-text:true;-fx-text-alignment:center;");
-                empty.setWrapText(true);
-                contactList.getChildren().add(empty);
-                return;
+        int idx = 0;
+        for (ChatContactBean contact : contacts) {
+            String uname = contact.getUsername();
+            if (!PHOTO_URLS.containsKey(uname)) {
+                contactIndexMap.put(uname, idx++);
             }
-
-            int idx = 0;
-            for (Map.Entry<String, User> e : contacts.entrySet()) {
-                String uname = e.getKey();
-                if (!PHOTO_URLS.containsKey(uname)) {
-                    contactIndexMap.put(uname, idx++);
-                }
-                contactList.getChildren().add(
-                        buildContactItem(uname, e.getValue().getFullName(), roles.get(uname)));
-            }
+            contactList.getChildren().add(
+                    buildContactItem(uname, contact.getFullName(), contact.getRole()));
+        }
     }
 
     // ----------------------------------------------------------------
@@ -174,7 +149,7 @@ public class ChatGfxController {
 
     private Button buildContactItem(String username, String fullName, String role) {
 
-        // ── Avatar (circle with Unsplash photo) ──
+        // ── Avatar (circle with optional photo) ──
         StackPane avatar = buildAvatarPane(username, fullName, 42);
 
         // ── Right side: name + preview ──
@@ -220,7 +195,7 @@ public class ChatGfxController {
     }
 
     // ----------------------------------------------------------------
-    // Build a circular avatar StackPane with async Unsplash photo
+    // Build a circular avatar StackPane with optional photo
     // ----------------------------------------------------------------
 
     private StackPane buildAvatarPane(String username, String fullName, double size) {
@@ -249,14 +224,7 @@ public class ChatGfxController {
 
         avatar.getChildren().add(imgView);
 
-        // Load photo only if the user has set one or has a dedicated URL — never use pool for real users
-        String url = null;
-        if (AvatarManager.hasAvatar(username)) {
-            url = new File(AvatarManager.getAvatarPath(username)).toURI().toString();
-        } else if (PHOTO_URLS.containsKey(username)) {
-            url = PHOTO_URLS.get(username);
-        }
-
+        String url = resolvePhotoUrl(username);
         if (url != null) {
             Image img = new Image(url, size, size, false, true, true);
             img.progressProperty().addListener((obs, oldV, newV) -> {
@@ -294,7 +262,7 @@ public class ChatGfxController {
         chatHeaderName.setText(fullName);
         chatHeaderRole.setText(role);
 
-        // Reload header avatar photo (use same URL logic as the contact list)
+        // Reload header avatar photo
         chatHeaderImageView.setVisible(false);
         chatHeaderInitial.setVisible(true);
         String url = resolvePhotoUrl(username);
@@ -331,39 +299,33 @@ public class ChatGfxController {
     }
 
     // ----------------------------------------------------------------
-    // Load messages
+    // Load messages — delegated to ChatController
     // ----------------------------------------------------------------
 
     private void loadMessages() {
         if (selectedContactUsername == null) return;
-        try {
-            MessageDao msgDao = DaoFactory.getInstance().createMessageDao();
-            List<Message> messages = msgDao.getConversation(
-                    DaoFactory.getInstance().getConnection(),
-                    currentUsername, selectedContactUsername);
+        List<Message> messages = chatController.getConversation(currentUsername, selectedContactUsername);
 
-            messagesContainer.getChildren().clear();
+        messagesContainer.getChildren().clear();
 
-            if (messages.isEmpty()) {
-                Label hint = new Label("No messages yet. Say hello! 👋");
-                hint.setStyle("-fx-text-fill:#9CA3AF;-fx-font-size:14px;-fx-padding:12;");
-                messagesContainer.getChildren().add(hint);
-            } else {
-                String prevSender = null;
-                for (int i = 0; i < messages.size(); i++) {
-                    Message msg  = messages.get(i);
-                    boolean last = (i == messages.size() - 1) || !messages.get(i + 1).getSenderUsername().equals(msg.getSenderUsername());
-                    boolean first = (prevSender == null || !prevSender.equals(msg.getSenderUsername()));
-                    messagesContainer.getChildren().add(buildMessageBubble(msg, first, last));
-                    prevSender = msg.getSenderUsername();
-                }
+        if (messages.isEmpty()) {
+            Label hint = new Label("No messages yet. Say hello! 👋");
+            hint.setStyle("-fx-text-fill:#9CA3AF;-fx-font-size:14px;-fx-padding:12;");
+            messagesContainer.getChildren().add(hint);
+        } else {
+            String prevSender = null;
+            for (int i = 0; i < messages.size(); i++) {
+                Message msg  = messages.get(i);
+                boolean last  = (i == messages.size() - 1)
+                        || !messages.get(i + 1).getSenderUsername().equals(msg.getSenderUsername());
+                boolean first = (prevSender == null
+                        || !prevSender.equals(msg.getSenderUsername()));
+                messagesContainer.getChildren().add(buildMessageBubble(msg, first, last));
+                prevSender = msg.getSenderUsername();
             }
-
-            Platform.runLater(() -> messagesScroll.setVvalue(1.0));
-
-        } catch (DatabaseException e) {
-            LOGGER.warning("Cannot load messages: " + e.getMessage());
         }
+
+        Platform.runLater(() -> messagesScroll.setVvalue(1.0));
     }
 
     // ----------------------------------------------------------------
@@ -417,7 +379,7 @@ public class ChatGfxController {
     }
 
     // ----------------------------------------------------------------
-    // Send
+    // Send — delegated to ChatController
     // ----------------------------------------------------------------
 
     @FXML
@@ -427,22 +389,11 @@ public class ChatGfxController {
         if (text.isEmpty()) return;
         messageInput.clear();
 
-        try {
-            MessageDao msgDao = DaoFactory.getInstance().createMessageDao();
-            msgDao.insert(DaoFactory.getInstance().getConnection(),
-                    new Message.Builder()
-                            .senderUsername(currentUsername)
-                            .recipientUsername(selectedContactUsername)
-                            .content(text)
-                            .sentAt(LocalDateTime.now())
-                            .build());
-        } catch (DatabaseException e) {
-            LOGGER.warning("Cannot send message: " + e.getMessage());
-            return;
+        boolean sent = chatController.sendMessage(sessionToken, selectedContactUsername, text);
+        if (sent) {
+            loadMessages();
+            refreshContactItem(activeContactBtn, selectedContactUsername);
         }
-
-        loadMessages();
-        refreshContactItem(activeContactBtn, selectedContactUsername);
     }
 
     // ----------------------------------------------------------------
@@ -451,35 +402,26 @@ public class ChatGfxController {
 
     @FXML
     private void handleCall() {
-        // Placeholder — voice call not yet implemented
         LOGGER.log(Level.INFO, "Voice call requested for: {0}", selectedContactUsername);
     }
 
     @FXML
     private void handleVideo() {
-        // Placeholder — video call not yet implemented
         LOGGER.log(Level.INFO, "Video call requested for: {0}", selectedContactUsername);
     }
 
     @FXML
     private void handleMore() {
-        // Placeholder — context menu (mute, block, clear) not yet implemented
         LOGGER.log(Level.INFO, "More options requested for: {0}", selectedContactUsername);
     }
 
     // ----------------------------------------------------------------
-    // Mark read
+    // Mark read — delegated to ChatController
     // ----------------------------------------------------------------
 
     private void markMessagesRead() {
         if (selectedContactUsername == null) return;
-        try {
-            DaoFactory.getInstance().createMessageDao()
-                    .markConversationRead(DaoFactory.getInstance().getConnection(),
-                            selectedContactUsername, currentUsername);
-        } catch (DatabaseException e) {
-            LOGGER.warning("Cannot mark as read: " + e.getMessage());
-        }
+        chatController.markConversationRead(sessionToken, selectedContactUsername);
     }
 
     // ----------------------------------------------------------------
@@ -498,17 +440,10 @@ public class ChatGfxController {
     }
 
     private void refreshMessagesIfNeeded() {
-        try {
-            MessageDao msgDao = DaoFactory.getInstance().createMessageDao();
-            List<Message> messages = msgDao.getConversation(
-                    DaoFactory.getInstance().getConnection(),
-                    currentUsername, selectedContactUsername);
-            long rendered = messagesContainer.getChildren().stream()
-                    .filter(HBox.class::isInstance).count();
-            if (messages.size() != rendered) loadMessages();
-        } catch (DatabaseException e) {
-            LOGGER.warning("Poll error: " + e.getMessage());
-        }
+        List<Message> messages = chatController.getConversation(currentUsername, selectedContactUsername);
+        long rendered = messagesContainer.getChildren().stream()
+                .filter(HBox.class::isInstance).count();
+        if (messages.size() != rendered) loadMessages();
     }
 
     private void refreshAllContactItems() {
@@ -528,7 +463,8 @@ public class ChatGfxController {
         for (var child : row.getChildren()) {
             if (child instanceof VBox textBox && textBox.getChildren().size() >= 2) {
                 refreshTextBox(textBox, username);
-            } else if (child instanceof Region dot && dot.getStyleClass().contains("chat-unread-dot")) {
+            } else if (child instanceof Region dot
+                    && dot.getStyleClass().contains("chat-unread-dot")) {
                 refreshUnreadDot(dot, username);
             }
         }
@@ -558,47 +494,19 @@ public class ChatGfxController {
     }
 
     // ----------------------------------------------------------------
-    // Helpers
+    // Helpers — delegated to ChatController
     // ----------------------------------------------------------------
 
     private String getLastMessagePreview(String contactUsername) {
-        try {
-            List<Message> msgs = DaoFactory.getInstance().createMessageDao()
-                    .getConversation(DaoFactory.getInstance().getConnection(),
-                            currentUsername, contactUsername);
-            if (msgs.isEmpty()) return "No messages yet";
-            Message last = msgs.get(msgs.size() - 1);
-            String prefix = last.getSenderUsername().equals(currentUsername) ? "You: " : "";
-            String body   = last.getContent();
-            return prefix + (body.length() > 34 ? body.substring(0, 34) + "…" : body);
-        } catch (DatabaseException e) {
-            return "";
-        }
+        return chatController.getLastMessagePreview(currentUsername, contactUsername);
     }
 
     private String getLastMessageTime(String contactUsername) {
-        try {
-            List<Message> msgs = DaoFactory.getInstance().createMessageDao()
-                    .getConversation(DaoFactory.getInstance().getConnection(),
-                            currentUsername, contactUsername);
-            if (msgs.isEmpty()) return "";
-            return formatTime(msgs.get(msgs.size() - 1).getSentAt());
-        } catch (DatabaseException e) {
-            return "";
-        }
+        return chatController.getLastMessageTime(currentUsername, contactUsername);
     }
 
     private long countUnread(String contactUsername) {
-        try {
-            return DaoFactory.getInstance().createMessageDao()
-                    .getConversation(DaoFactory.getInstance().getConnection(),
-                            currentUsername, contactUsername)
-                    .stream()
-                    .filter(m -> m.getRecipientUsername().equals(currentUsername) && !m.isRead())
-                    .count();
-        } catch (DatabaseException e) {
-            return 0;
-        }
+        return chatController.countUnreadFrom(currentUsername, contactUsername);
     }
 
     private String formatTime(LocalDateTime dt) {

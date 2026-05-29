@@ -106,6 +106,31 @@ public abstract class DaoFactory {
         return null; // default: Demo e JSON non hanno connessione
     }
 
+    /**
+     * Restituisce {@code true} se la factory è in modalità demo (dati in-memory).
+     * Le sottoclassi concrete che usano persistenza reale (DB, JSON) lasciano
+     * il default {@code false}; {@code DemoDaoFactory} sovrascrive con {@code true}.
+     *
+     * Usato dall'entry point dell'applicazione per disabilitare la persistenza
+     * dell'avatar su disco (in demo mode i dati sono sempre freschi).
+     */
+    public boolean isDemo() { return false; }
+
+    /**
+     * Controlla se il tutor ha il flag "neotutor" attivo nella persistenza.
+     * Default no-op (false): solo JsonDaoFactory lo implementa davvero,
+     * perché in DB mode il flag è gestito interamente in-memory da SessionManager.
+     */
+    @SuppressWarnings("java:S1172") // parametro richiesto dal contratto; JsonDaoFactory lo usa
+    public boolean isNewlyPromotedTutor(String username) { return false; }
+
+    /**
+     * Azzera il flag "neotutor" nella persistenza dopo il primo login andato a buon fine.
+     * Default no-op: solo JsonDaoFactory lo implementa.
+     */
+    @SuppressWarnings("java:S1172") // parametro richiesto dal contratto; JsonDaoFactory lo usa
+    public void clearNewlyPromotedTutor(String username) { /* no-op */ }
+
     // ----------------------------------------------------------------
     // Metodi factory — da implementare nelle sottoclassi concrete
     // ----------------------------------------------------------------

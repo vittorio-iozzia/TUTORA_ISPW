@@ -88,4 +88,22 @@ public class JsonDaoFactory extends DaoFactory {
 
     @Override
     public MessageDao createMessageDao() { return new MessageDaoDemo(); }
+
+    @Override
+    public boolean isNewlyPromotedTutor(String username) {
+        try {
+            return new UserDaoJson().isNewlyPromoted(username);
+        } catch (it.ispw.tutora.exception.DatabaseException e) {
+            return false;
+        }
+    }
+
+    @Override
+    public void clearNewlyPromotedTutor(String username) {
+        try {
+            new UserDaoJson().clearNewlyPromoted(username);
+        } catch (it.ispw.tutora.exception.DatabaseException ignored) {
+            // best-effort
+        }
+    }
 }

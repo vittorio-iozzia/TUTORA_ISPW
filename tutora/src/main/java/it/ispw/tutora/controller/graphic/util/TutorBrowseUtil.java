@@ -2,8 +2,6 @@ package it.ispw.tutora.controller.graphic.util;
 
 import it.ispw.tutora.controller.application.SearchTutorController;
 import it.ispw.tutora.controller.graphic.BookTutorGfxController;
-import it.ispw.tutora.dao.TutorDao;
-import it.ispw.tutora.dao.factory.DaoFactory;
 import it.ispw.tutora.exception.DatabaseException;
 import it.ispw.tutora.model.Category;
 import it.ispw.tutora.model.Tutor;
@@ -67,16 +65,6 @@ public final class TutorBrowseUtil {
 
     private TutorBrowseUtil() {}
 
-    public static List<Tutor> loadTutors(Logger logger) {
-        try {
-            TutorDao dao = DaoFactory.getInstance().createTutorDao();
-            return dao.selectAllTutors(DaoFactory.getInstance().getConnection());
-        } catch (DatabaseException e) {
-            logger.warning("Cannot load tutors: " + e.getMessage());
-            return List.of();
-        }
-    }
-
     public static List<Category> loadCategories(SearchTutorController ctrl, Logger logger) {
         try {
             return ctrl.loadCategories();
@@ -98,8 +86,7 @@ public final class TutorBrowseUtil {
      * @param pool      lista URL foto di riserva ordinate per poolIndex
      */
     public static StackPane buildPhotoHalf(Tutor tutor, int poolIndex, double width,
-                                           Map<String, String> photoUrls,
-                                           List<String> pool) {
+                                           Map<String, String> photoUrls) {
         StackPane pane = new StackPane();
         pane.getStyleClass().add("tutor-card-photo-wrap");
         pane.setPrefHeight(160);
@@ -135,16 +122,29 @@ public final class TutorBrowseUtil {
 
         pane.getChildren().addAll(featured, mode);
 
+        // Risoluzione URL foto (stessa logica della pagina profilo → massima coerenza visiva):
+        // 1. Avatar caricato dall'utente (AvatarManager) — priorità assoluta
+        // 2. Mappa specifica della card (risoluzione ottimale, passata dal controller)
+        // 3. PROFILE_PHOTO_URLS — stessa sorgente usata dalla pagina profilo
+        // 4. null → imgView resta vuoto, il Label con la lettera iniziale rimane visibile
         String photoUrl;
         if (AvatarManager.hasAvatar(tutor.getUsername())) {
             photoUrl = new File(AvatarManager.getAvatarPath(tutor.getUsername())).toURI().toString();
         } else {
-            photoUrl = photoUrls.getOrDefault(tutor.getUsername(), pool.get(poolIndex % pool.size()));
+            photoUrl = photoUrls.get(tutor.getUsername());
+            if (photoUrl == null) {
+                // Fallback: stessa sorgente della pagina profilo → card e profilo sempre coerenti
+                photoUrl = resolveProfileImageUrl(tutor.getUsername());
+            }
         }
-        Image img = new Image(photoUrl, width + 20, 200, false, true, true);
-        img.progressProperty().addListener((obs, oldV, newV) -> {
-            if (newV.doubleValue() >= 1.0 && !img.isError()) imgView.setImage(img);
-        });
+        if (photoUrl != null) {
+            // Caricamento sincrono (nessun backgroundLoading) per mostrare l'immagine subito,
+            // coerente con ProfileGfxController.displayAvatar() che usa la stessa modalità.
+            // Evita il race-condition in cui il listener asincrono non veniva mai invocato
+            // per immagini già in cache, lasciando visibile la lettera iniziale verde.
+            Image img = new Image(photoUrl, width + 20, 200, false, true);
+            if (!img.isError()) imgView.setImage(img);
+        }
 
         return pane;
     }

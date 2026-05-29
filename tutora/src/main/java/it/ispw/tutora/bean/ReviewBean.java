@@ -15,18 +15,24 @@ package it.ispw.tutora.bean;
  */
 public class ReviewBean {
 
-    private int bookingId;
-    private int rating;
+    private int    bookingId;
+    private String tutorUsername;
+    private int    rating;
     private String comment;
-
-
+    private String errorMessage;
 
     public int getBookingId() { return bookingId; }
     public void setBookingId(int bookingId) { this.bookingId = bookingId; }
+
+    public String getTutorUsername() { return tutorUsername; }
+    public void setTutorUsername(String tutorUsername) { this.tutorUsername = tutorUsername; }
 
     public int getRating() { return rating; }
     public void setRating(int rating) { this.rating = rating; }
 
     public String getComment() { return comment; }
     public void setComment(String comment) { this.comment = comment; }
+
+    public String getErrorMessage() { return errorMessage; }
+    public void setErrorMessage(String errorMessage) { this.errorMessage = errorMessage; }
 }

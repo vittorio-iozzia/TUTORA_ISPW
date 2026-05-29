@@ -64,9 +64,9 @@ public class TutorApplicationGfxController extends DialogGfxController {
 
     @FXML
     private void initialize() {
-        setupIconBox(headerIconWrap, headerIconView, "1f393", 22); // 🎓 graduation cap
-        setupIconBox(bannerIconWrap, bannerIconView, "1f3f7", 13); // 🏷️ tag
-        setupIconBox(successIconWrap, successIconView, "2705", 34); // ✅ check
+        setupIconBox(headerIconWrap, headerIconView, "1f393", 22); // graduation cap
+        setupIconBox(bannerIconWrap, bannerIconView, "1f3f7", 13); // tag
+        setupIconBox(successIconWrap, successIconView, "2705", 34); // check
         applyRoundedClip(dialogRoot);
     }
 
@@ -372,7 +372,8 @@ public class TutorApplicationGfxController extends DialogGfxController {
         item.setSizeBytes(f.length());
         try {
             item.setContent(Files.readAllBytes(f.toPath()));
-            item.setMimeType(Files.probeContentType(f.toPath()));
+            String mime = Files.probeContentType(f.toPath());
+            item.setMimeType(mime != null ? mime : "application/octet-stream");
         } catch (IOException ex) {
             LOGGER.warning("Cannot read file: " + ex.getMessage());
         }

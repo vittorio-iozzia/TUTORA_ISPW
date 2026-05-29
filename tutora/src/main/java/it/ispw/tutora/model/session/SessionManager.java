@@ -116,6 +116,17 @@ public class SessionManager {
     }
 
     /**
+     * Controlla senza consumare se l'utente è un neotutor.
+     * Usato dal LoginGfxController per distinguere uno studente appena
+     * promosso da un tutor che ha semplicemente selezionato il ruolo sbagliato.
+     */
+    public boolean isNewlyPromotedTutor(String username) {
+        return newlyPromotedTutors.contains(username);
+    }
+
+
+
+    /**
      * Invalida tutte le sessioni attive per un utente specifico.
      * Chiamato quando un utente viene promosso a un nuovo ruolo,
      * forzando il re-login per aggiornare la sessione.

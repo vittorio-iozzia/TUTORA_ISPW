@@ -14,15 +14,14 @@ import it.ispw.tutora.enums.LessonStatus;
 import it.ispw.tutora.enums.NotificationType;
 import it.ispw.tutora.enums.PaymentStatus;
 import it.ispw.tutora.exception.*;
-import it.ispw.tutora.model.Booking;
-import it.ispw.tutora.model.Lesson;
-import it.ispw.tutora.model.Notification;
-import it.ispw.tutora.model.Student;
+import it.ispw.tutora.model.*;
 import it.ispw.tutora.model.session.SessionManager;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -43,7 +42,7 @@ public class BookTutorController {
     private static final String ERR_SYSTEM = "System Error. Try later.";
     private static final String ERR_INVALID_ARGUMENT = "Invalid argument.";
     private static final String ERR_DUPLICATE_BOOKING =
-            "You already have an active booking for this subject with this tutor.";
+            "This slot overlaps with a lesson you have already booked.";
 
     private final StudentDao student;
     private final BookingDao booking;
@@ -108,12 +107,13 @@ public class BookTutorController {
                 bean.setErrorMessage(ERR_INSUFFICIENT_BUDGET);
                 return;
             }
-            // Vincolo one-booking-per-(student, tutor, subcategory)
+            // Vincolo anti-sovrapposto orario: lo student non può prenotare una lezione
+            // il cui orario si sovrappone a una prenotazione attiva già esistente.
             String tutorName = less.getExpertise().getTutor().getUsername();
-            String subcatName = less.getExpertise().getSubcategory().getName();
-            booking.checkNoDuplicateBooking(conn, username, tutorName, subcatName);
+            booking.checkNoDuplicateBooking(conn, username, less.getStartTime(), less.getEndTime());
             // Also block duplicate requests that are still pending (no booking in cache yet)
-            checkNoPendingRequest(conn, less.getId(), tutorName, username, subcatName);
+            checkNoPendingRequest(conn, less.getId(), tutorName, username,
+                    less.getExpertise().getSubcategory().getName());
             Notification notify = new Notification.Builder()
                     .recipientUsername(less.getExpertise().getTutor().getUsername())
                     .senderUsername(stu.getUsername())
@@ -265,6 +265,11 @@ public class BookTutorController {
         }
         if (price == null) return;
 
+        // Fase 1 completata con successo: allinea il session user in-memory.
+        // Segue lo stesso pattern di UserProfileController.updateBudget():
+        // DAO prima, poi aggiornamento del modello in-memory.
+        syncSessionUserBudget(token, price, true);
+
         // Fase 2: chiama il gateway PayPal fuori da qualsiasi connessione DB.
         String paymentRef;
         try {
@@ -272,6 +277,7 @@ public class BookTutorController {
             bean.setPaymentRef(paymentRef);
         } catch (PaymentException | PaymentTimeoutException e) {
             restoreBudget(username, price);
+            syncSessionUserBudget(token, price, false); // annulla la detrazione di Fase 1
             bean.setErrorMessage(e.getMessage());
             return;
         }
@@ -284,6 +290,11 @@ public class BookTutorController {
             safeRefund(paymentRef, price);
             restoreBudget(username, price);
             bean.setErrorMessage(ERR_SYSTEM);
+        }
+        // Se Fase 3 ha fallito (errore interno di performPhase3Inner o eccezione del try-catch esterno),
+        // restoreBudget ha già ripristinato il datastore: allineiamo anche il session user.
+        if (bean.getErrorMessage() != null) {
+            syncSessionUserBudget(token, price, false);
         }
     }
 
@@ -389,6 +400,31 @@ public class BookTutorController {
     }
 
     // ----------------------------------------------------------------
+    // calculateProportionalPrice
+    // ----------------------------------------------------------------
+
+    /**
+     * Calcola il costo proporzionale per la durata scelta dallo student.
+     * Il prezzoOrario viene derivato dal listedPrice della slot completa:
+     *   prezzoOrario = listedPrice / (durataTotaleSlot in ore)
+     *   costo = prezzoOrario × durationHours
+
+     */
+    public BigDecimal calculateProportionalPrice(Lesson lesson, double durationHours) {
+        if (lesson == null || lesson.getStartTime() == null
+                || lesson.getEndTime() == null || lesson.getListedPrice() == null)
+            return BigDecimal.ZERO;
+        long totalMins = Duration.between(lesson.getStartTime(), lesson.getEndTime()).toMinutes();
+        if (totalMins == 0) return BigDecimal.ZERO;
+        BigDecimal hourlyRate = lesson.getListedPrice()
+                .divide(BigDecimal.valueOf(totalMins)
+                        .divide(BigDecimal.valueOf(60), 4, RoundingMode.HALF_UP),
+                        2, RoundingMode.HALF_UP);
+        return hourlyRate.multiply(BigDecimal.valueOf(durationHours))
+                .setScale(2, RoundingMode.HALF_UP);
+    }
+
+    // ----------------------------------------------------------------
     // Helper privati
     // ----------------------------------------------------------------
 
@@ -450,6 +486,26 @@ public class BookTutorController {
             LOGGER.warning("PayPal refund failed — manual intervention required."
                     + " paymentRef=" + paymentRef + " amount=" + amount
                     + " reason=" + e.getMessage());
+        }
+    }
+
+    /**
+     * Allinea il budget in-memory del session user dopo che il datastore e' gia' stato aggiornato.
+     * Segue il pattern di UserProfileController.updateBudget():
+     * persistenza DAO prima, aggiornamento del modello in-memory dopo.
+     *
+     * Best-effort: se il session user e' scaduto o il budget e' inconsistente (es. modifica
+     * concorrente esterna), il fallimento viene solo loggato senza propagarsi al chiamante.
+     */
+    private void syncSessionUserBudget(String token, BigDecimal amount, boolean deduct) {
+        try {
+            User sessionUser = SessionManager.getInstance().getCurrentUser(token);
+            if (!(sessionUser instanceof Student sessionStu)) return;
+            if (deduct) sessionStu.deductBudget(amount);
+            else        sessionStu.addBudget(amount);
+        } catch (Exception e) {
+            LOGGER.warning("Session budget sync failed for token=" + token
+                    + " amount=" + amount + " deduct=" + deduct + ": " + e.getMessage());
         }
     }
 }

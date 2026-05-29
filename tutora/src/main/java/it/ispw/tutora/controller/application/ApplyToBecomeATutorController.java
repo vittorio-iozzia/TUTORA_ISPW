@@ -17,6 +17,8 @@ import java.math.BigDecimal;
 import java.util.logging.Level;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -180,10 +182,13 @@ public class ApplyToBecomeATutorController {
             for (ApplicationItemBean itemBean : bean.getItems()) {
                 itemDao.insert(conn, buildItem(conn, itemBean, applicationId, documentDao));
             }
+            // Ricava lo username admin dal DAO invece di hardcodarlo
+            String adminUsername = DaoFactory.getInstance()
+                    .createUserDao().findFirstAdminUsername(conn);
             sendNotificationToAdmin(conn, notifDao, studentUsername,
-                    applicationId, bean.getCategoryName());
+                    applicationId, bean.getCategoryName(), adminUsername);
             sendApplicationReceivedNotificationToStudent(conn, notifDao, studentUsername,
-                    applicationId, bean.getCategoryName());
+                    applicationId, bean.getCategoryName(), adminUsername);
             if (conn != null) conn.commit();
             return applicationId;
         } catch (DuplicateApplicationException | DatabaseException e) {
@@ -286,11 +291,27 @@ public class ApplyToBecomeATutorController {
 
             List<ApplicationItem> items = itemDao.findByApplicationId(conn, applicationId);
 
-            String subcategoryName = items.stream()
-                    .filter(i -> "subcategory".equals(i.getRequirementName()) && i instanceof TextItem ti && !ti.getTextContent().isBlank())
+            // Testo grezzo inserito dallo studente nel campo "subcategory" del form
+            String rawSubcategoryName = items.stream()
+                    .filter(i -> "subcategory".equals(i.getRequirementName())
+                            && i instanceof TextItem ti && !ti.getTextContent().isBlank())
                     .map(i -> ((TextItem) i).getTextContent().trim())
                     .findFirst()
                     .orElse(categoryName);
+
+            // Capitalizza la prima lettera per uniformità (es. "violin" → "Violin")
+            if (!rawSubcategoryName.isEmpty()) {
+                rawSubcategoryName = Character.toUpperCase(rawSubcategoryName.charAt(0))
+                        + rawSubcategoryName.substring(1);
+            }
+
+            // Risolve il nome esatto nel DB (case-insensitive) per rispettare il FK constraint.
+            // Se lo studente scrive "jazz guitar" e nel DB c'è "Jazz Guitar", trova il match.
+            String subcategoryName = resolveSubcategoryName(conn, categoryName, rawSubcategoryName);
+
+            // Se la subcategory non esiste nel DB, la crea nella stessa transazione
+            // così il FK constraint di tutor_expertise non fallisce.
+            ensureSubcategoryExists(conn, categoryName, subcategoryName);
 
             BigDecimal price = items.stream()
                     .filter(i -> "hourly_price".equals(i.getRequirementName()) && i instanceof TextItem)
@@ -314,6 +335,64 @@ public class ApplyToBecomeATutorController {
             LOGGER.info("Expertise already exists for this tutor/subcategory, skipping.");
         } catch (Exception e) {
             LOGGER.warning("Cannot create initial expertise: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Risolve il nome esatto della subcategory nel DB tramite confronto case-insensitive.
+     *
+     * Il campo "subcategory" del form è testo libero: lo studente può scrivere
+     * "jazz guitar", "Jazz Guitar" o "Jazz guitar". Il FK constraint in
+     * tutor_expertise.subcategory_name → subcategory.name richiede il valore esatto.
+     * Questo metodo trova il match corretto e previene la violazione silenziosa.
+     *
+     * In modalità demo (conn == null) la risoluzione viene saltata e viene
+     * restituito il valore grezzo, che funziona perché i DAO demo non hanno FK.
+     *
+     * @param conn          connessione attiva nella transazione corrente
+     * @param categoryName  nome della categoria padre (es. "Music")
+     * @param rawName       testo inserito dallo studente nel form
+     * @return              nome esatto trovato nel DB, oppure rawName se non trovato
+     */
+    private String resolveSubcategoryName(Connection conn, String categoryName, String rawName) {
+        if (conn == null) return rawName;  // demo/json: nessun FK, ok qualsiasi valore
+        // Prima prova match esatto (case-insensitive); poi fallback su LIKE parziale.
+        // Ordine: esatto prima, parziale dopo — LIMIT 1 prende il migliore.
+        // Esempio: rawName="Guitar" → trova "Jazz Guitar" (LIKE '%guitar%').
+        String sql =
+                "SELECT name FROM subcategory " +
+                "WHERE category_name = ? " +
+                "  AND (LOWER(name) = LOWER(?) OR LOWER(name) LIKE CONCAT('%', LOWER(?), '%')) " +
+                "ORDER BY CASE WHEN LOWER(name) = LOWER(?) THEN 0 ELSE 1 END " +
+                "LIMIT 1";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, categoryName);
+            ps.setString(2, rawName);   // esatto
+            ps.setString(3, rawName);   // parziale LIKE
+            ps.setString(4, rawName);   // ORDER BY: esatto = 0
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getString("name");
+            }
+        } catch (SQLException e) {
+            LOGGER.warning("Cannot resolve subcategory name '" + rawName + "': " + e.getMessage());
+        }
+        return rawName;  // fallback: valore grezzo (il FK fallirà se non c'è match)
+    }
+
+    /**
+     * Assicura che la subcategory esista nella tabella `subcategory`.
+     * Usa INSERT IGNORE per essere idempotente: se già esiste non fa nulla.
+     * Chiamato in modalità DB prima di insertExpertise() per evitare violazioni FK.
+     */
+    private void ensureSubcategoryExists(Connection conn, String categoryName, String subcategoryName) {
+        if (conn == null) return;
+        String sql = "INSERT IGNORE INTO subcategory (name, category_name, description) VALUES (?, ?, '')";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, subcategoryName);
+            ps.setString(2, categoryName);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            LOGGER.warning("Cannot ensure subcategory exists '" + subcategoryName + "': " + e.getMessage());
         }
     }
 
@@ -532,17 +611,20 @@ public class ApplyToBecomeATutorController {
 
     /**
      * Invia una notifica all'admin quando arriva una nuova candidatura.
+     * Lo username admin viene passato dal chiamante (risolto dinamicamente
+     * tramite UserDao.findFirstAdminUsername) per evitare hardcoding.
      */
     private void sendNotificationToAdmin(Connection conn,
                                          NotificationDao notifDao,
                                          String studentUsername,
                                          int applicationId,
-                                         String categoryName)
+                                         String categoryName,
+                                         String adminUsername)
             throws DatabaseException {
 
         Notification notification = new Notification.Builder()
                 .id(0)
-                .recipientUsername("admin")
+                .recipientUsername(adminUsername)
                 .senderUsername(studentUsername)
                 .message("New tutor application from '"
                         + studentUsername + "' for category '"
@@ -560,13 +642,14 @@ public class ApplyToBecomeATutorController {
                                                                NotificationDao notifDao,
                                                                String studentUsername,
                                                                int applicationId,
-                                                               String categoryName)
+                                                               String categoryName,
+                                                               String adminUsername)
             throws DatabaseException {
 
         Notification notification = new Notification.Builder()
                 .id(0)
                 .recipientUsername(studentUsername)
-                .senderUsername("admin")
+                .senderUsername(adminUsername)
                 .message("Application update: your application for '"
                         + categoryName + "' has been received and is under review.")
                 .type(NotificationType.APPLICATION_UPDATE)

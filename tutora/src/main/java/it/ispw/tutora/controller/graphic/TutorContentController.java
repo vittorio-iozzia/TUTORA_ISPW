@@ -4,14 +4,7 @@ import it.ispw.tutora.bean.BookingTutorBean;
 import it.ispw.tutora.bean.NotificationBean;
 import it.ispw.tutora.controller.application.BookTutorController;
 import it.ispw.tutora.controller.application.GetNotificationsController;
-import it.ispw.tutora.dao.BookingDao;
-import it.ispw.tutora.dao.LessonDao;
-import it.ispw.tutora.dao.NotificationDao;
-import it.ispw.tutora.dao.factory.DaoFactory;
-import it.ispw.tutora.enums.NotificationType;
-import it.ispw.tutora.enums.PaymentStatus;
-import it.ispw.tutora.exception.DatabaseException;
-import it.ispw.tutora.model.Booking;
+import it.ispw.tutora.controller.application.GetTutorDashboardController;
 import it.ispw.tutora.model.Lesson;
 import it.ispw.tutora.model.Notification;
 import it.ispw.tutora.model.session.Session;
@@ -20,16 +13,12 @@ import it.ispw.tutora.view.SceneManager;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
@@ -61,11 +50,11 @@ public class TutorContentController {
     private static final String LESSON_META_ICON   = "lesson-meta-icon";
     private static final String LESSON_META        = "lesson-meta";
     private static final String EMPTY_LABEL_STYLE  = "-fx-text-fill:#9CA3AF;-fx-font-size:13px;";
+    private static final String UNKNOWN_ERROR      = "error";
 
     private static final DateTimeFormatter CARD_FMT =
             DateTimeFormatter.ofPattern("EEE d MMM · HH:mm", java.util.Locale.ENGLISH);
 
-    private String tutorUsername;
 
     // Hero
     @FXML private StackPane heroPane;
@@ -94,10 +83,11 @@ public class TutorContentController {
     // Calendar state
     private YearMonth currentMonth    = YearMonth.now();
     private LocalDate selectedCalendarDate = null;
-    private Set<LocalDate> lessonDates = new HashSet<>();
+    private Set<LocalDate> lessonDates = Set.of();
 
     private final BookTutorController bookTutorController = new BookTutorController();
     private final GetNotificationsController notifController = new GetNotificationsController();
+    private final GetTutorDashboardController tutorDashController = new GetTutorDashboardController();
 
     // ----------------------------------------------------------------
     // Init
@@ -107,7 +97,11 @@ public class TutorContentController {
     public void initialize() {
         String token   = SceneManager.getInstance().getSessionToken();
         Session session = SessionManager.getInstance().getSession(token);
-        this.tutorUsername = session.getUser().getUsername();
+        if (session == null) {
+            Platform.runLater(() -> SceneManager.getInstance().showLogin());
+            return;
+        }
+        String tutorUsername = session.getUser().getUsername();
         welcomeTitle.setText("Welcome, " + session.getUser().getName() + "!");
 
         loadHeroImage();
@@ -122,7 +116,8 @@ public class TutorContentController {
         addHoverLift(statCard3);
         addHoverLift(statCard4);
 
-        loadLessonDates();
+        buildCalendar();      // placeholder immediato: evita layout a larghezza 0 in JSON/DB
+        loadLessonDates();    // async: ricostruisce il calendario con i dati reali
         buildUpcomingLessons();
         buildBookingRequests();
         buildThisWeek();
@@ -167,14 +162,11 @@ public class TutorContentController {
     // ----------------------------------------------------------------
 
     private void loadLessonDates() {
+        String token = SceneManager.getInstance().getSessionToken();
         Task<Set<LocalDate>> task = new Task<>() {
             @Override
-            protected Set<LocalDate> call() throws Exception {
-                LessonDao dao = DaoFactory.getInstance().createLessonDao();
-                return dao.findByTutor(DaoFactory.getInstance().getConnection(), tutorUsername)
-                        .stream()
-                        .map(l -> l.getStartTime().toLocalDate())
-                        .collect(Collectors.toSet());
+            protected Set<LocalDate> call() {
+                return tutorDashController.getLessonDates(token);
             }
         };
         task.setOnSucceeded(e -> Platform.runLater(() -> {
@@ -182,7 +174,8 @@ public class TutorContentController {
             buildCalendar();
         }));
         task.setOnFailed(e -> {
-            LOGGER.warning("Cannot load lesson dates: " + task.getException().getMessage());
+            LOGGER.warning("Cannot load lesson dates: " +
+                    (task.getException() != null ? task.getException().getMessage() : UNKNOWN_ERROR));
             buildCalendar();
         });
         Thread t = new Thread(task, "load-lesson-dates");
@@ -519,50 +512,18 @@ public class TutorContentController {
     }
 
     // ----------------------------------------------------------------
-    // Upcoming lessons — real data from BookingDao (PAID only)
+    // Upcoming lessons — delegated to GetTutorDashboardController
     // ----------------------------------------------------------------
 
     private void buildUpcomingLessons() {
-        try {
-            BookingDao dao = DaoFactory.getInstance().createBookingDao();
-            LocalDateTime now = LocalDateTime.now();
-            List<Lesson> upcoming = dao.findByTutor(
-                            DaoFactory.getInstance().getConnection(), tutorUsername).stream()
-                    .filter(b -> b.getPaymentStatus() == PaymentStatus.PAID)
-                    .filter(b -> b.getLesson().getStartTime().isAfter(now))
-                    .sorted(Comparator.comparing(b -> b.getLesson().getStartTime()))
-                    .map(Booking::getLesson)
-                    .toList();
-            if (upcoming.isEmpty()) {
-                Label empty = new Label("No upcoming lessons.");
-                empty.setStyle(EMPTY_LABEL_STYLE);
-                upcomingLessonsList.getChildren().add(empty);
-            } else {
-                for (Lesson l : upcoming) upcomingLessonsList.getChildren().add(buildUpcomingCard(l));
-            }
-        } catch (DatabaseException e) {
-            LOGGER.warning("Cannot load upcoming lessons: " + e.getMessage());
-        }
-    }
-
-    public void refreshUpcomingLessons() {
         upcomingLessonsList.getChildren().clear();
-
+        String token = SceneManager.getInstance().getSessionToken();
         Task<List<Lesson>> task = new Task<>() {
             @Override
-            protected List<Lesson> call() throws Exception {
-                BookingDao dao = DaoFactory.getInstance().createBookingDao();
-                LocalDateTime now = LocalDateTime.now();
-                return dao.findByTutor(
-                                DaoFactory.getInstance().getConnection(), tutorUsername).stream()
-                        .filter(b -> b.getPaymentStatus() == PaymentStatus.PAID)
-                        .filter(b -> b.getLesson().getStartTime().isAfter(now))
-                        .sorted(Comparator.comparing(b -> b.getLesson().getStartTime()))
-                        .map(Booking::getLesson)
-                        .toList();
+            protected List<Lesson> call() {
+                return tutorDashController.getUpcomingLessons(token);
             }
         };
-
         task.setOnSucceeded(e -> Platform.runLater(() -> {
             List<Lesson> upcoming = task.getValue();
             upcomingLessonsList.getChildren().clear();
@@ -574,19 +535,27 @@ public class TutorContentController {
                 for (Lesson l : upcoming) upcomingLessonsList.getChildren().add(buildUpcomingCard(l));
             }
         }));
-
         task.setOnFailed(e ->
-                LOGGER.warning("Cannot refresh upcoming lessons: " + task.getException().getMessage()));
-
-        Thread t = new Thread(task, "tutor-upcoming-refresh");
+                LOGGER.warning("Cannot load upcoming lessons: " +
+                        (task.getException() != null ? task.getException().getMessage() : UNKNOWN_ERROR)));
+        Thread t = new Thread(task, "tutor-upcoming");
         t.setDaemon(true);
         t.start();
     }
 
+    public void refreshUpcomingLessons() {
+        buildUpcomingLessons();
+    }
+
     private HBox buildUpcomingCard(Lesson lesson) {
-        String subject  = lesson.getExpertise().getSubcategory().getName();
+        String subject  = (lesson.getExpertise() != null
+                           && lesson.getExpertise().getSubcategory() != null)
+                          ? lesson.getExpertise().getSubcategory().getName()
+                          : "Unknown Subject";
         String mode     = lesson.isRemote() ? "Remote" : "In-Person";
-        String datetime = lesson.getStartTime().format(CARD_FMT);
+        String datetime = lesson.getStartTime() != null
+                          ? lesson.getStartTime().format(CARD_FMT)
+                          : "TBD";
 
         HBox card = new HBox(16);
         card.getStyleClass().add("lesson-card");
@@ -620,7 +589,7 @@ public class TutorContentController {
     }
 
     // ----------------------------------------------------------------
-    // Booking requests — real data from LESSON_BOOKED notifications
+    // Booking requests — delegated to GetTutorDashboardController
     // ----------------------------------------------------------------
 
     public void refreshBookingRequests() {
@@ -629,14 +598,11 @@ public class TutorContentController {
     }
 
     private void buildBookingRequests() {
+        String token = SceneManager.getInstance().getSessionToken();
         Task<List<Notification>> task = new Task<>() {
             @Override
-            protected List<Notification> call() throws Exception {
-                NotificationDao notifDao = DaoFactory.getInstance().createNotificationDao();
-                return notifDao.findByRecipient(DaoFactory.getInstance().getConnection(), tutorUsername)
-                        .stream()
-                        .filter(n -> n.getType() == NotificationType.LESSON_BOOKED && !n.isRead())
-                        .toList();
+            protected List<Notification> call() {
+                return tutorDashController.getPendingBookingRequests(token);
             }
         };
 
@@ -656,7 +622,8 @@ public class TutorContentController {
         }));
 
         task.setOnFailed(e ->
-                LOGGER.warning("Cannot load booking requests: " + task.getException().getMessage()));
+                LOGGER.warning("Cannot load booking requests: " +
+                        (task.getException() != null ? task.getException().getMessage() : UNKNOWN_ERROR)));
 
         Thread t = new Thread(task, "load-booking-requests");
         t.setDaemon(true);
@@ -666,17 +633,21 @@ public class TutorContentController {
     private void loadAndShowBookingCard(Notification notif) {
         Task<Lesson> task = new Task<>() {
             @Override
-            protected Lesson call() throws Exception {
-                LessonDao lessonDao = DaoFactory.getInstance().createLessonDao();
-                return lessonDao.selectLesson(DaoFactory.getInstance().getConnection(), notif.getTargetId());
+            protected Lesson call() {
+                return tutorDashController.getLessonById(notif.getTargetId());
             }
         };
 
-        task.setOnSucceeded(e -> Platform.runLater(() ->
-                bookingRequestsList.getChildren().add(buildBookingCard(notif, task.getValue()))));
+        task.setOnSucceeded(e -> Platform.runLater(() -> {
+            Lesson lesson = task.getValue();
+            if (lesson != null) {
+                bookingRequestsList.getChildren().add(buildBookingCard(notif, lesson));
+            }
+        }));
 
         task.setOnFailed(e ->
-                LOGGER.warning("Cannot load lesson for booking card: " + task.getException().getMessage()));
+                LOGGER.warning("Cannot load lesson for booking card: " +
+                        (task.getException() != null ? task.getException().getMessage() : UNKNOWN_ERROR)));
 
         Thread t = new Thread(task, "load-booking-card-" + notif.getId());
         t.setDaemon(true);
@@ -685,8 +656,13 @@ public class TutorContentController {
 
     private VBox buildBookingCard(Notification notif, Lesson lesson) {
         String studentUsername = notif.getSenderUsername();
-        String subject  = lesson.getExpertise().getSubcategory().getName();
-        String datetime = lesson.getStartTime().format(CARD_FMT);
+        String subject  = (lesson.getExpertise() != null
+                           && lesson.getExpertise().getSubcategory() != null)
+                          ? lesson.getExpertise().getSubcategory().getName()
+                          : "Unknown Subject";
+        String datetime = lesson.getStartTime() != null
+                          ? lesson.getStartTime().format(CARD_FMT)
+                          : "TBD";
 
         VBox card = new VBox(8);
         card.getStyleClass().add("booking-request-card");

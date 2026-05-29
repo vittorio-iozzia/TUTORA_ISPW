@@ -7,6 +7,7 @@ import it.ispw.tutora.exception.DuplicateBookingException;
 import it.ispw.tutora.model.Booking;
 
 import java.sql.Connection;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -77,14 +78,16 @@ public interface BookingDao {
 
     /**
      * Verifica che lo student non abbia già una prenotazione attiva
-     * (Pending o Paid, lezione non ancora terminata) con il tutor dato
-     * per la sottocategoria data.
+     * (Pending o Paid, lezione non ancora terminata) il cui orario si sovrappone
+     * all'intervallo [newLessonStart, newLessonEnd) della nuova lezione richiesta.
      * Lancia DuplicateBookingException se il vincolo è violato;
      * ritorna normalmente se il controllo passa.
+     *
+     * Due intervalli si sovrappongono se: existingStart &lt; newEnd AND existingEnd &gt; newStart.
      */
     void checkNoDuplicateBooking(Connection conn,
                                  String studentUsername,
-                                 String tutorUsername,
-                                 String subcategoryName)
+                                 LocalDateTime newLessonStart,
+                                 LocalDateTime newLessonEnd)
             throws DatabaseException, DuplicateBookingException;
 }

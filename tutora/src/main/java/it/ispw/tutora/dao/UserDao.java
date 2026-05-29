@@ -85,4 +85,15 @@ public interface UserDao {
      */
     Tutor promoteToTutor(Connection conn, String studentUsername)
             throws DatabaseException, UserNotFoundException;
+
+    /**
+     * Restituisce lo username del primo utente con ruolo Admin trovato.
+     * Usato da ApplyToBecomeATutorController per indirizzare correttamente
+     * le notifiche all'admin senza hardcodare lo username.
+     * Il default "admin" è un fallback per implementazioni che non
+     * sovrascrivono questo metodo (es. JsonDaoFactory).
+     */
+    default String findFirstAdminUsername(Connection conn) throws DatabaseException {
+        return "admin";
+    }
 }

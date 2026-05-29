@@ -18,21 +18,6 @@ import java.util.Scanner;
  * Questa classe non estende Application, quindi il controllo non viene
  * eseguito all'avvio. JavaFX viene caricato normalmente dal classpath
  * quando TutoraApp.main() chiama Application.launch().
- *
- * -----------------------------------------------------------------------
- * Selezione interfaccia e persistenza da terminale
- * -----------------------------------------------------------------------
- * Argomenti opzionali (qualsiasi ordine):
- *   --ui=GFX|CLI
- *   --dao=DB|DEMO|JSON
- *
- * Se un argomento e' assente viene chiesto interattivamente.
- * La scelta del DAO viene propagata a DaoFactory tramite system property.
- *
- * Esempi:
- *   mvn javafx:run                              -> prompt interattivo
- *   mvn javafx:run -Djavafx.args="--ui=CLI --dao=DEMO"
- *   java -jar tutora.jar --ui=GFX --dao=JSON
  */
 @SuppressWarnings("java:S106") // System.out intenzionale: classe boundary di avvio
 public class Launcher {

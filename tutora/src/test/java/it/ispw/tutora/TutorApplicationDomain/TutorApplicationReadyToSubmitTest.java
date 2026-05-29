@@ -1,5 +1,5 @@
-// Alessio Dainelli
-package it.ispw.tutora.BookingApplicationDomain;
+// Vittorio Iozzia
+package it.ispw.tutora.TutorApplicationDomain;
 
 import it.ispw.tutora.enums.ApplicationStatus;
 import it.ispw.tutora.model.TextRequirement;

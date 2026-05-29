@@ -419,17 +419,50 @@ CREATE TABLE `student_interest` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ============================================================
--- 12. DATI DI ESEMPIO
+-- 12. MESSAGGI DI CHAT
+-- ============================================================
+
+-- Tabella per la chat in tempo reale tra utenti.
+-- sender_username e recipient_username referenziano user con ON DELETE CASCADE
+-- così i messaggi vengono rimossi automaticamente se l'utente viene eliminato.
+-- sent_at usa DEFAULT CURRENT_TIMESTAMP come fallback, ma viene valorizzato
+-- esplicitamente dal DAO con il timestamp generato dall'applicazione.
+CREATE TABLE `message` (
+  `id`                 INT           NOT NULL AUTO_INCREMENT,
+  `sender_username`    VARCHAR(100)  NOT NULL,
+  `recipient_username` VARCHAR(100)  NOT NULL,
+  `content`            VARCHAR(2000) NOT NULL,
+  `sent_at`            DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `is_read`            BOOLEAN       NOT NULL DEFAULT FALSE,
+  PRIMARY KEY (`id`),
+  -- Copre le query di conversazione bidirezionale: (A→B) e (B→A)
+  KEY `idx_message_conversation` (`sender_username`, `recipient_username`),
+  -- Copre il conteggio non letti per destinatario: WHERE recipient=? AND is_read=?
+  KEY `idx_message_unread` (`recipient_username`, `is_read`),
+  CONSTRAINT `fk_msg_sender`
+    FOREIGN KEY (`sender_username`)    REFERENCES `user`(`username`) ON DELETE CASCADE,
+  CONSTRAINT `fk_msg_recipient`
+    FOREIGN KEY (`recipient_username`) REFERENCES `user`(`username`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- ============================================================
+-- 13. DATI DI ESEMPIO
 -- ============================================================
 
 INSERT INTO `user` (`username`, `email`, `name`, `surname`, `password_hash`, `role`) VALUES
-  ('admin_ale',     'admin@tutora.com',       'Alessio',  'Dainelli', '$2a$12$HASH_PLACEHOLDER_ADMIN',   'Admin'),
-  ('tutor_vitto',   'vitto@tutora.com',       'Vittorio', 'Iozzia',   '$2a$12$HASH_PLACEHOLDER_TUTOR',   'Tutor'),
-  ('student_luigi', 'luigi.verdi@tutora.com', 'Luigi',    'Verdi',    '$2a$12$HASH_PLACEHOLDER_STUDENT', 'Student');
+  ('admin_ale',     'admin@tutora.com',        'Alessio',  'Dainelli', '$2a$12$8myF.NISwLXsNdpvavzvUuU4Je8inkqeCeYsmwcd8SG4lcDmYJSCy',   'Admin'),
+  ('tutor_vitto',   'vitto@tutora.com',        'Vittorio', 'Iozzia',   '$2a$12$FfrpvJJvuKlInVNTCQ/xT.APSh16BiLnRdQijDSMGKzhT1MRWDgl.',   'Tutor'),
+  ('student_luigi', 'luigi.verdi@tutora.com',  'Luigi',    'Verdi',    '$2a$12$G5ozVjkpzq8WdaF4.rXuB.JzggbtLX37moK9RFt61QE.tk1eI.n5u',  'Student'),
+  ('student_marco', 'marco.rossi@tutora.com',  'Marco',    'Rossi',    '$2a$12$G5ozVjkpzq8WdaF4.rXuB.JzggbtLX37moK9RFt61QE.tk1eI.n5u',  'Student');
 
 INSERT INTO `admin`   (`username`) VALUES ('admin_ale');
-INSERT INTO `student` (`username`, `budget`)                  VALUES ('student_luigi',  150.00);
-INSERT INTO `tutor`   (`username`, `rating`, `rating_count`)  VALUES ('tutor_vitto',    0.00, 0);
+
+INSERT INTO `student` (`username`, `budget`) VALUES
+  ('student_luigi', 150.00),
+  ('student_marco', 200.00);
+
+INSERT INTO `tutor`   (`username`, `rating`, `rating_count`) VALUES
+  ('tutor_vitto', 0.00, 0);
 
 INSERT INTO `category` (`name`, `description`) VALUES
   ('Music',       'Musical instrument lessons and music theory'),
@@ -452,26 +485,40 @@ INSERT INTO `expertise_tag` (`tutor_username`, `subcategory_name`, `tag_name`) V
   ('tutor_vitto', 'Saxophone', '#Blues'),
   ('tutor_vitto', 'Saxophone', '#InPerson');
 
--- Requisiti dell'application per la categoria Music
+-- Requisiti dell'application per tutte le categorie
 INSERT INTO `document_requirement` (`category_name`, `name`, `label`, `description`, `is_required`) VALUES
-  ('Music', 'music_cert',  'Diploma / Certificate', 'Music school diploma or conservatory certificate', TRUE),
-  ('Music', 'id_document', 'Identity document', 'Valid national ID or passport', TRUE);
+  ('Music',       'music_cert',    'Diploma / Certificate', 'Music school diploma or conservatory certificate', TRUE),
+  ('Music',       'id_document',   'Identity document',     'Valid national ID or passport',                    TRUE),
+  ('Photography', 'portfolio',     'Portfolio',             'Upload a sample of your photographic work',        TRUE),
+  ('Sport',       'certification', 'Sports certification',  'Upload your coaching or sports certification',     TRUE);
 
 INSERT INTO `text_requirement` (`category_name`, `name`, `label`, `description`, `min_char`, `max_char`, `is_required`) VALUES
-  ('Music', 'bio',          'Biography',          'Describe your musical background and experience',   50,  800, TRUE),
-  ('Music', 'teaching_exp', 'Teaching experience','Describe your experience as a music teacher',        0,  600, FALSE),
-  ('Music', 'subcategory',  'Subcategory',        'Which instrument do you want to teach?',             2,  100, TRUE);
+  ('Music',       'bio',          'Biography',          'Describe your musical background and experience',                                    50, 800, TRUE),
+  ('Music',       'teaching_exp', 'Teaching experience','Describe your experience as a music teacher',                                        0,  600, FALSE),
+  ('Music',       'subcategory',  'Subcategory',        'Which instrument do you want to teach?',                                             2,  100, TRUE),
+  ('Photography', 'bio',          'Biography',          'Describe your photography experience',                                              50, 800, TRUE),
+  ('Photography', 'subcategory',  'Subcategory',        'What specific area do you want to teach? (e.g., Portrait, Landscape, Videomaking)',  2,  100, TRUE),
+  ('Sport',       'bio',          'Biography',          'Describe your sports background',                                                   50, 800, TRUE),
+  ('Sport',       'subcategory',  'Subcategory',        'What sport do you want to teach? (e.g., Tennis, Swimming, Football)',                2,  100, TRUE);
 
--- Application di esempio in stato Draft
--- active_key = student_username perché lo status è Draft (application attiva)
-INSERT INTO `tutor_application`
-  (`category_name`, `student_username`, `active_key`, `status`) VALUES
-  ('Music', 'student_luigi', 'student_luigi', 'Draft');
+-- Tre lezioni Saxophone completate nel passato (abilitano la funzionalità review)
+-- IDs 1,2,3 sono garantiti su DB fresco (primo gruppo di INSERT in lesson).
+INSERT INTO `lesson` (`tutor_username`, `subcategory_name`, `start_time`, `end_time`,
+                      `is_remote`, `listed_price`, `status`) VALUES
+  ('tutor_vitto', 'Saxophone', '2025-05-01 10:00:00', '2025-05-01 11:00:00', TRUE,  30.00, 'Completed'),
+  ('tutor_vitto', 'Saxophone', '2025-05-08 15:00:00', '2025-05-08 16:00:00', FALSE, 30.00, 'Completed'),
+  ('tutor_vitto', 'Saxophone', '2025-05-15 10:00:00', '2025-05-15 11:00:00', TRUE,  30.00, 'Completed');
+
+-- Prenotazioni pagate di student_marco per quelle lezioni
+INSERT INTO `booking` (`lesson_id`, `student_username`, `price_paid`, `payment_status`, `payment_ref`) VALUES
+  (1, 'student_marco', 30.00, 'Paid', 'PAY-DEMO-001'),
+  (2, 'student_marco', 30.00, 'Paid', 'PAY-DEMO-002'),
+  (3, 'student_marco', 30.00, 'Paid', 'PAY-DEMO-003');
 
 COMMIT;
 
 -- ============================================================
--- 13. TRIGGER – AGGIORNAMENTO AUTOMATICO RATING TUTOR
+-- 14. TRIGGER – AGGIORNAMENTO AUTOMATICO RATING TUTOR
 -- ============================================================
 -- I trigger mantengono tutor.rating e tutor.rating_count sempre
 -- sincronizzati con la tabella review, eliminando il rischio di
@@ -564,7 +611,7 @@ DELIMITER ;
 --      WHERE tutor_username = ? AND subcategory_name = ?
 --    e rifiutare se status != 'Approved'.
 --
--- di ogni6. GUARDIA ANTI-OVERLAP LEZIONI
+-- 6. GUARDIA ANTI-OVERLAP LEZIONI
 --    Prima  INSERT in lesson, eseguire (con SELECT … FOR UPDATE
 --    sulla riga del tutor per evitare race condition):
 --      SELECT COUNT(*) FROM lesson

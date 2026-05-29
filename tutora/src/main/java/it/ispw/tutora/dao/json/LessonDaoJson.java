@@ -83,7 +83,7 @@ public class LessonDaoJson implements LessonDao {
                 .mapToInt(r -> r.id)
                 .max()
                 .orElse(0) + 1;
-        LessonRecord lessonRecord= toRecord(newLesson);
+        LessonRecord lessonRecord = toRecord(newLesson);
         lessonRecord.id = nextId;
         records.add(lessonRecord);
         writeAll(records);
@@ -136,8 +136,6 @@ public class LessonDaoJson implements LessonDao {
             if (r.id == id) {
                 r.status = toJsonStatus(newStatus);
                 writeAll(records);
-                // FIX: era break — l'esecuzione cadeva fuori dal loop e
-                // raggiungeva sempre il throw LessonNotFoundException.
                 return;
             }
         }

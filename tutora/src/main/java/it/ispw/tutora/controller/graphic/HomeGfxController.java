@@ -1,6 +1,8 @@
 package it.ispw.tutora.controller.graphic;
 
+import it.ispw.tutora.controller.application.ChatController;
 import it.ispw.tutora.controller.application.GetNotificationsController;
+import it.ispw.tutora.controller.graphic.util.TutorBrowseUtil;
 import it.ispw.tutora.model.session.Session;
 import it.ispw.tutora.model.session.SessionManager;
 import it.ispw.tutora.view.AvatarManager;
@@ -9,8 +11,6 @@ import it.ispw.tutora.view.home.DashboardComponent;
 import it.ispw.tutora.view.home.DashboardFactory;
 import it.ispw.tutora.view.home.StudentDashboardDecorator;
 import it.ispw.tutora.view.home.TutorDashboardDecorator;
-import it.ispw.tutora.dao.factory.DaoFactory;
-import it.ispw.tutora.exception.DatabaseException;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -36,7 +36,6 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -95,11 +94,13 @@ public class HomeGfxController {
     private final List<Button> navButtons = new ArrayList<>();
     private Button activeNavBtn;
     private Label msgNavBadge;
+    private Timeline msgBadgePoller;
 
     /** Snapshot dell'area destra quando mostriamo il profilo a schermo intero. */
     private List<Node> defaultMainAreaChildren;
 
     private final GetNotificationsController notifController = new GetNotificationsController();
+    private final ChatController chatController = new ChatController();
 
     // ----------------------------------------------------------------
     // Inizializzazione
@@ -134,7 +135,17 @@ public class HomeGfxController {
         updateAvatarDisplay(currentUsername);
 
         setInstance(this);
-        startMsgBadgePoller(session);
+        startMsgBadgePoller();
+
+        // Ferma il poller quando questo controller viene sostituito da un'altra scena.
+        // Senza questo listener la Timeline rimane attiva anche dopo il logout,
+        // e quando la sessione viene invalidata (es. promozione a Tutor) chiama
+        // showLogin() kickando fuori l'utente attualmente loggato.
+        mainArea.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene == null && msgBadgePoller != null) {
+                msgBadgePoller.stop();
+            }
+        });
     }
 
     private static void setInstance(HomeGfxController ctrl) {
@@ -211,46 +222,60 @@ public class HomeGfxController {
     // ----------------------------------------------------------------
 
     /**
-     * Aggiorna sidebar avatar e header avatar in base all'immagine
-     * registrata in {@link AvatarManager} per l'utente corrente.
+     * Aggiorna sidebar avatar e header avatar.
+     * Usa resolveProfileImageUrl() che controlla in ordine:
+     * 1. file caricato dall'utente (AvatarManager)
+     * 2. PROFILE_PHOTO_URLS (Unsplash, per tutor con foto fissa)
+     * 3. null → lettera iniziale + FontIcon
      */
     private void updateAvatarDisplay(String username) {
-        if (AvatarManager.hasAvatar(username)) {
-            String path = AvatarManager.getAvatarPath(username);
-            String uri  = new File(path).toURI().toString();
-
-            // Sidebar: mostra ImageView con clip circolare, nasconde la lettera
-            Image img = new Image(uri, 40, 40, false, true);
-            sidebarAvatarImage.setImage(img);
-            Circle sidebarClip = new Circle(20, 20, 20);
-            sidebarAvatarImage.setClip(sidebarClip);
-            sidebarAvatarImage.setVisible(true);
-            sidebarAvatarImage.setManaged(true);
-            avatarLabel.setVisible(false);
-            avatarLabel.setManaged(false);
-
-            // Header: sostituisce il FontIcon con un ImageView circolare
-            Image headerImg = new Image(uri, 40, 40, false, true);
-            ImageView headerIv = new ImageView(headerImg);
-            headerIv.setFitWidth(40);
-            headerIv.setFitHeight(40);
-            headerIv.setPreserveRatio(false);
-            Circle headerClip = new Circle(20, 20, 20);
-            headerIv.setClip(headerClip);
-            headerProfileBtn.setGraphic(headerIv);
-
-        } else {
-            // Nessun avatar: ripristina lettera e FontIcon
-            sidebarAvatarImage.setVisible(false);
-            sidebarAvatarImage.setManaged(false);
-            avatarLabel.setVisible(true);
-            avatarLabel.setManaged(true);
-
-            FontIcon icon = new FontIcon(ICON_USER_CIRCLE);
-            icon.setIconSize(40);
-            icon.getStyleClass().add("header-profile-icon");
-            headerProfileBtn.setGraphic(icon);
+        String url = TutorBrowseUtil.resolveProfileImageUrl(username);
+        if (url == null) {
+            showDefaultAvatar();
+            return;
         }
+        // file:// → caricamento sincrono; http:// → asincrono per non bloccare l'FX thread
+        boolean isLocal = url.startsWith("file:");
+        Image img = new Image(url, 40, 40, false, true, !isLocal);
+        if (isLocal || img.getProgress() >= 1.0) {
+            applyAvatarImage(img);
+        } else {
+            img.progressProperty().addListener((obs, o, n) -> {
+                if (n.doubleValue() >= 1.0)
+                    Platform.runLater(() -> applyAvatarImage(img));
+            });
+        }
+    }
+
+    private void applyAvatarImage(Image img) {
+        if (img.isError()) { showDefaultAvatar(); return; }
+
+        sidebarAvatarImage.setImage(img);
+        Circle sidebarClip = new Circle(20, 20, 20);
+        sidebarAvatarImage.setClip(sidebarClip);
+        sidebarAvatarImage.setVisible(true);
+        sidebarAvatarImage.setManaged(true);
+        avatarLabel.setVisible(false);
+        avatarLabel.setManaged(false);
+
+        ImageView headerIv = new ImageView(img);
+        headerIv.setFitWidth(40);
+        headerIv.setFitHeight(40);
+        headerIv.setPreserveRatio(false);
+        Circle headerClip = new Circle(20, 20, 20);
+        headerIv.setClip(headerClip);
+        headerProfileBtn.setGraphic(headerIv);
+    }
+
+    private void showDefaultAvatar() {
+        sidebarAvatarImage.setVisible(false);
+        sidebarAvatarImage.setManaged(false);
+        avatarLabel.setVisible(true);
+        avatarLabel.setManaged(true);
+        FontIcon icon = new FontIcon(ICON_USER_CIRCLE);
+        icon.setIconSize(40);
+        icon.getStyleClass().add("header-profile-icon");
+        headerProfileBtn.setGraphic(icon);
     }
 
     // ----------------------------------------------------------------
@@ -274,8 +299,15 @@ public class HomeGfxController {
     }
 
     /**
-     * Ripristina l'area destra allo stato originale (header + contentArea).
-     * Chiamato dal callback "Back" dei controller di profilo.
+     * Ripristina l'area destra allo stato originale (header + contentArea)
+     * e ricarica il contenuto dashboard dalla sorgente dati aggiornata.
+     *
+     * Il reload è necessario perché {@code defaultMainAreaChildren} conserva
+     * il vecchio {@code contentArea} con i dati precedenti alla modifica del profilo
+     * (es. descrizione non ancora aggiornata). Ricaricare l'FXML forza una nuova
+     * query al datastore e mostra i dati più recenti nelle card dei tutor.
+     *
+     * Chiamato dal callback "Back" dei controller di profilo (proprio + pubblico tutor).
      */
     public void restoreMainArea() {
         if (defaultMainAreaChildren != null) {
@@ -283,6 +315,16 @@ public class HomeGfxController {
         }
         headerTitle.setText(NAV_DASHBOARD);
         if (!navButtons.isEmpty()) setActive(navButtons.get(0));
+
+        // Ricarica il contenuto per mostrare eventuali modifiche al profilo (es. nuova descrizione)
+        String token = SceneManager.getInstance().getSessionToken();
+        Session session = SessionManager.getInstance().getSession(token);
+        if (session == null) return;
+        if (session.isTutor()) {
+            swapContent("/fxml/tutor_content.fxml");
+        } else if (session.isStudent()) {
+            swapContent("/fxml/student_content.fxml");
+        }
     }
 
     /**
@@ -496,25 +538,31 @@ public class HomeGfxController {
         }
     }
 
-    private void startMsgBadgePoller(Session session) {
-        Timeline tl = new Timeline(new KeyFrame(Duration.seconds(5),
-                e -> refreshMsgBadge(session)));
-        tl.setCycleCount(javafx.animation.Animation.INDEFINITE);
-        tl.play();
-        refreshMsgBadge(session); // initial check
+    private void startMsgBadgePoller() {
+        String polledToken = SceneManager.getInstance().getSessionToken();
+        msgBadgePoller = new Timeline(new KeyFrame(Duration.seconds(5), e -> {
+            // Se la sessione è stata invalidata (es. promozione a Tutor),
+            // ferma questo poller prima di reindirizzare al login.
+            // Senza lo stop(), il vecchio Timeline continuerebbe a girare
+            // dopo il login e chiamerebbe showLogin() in loop.
+            if (!SessionManager.getInstance().isSessionValid(polledToken)) {
+                msgBadgePoller.stop();
+                SceneManager.getInstance().showLogin();
+                return;
+            }
+            refreshMsgBadge();
+        }));
+        msgBadgePoller.setCycleCount(javafx.animation.Animation.INDEFINITE);
+        msgBadgePoller.play();
+        refreshMsgBadge(); // initial check
     }
 
-    private void refreshMsgBadge(Session session) {
+    private void refreshMsgBadge() {
         if (msgNavBadge == null) return;
-        String username = session.getUser().getUsername();
+        String token = SceneManager.getInstance().getSessionToken();
         Task<Integer> task = new Task<>() {
             @Override protected Integer call() {
-                try {
-                    return DaoFactory.getInstance().createMessageDao()
-                            .countTotalUnread(DaoFactory.getInstance().getConnection(), username);
-                } catch (DatabaseException ex) {
-                    return 0;
-                }
+                return chatController.countTotalUnread(token);
             }
         };
         task.setOnSucceeded(ev -> Platform.runLater(() -> {

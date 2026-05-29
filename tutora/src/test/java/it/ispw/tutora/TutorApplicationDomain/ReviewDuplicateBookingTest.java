@@ -1,5 +1,5 @@
 // Vittorio Iozzia
-package it.ispw.tutora.StudentReviewDomain;
+package it.ispw.tutora.TutorApplicationDomain;
 
 import it.ispw.tutora.dao.demo.ReviewDaoDemo;
 import it.ispw.tutora.enums.PaymentStatus;

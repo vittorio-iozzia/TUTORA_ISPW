@@ -7,11 +7,9 @@ import it.ispw.tutora.exception.BookingNotFoundException;
 import it.ispw.tutora.exception.DatabaseException;
 import it.ispw.tutora.exception.DuplicateBookingException;
 import it.ispw.tutora.model.Booking;
-import it.ispw.tutora.model.SubCategory;
-import it.ispw.tutora.model.Tutor;
-import it.ispw.tutora.model.TutorExpertise;
 
 import java.sql.Connection;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -123,27 +121,25 @@ public class BookingDaoDemo implements BookingDao {
 
     /**
      * Verifica che lo student non abbia già una booking attiva (Pending o Paid)
-     * con il tutor e la sottocategoria dati, per una lezione non ancora terminata.
+     * il cui orario si sovrappone all'intervallo [newLessonStart, newLessonEnd).
      * Naviga il grafo degli oggetti in-memory già presenti in cache.
+     * Due intervalli si sovrappongono se: existingStart &lt; newEnd AND existingEnd &gt; newStart.
      *
-     * @throws DuplicateBookingException se esiste già una booking attiva
+     * @throws DuplicateBookingException se esiste già una booking con orario sovrapposto
      */
     @Override
     public void checkNoDuplicateBooking(Connection conn,
                                         String studentUsername,
-                                        String tutorUsername,
-                                        String subcategoryName)
+                                        LocalDateTime newLessonStart,
+                                        LocalDateTime newLessonEnd)
             throws DatabaseException, DuplicateBookingException {
         for (Booking b : cache.values()) {
             if (!isActiveBooking(b, studentUsername)) continue;
-            TutorExpertise exp = b.getLesson().getExpertise();
-            if (exp != null) {
-                Tutor tutor = exp.getTutor();
-                SubCategory sub = exp.getSubcategory();
-                if (tutor != null && tutorUsername.equals(tutor.getUsername())
-                        && sub != null && subcategoryName.equals(sub.getName())) {
-                    throw new DuplicateBookingException(studentUsername, tutorUsername, subcategoryName);
-                }
+            LocalDateTime existingStart = b.getLesson().getStartTime();
+            LocalDateTime existingEnd   = b.getLesson().getEndTime();
+            if (existingStart != null && existingEnd != null
+                    && existingStart.isBefore(newLessonEnd) && existingEnd.isAfter(newLessonStart)) {
+                throw new DuplicateBookingException(studentUsername, newLessonStart, newLessonEnd);
             }
         }
     }

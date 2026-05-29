@@ -2,6 +2,7 @@ package it.ispw.tutora.dao.factory;
 
 import it.ispw.tutora.dao.*;
 import it.ispw.tutora.dao.db.*;
+import it.ispw.tutora.dao.demo.MessageDaoDemo;
 import it.ispw.tutora.exception.DatabaseException;
 
 import java.sql.Connection;
@@ -119,6 +120,6 @@ public class DbDaoFactory extends DaoFactory {
 
     @Override
     public MessageDao createMessageDao() {
-        return new MessageDaoDb();
+        return new MessageDaoDemo();
     }
 }

@@ -40,7 +40,7 @@ public class CategoryDaoJson implements CategoryDao {
 
     private static final String JSON_PATH = "../tutora_data/categories.json";
 
-    private final ObjectMapper mapper = new ObjectMapper(); // Classe di Jackson che permette la conversione degli oggetti java/json
+    private final ObjectMapper mapper = new ObjectMapper();
 
     // ----------------------------------------------------------------
     // findAll

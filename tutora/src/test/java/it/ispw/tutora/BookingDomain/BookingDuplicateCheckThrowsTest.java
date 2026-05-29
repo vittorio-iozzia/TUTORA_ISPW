@@ -1,5 +1,5 @@
 // Alessio Dainelli
-package it.ispw.tutora.BookingApplicationDomain;
+package it.ispw.tutora.BookingDomain;
 
 import it.ispw.tutora.dao.demo.BookingDaoDemo;
 import it.ispw.tutora.enums.LessonStatus;
@@ -55,10 +55,12 @@ class BookingDuplicateCheckThrowsTest {
     }
 
     @Test
-    void testCheckThrowsForSameTutorAndSubcategory() {
+    void testCheckThrowsForOverlappingTimeSlot() {
+        // La nuova lezione si sovrappone esattamente alla prenotazione esistente (now+3d, now+3d+1h).
+        LocalDateTime newStart = LocalDateTime.now().plusDays(3);
+        LocalDateTime newEnd   = LocalDateTime.now().plusDays(3).plusHours(1);
         assertThrows(DuplicateBookingException.class,
-                () -> bookingDao.checkNoDuplicateBooking(null,
-                        "student_test", "tutor_test", "Piano"),
-                "A second active booking for the same tutor and subject should throw DuplicateBookingException.");
+                () -> bookingDao.checkNoDuplicateBooking(null, "student_test", newStart, newEnd),
+                "A lesson that overlaps an active booking should throw DuplicateBookingException.");
     }
 }

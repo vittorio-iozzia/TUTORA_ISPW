@@ -102,7 +102,7 @@ public class SocialLoginController {
      * Esegue il login tramite Meta (Facebook) OAuth2.
      */
     public String loginWithMeta() throws OAuthException, DatabaseException {
-        String appId     = props.getProperty("META_APP_ID", "").trim();
+        String appId = props.getProperty("META_APP_ID", "").trim();
         String appSecret = props.getProperty("META_APP_SECRET", "").trim();
 
         if (appId.isBlank()) {

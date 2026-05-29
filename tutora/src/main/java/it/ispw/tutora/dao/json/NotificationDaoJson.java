@@ -55,11 +55,7 @@ public class NotificationDaoJson implements NotificationDao {
         List<NotifRecord> records = readAll();
 
         // Simulo in Json un ID auto-incremented
-        int id = records.stream()                   // Crea uno stream di AppRecord
-                .mapToInt(r -> r.id)     // Trasforma ogni AppRecord nel suo id (IntStream)
-                .max()                              // Trova il valore massimo
-                .orElse(0)                    // Se la lista è vuota restituisce zero
-                + 1;                                // Aggiunge uno per otterene il prossimo id
+        int id = records.stream().mapToInt(r -> r.id).max().orElse(0) + 1;
 
         NotifRecord r = new NotifRecord();
         r.id = id;

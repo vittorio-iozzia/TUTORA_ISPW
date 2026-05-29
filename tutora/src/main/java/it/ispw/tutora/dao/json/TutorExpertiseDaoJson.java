@@ -148,11 +148,6 @@ public class TutorExpertiseDaoJson implements TutorExpertiseDao {
     // Mapping record ↔ model
     // ----------------------------------------------------------------
 
-    /**
-     * Ricostruisce un oggetto TutorExpertise da un record JSON,
-     * ripristinando anche la lista dei tag.
-     * FIX: r.tags non veniva letto — l'oggetto tornava senza tag.
-     */
     private TutorExpertise toTutorExpertise(TutorExpertiseRecord r) {
         TutorExpertise tutorExpertise = new TutorExpertise(
                 new Tutor.Builder().username(r.tutorUsername).build(),

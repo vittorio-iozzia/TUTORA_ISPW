@@ -1,17 +1,9 @@
 package it.ispw.tutora.controller.graphic;
 
-import it.ispw.tutora.dao.NotificationDao;
-import it.ispw.tutora.dao.ReviewDao;
-import it.ispw.tutora.dao.factory.DaoFactory;
-import it.ispw.tutora.enums.NotificationType;
-import it.ispw.tutora.exception.DuplicateReviewException;
+import it.ispw.tutora.bean.ReviewBean;
+import it.ispw.tutora.controller.application.LeaveAReviewController;
 import it.ispw.tutora.model.Booking;
-import it.ispw.tutora.model.Notification;
-import it.ispw.tutora.model.Review;
-import it.ispw.tutora.model.Student;
 import it.ispw.tutora.model.Tutor;
-import it.ispw.tutora.model.session.Session;
-import it.ispw.tutora.model.session.SessionManager;
 import it.ispw.tutora.view.SceneManager;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -22,7 +14,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -47,6 +38,8 @@ public class ReviewGfxController {
     private int      selectedRating = 0;
     private Runnable onReviewSubmitted;
     private final List<Label> starLabels = new ArrayList<>();
+
+    private final LeaveAReviewController reviewController = new LeaveAReviewController();
 
     @FXML
     public void initialize() {
@@ -108,74 +101,51 @@ public class ReviewGfxController {
         errorLabel.setVisible(false);
         errorLabel.setManaged(false);
 
-        String  token   = SceneManager.getInstance().getSessionToken();
-        Session session = SessionManager.getInstance().getSession(token);
-        Student student = (Student) session.getUser();
-        Tutor   tutor   = booking.getLesson().getExpertise().getTutor();
+        String token = SceneManager.getInstance().getSessionToken();
+        Tutor  tutor = booking.getLesson().getExpertise().getTutor();
 
-        Review review = new Review.Builder()
-                .id(0)
-                .booking(booking)
-                .student(student)
-                .tutor(tutor)
-                .rating(selectedRating)
-                .comment(commentArea.getText().trim())
-                .createdAt(LocalDateTime.now())
-                .build();
+        ReviewBean bean = new ReviewBean();
+        bean.setBookingId(booking.getId());
+        bean.setTutorUsername(tutor.getUsername());
+        bean.setRating(selectedRating);
+        bean.setComment(commentArea.getText().trim());
 
         Task<Void> task = new Task<>() {
             @Override
-            protected Void call() throws Exception {
-                ReviewDao dao = DaoFactory.getInstance().createReviewDao();
-                dao.insertReview(DaoFactory.getInstance().getConnection(), review);
-
-                String comment = review.getComment();
-                String truncated = (comment != null && comment.length() > 60)
-                        ? comment.substring(0, 60) + "…" : comment;
-                String preview = (comment != null && !comment.isBlank())
-                        ? " — \"" + truncated + "\"" : "";
-                Notification notify = new Notification.Builder()
-                        .recipientUsername(tutor.getUsername())
-                        .senderUsername(student.getUsername())
-                        .message(student.getUsername() + " left you a "
-                                + selectedRating + "★ review" + preview)
-                        .type(NotificationType.NEW_REVIEW)
-                        .targetId(booking.getId())
-                        .timestamp(LocalDateTime.now())
-                        .build();
-                NotificationDao notifDao = DaoFactory.getInstance().createNotificationDao();
-                notifDao.insert(DaoFactory.getInstance().getConnection(), notify);
+            protected Void call() {
+                reviewController.submitReview(bean, token);
                 return null;
             }
         };
 
         task.setOnSucceeded(e -> {
-            formBody.setVisible(false);
-            formBody.setManaged(false);
-            successPane.setVisible(true);
-            successPane.setManaged(true);
-            submitBtn.setVisible(false);
-            submitBtn.setManaged(false);
-            cancelBtn.setText("Close");
-            cancelBtn.getStyleClass().setAll("review-close-btn");
-            cancelBtn.setVisible(true);
-            cancelBtn.setManaged(true);
-            cancelBtn.setDisable(false);
-            successSubLabel.setText(
-                    "Thank you! Your review for " + tutor.getFullName() + " has been saved.");
-            if (onReviewSubmitted != null) onReviewSubmitted.run();
+            if (bean.getErrorMessage() != null) {
+                submitBtn.setDisable(false);
+                cancelBtn.setDisable(false);
+                showError(bean.getErrorMessage());
+            } else {
+                formBody.setVisible(false);
+                formBody.setManaged(false);
+                successPane.setVisible(true);
+                successPane.setManaged(true);
+                submitBtn.setVisible(false);
+                submitBtn.setManaged(false);
+                cancelBtn.setText("Close");
+                cancelBtn.getStyleClass().setAll("review-close-btn");
+                cancelBtn.setVisible(true);
+                cancelBtn.setManaged(true);
+                cancelBtn.setDisable(false);
+                successSubLabel.setText(
+                        "Thank you! Your review for " + tutor.getFullName() + " has been saved.");
+                if (onReviewSubmitted != null) onReviewSubmitted.run();
+            }
         });
 
         task.setOnFailed(e -> {
             submitBtn.setDisable(false);
             cancelBtn.setDisable(false);
-            Throwable ex = task.getException();
-            if (ex instanceof DuplicateReviewException) {
-                showError("You have already submitted a review for this lesson.");
-            } else {
-                showError("Failed to submit review. Please try again.");
-                LOGGER.warning("Review submission failed: " + ex.getMessage());
-            }
+            showError("Failed to submit review. Please try again.");
+            LOGGER.warning("Review submission failed: " + task.getException().getMessage());
         });
 
         Thread t = new Thread(task, "submit-review");

@@ -177,20 +177,29 @@ Run all tests with:
 mvn test
 ```
 
-Tests are split into two suites:
+Tests are organised in two packages that reflect both the domain they exercise and their author.
 
-**📦 `BookingApplicationDomain`** — Booking and tutor application logic
-- Duplicate booking detection (pass and throw cases)
-- Tutor application DAO persistence
-- Application readiness check before submission
-- FSM status transition validation (`DRAFT → SUBMITTED → ACCEPTED/REJECTED`)
+**📦 `BookingDomain`** — *(Alessio Dainelli)*  
+Covers the **booking flow** and **student budget** management (budget is part of the payment step when confirming a booking).
 
-**📦 `StudentReviewDomain`** — Review and student budget logic
-- Duplicate review prevention
-- Rating value validation
-- Student budget deduction after payment
-- Insufficient budget detection
-- Budget boundary validation
+| Test class | What it verifies |
+|---|---|
+| `BookingDuplicateCheckThrowsTest` | A second booking for the same tutor + subcategory throws `DuplicateBookingException` |
+| `BookingDuplicateCheckPassesTest` | A booking for a *different* subcategory is not flagged as duplicate |
+| `StudentBudgetDeductionTest` | Budget is correctly reduced after a payment |
+| `StudentBudgetInsufficientTest` | `hasSufficientBudget` returns `false` when balance is too low |
+| `StudentBudgetValidationTest` | `hasSufficientBudget` returns `true` when budget exactly covers the price |
+
+**📦 `TutorApplicationDomain`** — *(Vittorio Iozzia)*  
+Covers the **tutor-application flow** (applying to become a tutor) and the **review flow**.
+
+| Test class | What it verifies |
+|---|---|
+| `TutorApplicationDaoTest` | Inserting a duplicate active application throws `DuplicateApplicationException` |
+| `TutorApplicationReadyToSubmitTest` | Application is not ready when a mandatory requirement is unfulfilled |
+| `TutorApplicationStatusTransitionTest` | Skipping `SUBMITTED` and jumping directly to `ACCEPTED` throws `IllegalStateException` |
+| `ReviewDuplicateBookingTest` | Inserting a second review for the same booking throws `DuplicateReviewException` |
+| `ReviewRatingValidationTest` | A rating of `0` throws `IllegalArgumentException` |
 
 ---
 

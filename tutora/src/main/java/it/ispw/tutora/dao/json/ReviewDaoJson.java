@@ -13,6 +13,8 @@ import it.ispw.tutora.model.Tutor;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Connection;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -73,11 +75,7 @@ public class ReviewDaoJson implements ReviewDao {
         }
 
         // Simulo in Json un ID auto-incremented
-        int id = records.stream()                     // Crea uno stream di AppRecord
-                .mapToInt(r -> r.id)     // Trasforma ogni AppRecord nel suo id (IntStream)
-                .max()                                // Trova il valore massimo
-                .orElse(0)                      // Se la lista è vuota restituisce zero
-                + 1;                                  // Aggiunge uno per otterene il prossimo id
+        int id = records.stream().mapToInt(r -> r.id).max().orElse(0) + 1;
 
 
         ReviewRecord newRecord = new ReviewRecord();
@@ -91,6 +89,7 @@ public class ReviewDaoJson implements ReviewDao {
 
         records.add(newRecord);
         writeAll(records);
+        recalculateTutorRating(newRecord.tutorUsername);
         return id;
     }
 
@@ -105,9 +104,11 @@ public class ReviewDaoJson implements ReviewDao {
         List<ReviewRecord> records = readAll();
         for (ReviewRecord r : records) {
             if (r.id == rev.getId()) {
+                String tutorUsername = r.tutorUsername;
                 r.rating  = rev.getRating();
                 r.comment = rev.getComment();
                 writeAll(records);
+                recalculateTutorRating(tutorUsername);
                 return;
             }
         }
@@ -123,9 +124,14 @@ public class ReviewDaoJson implements ReviewDao {
             throws DatabaseException, ReviewNotFoundException {
 
         List<ReviewRecord> records = readAll();
-        boolean removed = records.removeIf(r -> r.id == id);
-        if (!removed) throw new ReviewNotFoundException(id);
+        String tutorUsername = null;
+        for (ReviewRecord r : records) {
+            if (r.id == id) { tutorUsername = r.tutorUsername; break; }
+        }
+        if (tutorUsername == null) throw new ReviewNotFoundException(id);
+        records.removeIf(r -> r.id == id);
         writeAll(records);
+        recalculateTutorRating(tutorUsername);
     }
 
     // ----------------------------------------------------------------
@@ -161,6 +167,20 @@ public class ReviewDaoJson implements ReviewDao {
     // ----------------------------------------------------------------
     // Helper privati
     // ----------------------------------------------------------------
+
+    private void recalculateTutorRating(String tutorUsername) throws DatabaseException {
+        List<ReviewRecord> all = readAll();
+        List<ReviewRecord> forTutor = all.stream()
+                .filter(r -> tutorUsername.equals(r.tutorUsername))
+                .toList();
+        int count = forTutor.size();
+        BigDecimal avg = BigDecimal.ZERO;
+        if (count > 0) {
+            int sum = forTutor.stream().mapToInt(r -> r.rating).sum();
+            avg = new BigDecimal(sum).divide(new BigDecimal(count), 2, RoundingMode.HALF_UP);
+        }
+        new UserDaoJson().updateTutorRating(tutorUsername, avg, count);
+    }
 
     private List<ReviewRecord> readAll() throws DatabaseException {
         try {

@@ -84,8 +84,8 @@ public abstract class UserDaoDb implements UserDao {
             "UPDATE user SET role = 'TUTOR' WHERE username = ?";
 
     @Language("SQL")
-    private static final String SQL_DELETE_STUDENT =
-            "DELETE FROM student WHERE username = ?";
+    private static final String SQL_FIND_ADMIN =
+            "SELECT username FROM user WHERE UPPER(role) = 'ADMIN' LIMIT 1";
 
     @Language("SQL")
     private static final String SQL_INSERT_TUTOR =
@@ -244,14 +244,18 @@ public abstract class UserDaoDb implements UserDao {
     public Tutor promoteToTutor(Connection conn, String studentUsername)
             throws DatabaseException, UserNotFoundException {
         try {
+            // 1. aggiorna il ruolo nella tabella user
             try (PreparedStatement ps = conn.prepareStatement(SQL_PROMOTE_ROLE)) {
                 ps.setString(1, studentUsername);
                 if (ps.executeUpdate() == 0) throw new UserNotFoundException(studentUsername);
             }
-            try (PreparedStatement ps = conn.prepareStatement(SQL_DELETE_STUDENT)) {
-                ps.setString(1, studentUsername);
-                ps.executeUpdate();
-            }
+            // 2. inserisce la riga nella tabella tutor
+            //    La riga in student NON viene eliminata: fk_booking_student usa
+            //    ON DELETE RESTRICT, quindi la DELETE fallirebbe se lo studente
+            //    ha prenotazioni. Lo storico finanziario deve essere preservato
+            //    (vedi commento schema: "non eliminare mai fisicamente un utente
+            //    che ha booking o review"). Il role='TUTOR' in user è sufficiente
+            //    per determinare il ruolo in tutta l'applicazione.
             try (PreparedStatement ps = conn.prepareStatement(SQL_INSERT_TUTOR)) {
                 ps.setString(1, studentUsername);
                 ps.executeUpdate();
@@ -261,6 +265,26 @@ public abstract class UserDaoDb implements UserDao {
             throw e;
         } catch (SQLException e) {
             throw new DatabaseException("Error promoting student to tutor: " + studentUsername, e);
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // findFirstAdminUsername
+    // ----------------------------------------------------------------
+
+    /**
+     * Restituisce lo username del primo utente Admin trovato nel DB.
+     * Risolve il problema del username admin hardcodato ("admin") che
+     * non corrisponde al valore reale nel DB ("admin_ale" nei dati seed).
+     */
+    @Override
+    public String findFirstAdminUsername(Connection conn) throws DatabaseException {
+        try (PreparedStatement ps = conn.prepareStatement(SQL_FIND_ADMIN);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getString("username");
+            return "admin"; // fallback se nessun admin trovato
+        } catch (SQLException e) {
+            throw new DatabaseException("Error finding admin username.", e);
         }
     }
 

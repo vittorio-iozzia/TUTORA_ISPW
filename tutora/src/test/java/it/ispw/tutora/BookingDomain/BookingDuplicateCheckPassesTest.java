@@ -1,5 +1,5 @@
 // Alessio Dainelli
-package it.ispw.tutora.BookingApplicationDomain;
+package it.ispw.tutora.BookingDomain;
 
 import it.ispw.tutora.dao.demo.BookingDaoDemo;
 import it.ispw.tutora.enums.LessonStatus;
@@ -54,10 +54,13 @@ class BookingDuplicateCheckPassesTest {
     }
 
     @Test
-    void testCheckPassesForDifferentSubcategory() {
+    void testCheckPassesForNonOverlappingTimeSlot() {
+        // La nuova lezione è in un giorno diverso (now+5d): nessuna sovrapposizione
+        // con la prenotazione esistente (now+2d, now+2d+1h) — stesso tutor e materia, orario diverso.
+        LocalDateTime newStart = LocalDateTime.now().plusDays(5);
+        LocalDateTime newEnd   = LocalDateTime.now().plusDays(5).plusHours(1);
         assertDoesNotThrow(
-                () -> bookingDao.checkNoDuplicateBooking(null,
-                        "student_test", "tutor_test", "Piano"),
-                "Booking request for a different subject should not be flagged as duplicate.");
+                () -> bookingDao.checkNoDuplicateBooking(null, "student_test", newStart, newEnd),
+                "A lesson on a different day should not be flagged as duplicate, even with the same tutor and subject.");
     }
 }

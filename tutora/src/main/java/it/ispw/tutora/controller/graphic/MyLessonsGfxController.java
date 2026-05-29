@@ -1,8 +1,7 @@
 package it.ispw.tutora.controller.graphic;
 
-import it.ispw.tutora.bean.BookingBean;
+import it.ispw.tutora.bean.MyLessonsBean;
 import it.ispw.tutora.controller.application.GetStudentLessonsController;
-import it.ispw.tutora.enums.LessonStatus;
 import it.ispw.tutora.model.Booking;
 import it.ispw.tutora.model.Lesson;
 import it.ispw.tutora.view.SceneManager;
@@ -17,7 +16,6 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -26,6 +24,12 @@ import java.util.logging.Logger;
 public class MyLessonsGfxController {
 
     private static final Logger LOGGER = Logger.getLogger(MyLessonsGfxController.class.getName());
+
+    // Costanti per le stringhe dell'empty-state (SonarQube S1192)
+    private static final String EMPTY_UPCOMING_TITLE    = "No upcoming lessons";
+    private static final String EMPTY_UPCOMING_SUBTITLE = "Book a session with a tutor to get started";
+    private static final String EMPTY_PAST_TITLE        = "No completed lessons yet";
+    private static final String EMPTY_PAST_SUBTITLE     = "Your lesson history will appear here";
 
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("EEE, dd MMM");
@@ -50,8 +54,8 @@ public class MyLessonsGfxController {
     public void initialize() {
         try {
             String token = SceneManager.getInstance().getSessionToken();
-            List<Booking> bookings = appController.loadBookings(new BookingBean(), token);
-            populate(bookings);
+            MyLessonsBean bean = appController.buildMyLessonsData(token);
+            populate(bean);
         } catch (Exception e) {
             LOGGER.warning("[MyLessons] initialize error: " + e.getMessage());
             showEmptyState();
@@ -62,31 +66,18 @@ public class MyLessonsGfxController {
     // Populate
     // ----------------------------------------------------------------
 
-    private void populate(List<Booking> bookings) {
-        List<Booking> upcoming = bookings.stream()
-                .filter(b -> b.getLesson().getLessonStatus() == LessonStatus.BOOKED)
-                .sorted((a, b) -> a.getLesson().getStartTime()
-                        .compareTo(b.getLesson().getStartTime()))
-                .toList();
-        List<Booking> past = bookings.stream()
-                .filter(b -> b.getLesson().getLessonStatus() == LessonStatus.COMPLETED)
-                .sorted((a, b) -> b.getLesson().getStartTime()
-                        .compareTo(a.getLesson().getStartTime()))
-                .toList();
+    /**
+     * Popola la UI dai dati pre-calcolati dal controller applicativo.
+     * Nessuna logica di filtro o aggregazione: solo resa grafica.
+     */
+    private void populate(MyLessonsBean bean) {
+        List<Booking> upcoming = bean.getUpcoming();
+        List<Booking> past     = bean.getPast();
 
-        long totalMinutes = past.stream()
-                .mapToLong(b -> java.time.Duration
-                        .between(b.getLesson().getStartTime(), b.getLesson().getEndTime())
-                        .toMinutes())
-                .sum();
-        BigDecimal totalSpent = bookings.stream()
-                .map(Booking::getPricePaid)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        animateStat(statUpcomingValue, upcoming.size(),          "%.0f");
-        animateStat(statCompletedValue, past.size(),             "%.0f");
-        animateStat(statHoursValue,    totalMinutes / 60.0,     "%.1fh");
-        animateStat(statSpentValue,    totalSpent.doubleValue(), "€%.2f");
+        animateStat(statUpcomingValue,  upcoming.size(),                    "%.0f");
+        animateStat(statCompletedValue, past.size(),                        "%.0f");
+        animateStat(statHoursValue,     bean.getTotalMinutes() / 60.0,     "%.1fh");
+        animateStat(statSpentValue,     bean.getTotalSpent().doubleValue(), "€%.2f");
 
         addHoverLift(statCard1);
         addHoverLift(statCard2);
@@ -95,14 +86,14 @@ public class MyLessonsGfxController {
 
         if (upcoming.isEmpty()) {
             upcomingList.getChildren().add(buildEmptyState("📅",
-                    "No upcoming lessons", "Book a session with a tutor to get started"));
+                    EMPTY_UPCOMING_TITLE, EMPTY_UPCOMING_SUBTITLE));
         } else {
             for (Booking b : upcoming) upcomingList.getChildren().add(buildCard(b, true));
         }
 
         if (past.isEmpty()) {
             pastList.getChildren().add(buildEmptyState("✅",
-                    "No completed lessons yet", "Your lesson history will appear here"));
+                    EMPTY_PAST_TITLE, EMPTY_PAST_SUBTITLE));
         } else {
             for (Booking b : past) pastList.getChildren().add(buildCard(b, false));
         }
@@ -115,10 +106,10 @@ public class MyLessonsGfxController {
         if (statSpentValue != null)     statSpentValue.setText("€0.00");
         if (upcomingList != null)
             upcomingList.getChildren().add(buildEmptyState("📅",
-                    "No upcoming lessons", "Book a session with a tutor to get started"));
+                    EMPTY_UPCOMING_TITLE, EMPTY_UPCOMING_SUBTITLE));
         if (pastList != null)
             pastList.getChildren().add(buildEmptyState("✅",
-                    "No completed lessons yet", "Your lesson history will appear here"));
+                    EMPTY_PAST_TITLE, EMPTY_PAST_SUBTITLE));
     }
 
     // ----------------------------------------------------------------
@@ -146,12 +137,14 @@ public class MyLessonsGfxController {
     // ----------------------------------------------------------------
 
     private HBox buildCard(Booking booking, boolean isUpcoming) {
-        Lesson lesson   = booking.getLesson();
-        String tutor    = lesson.getExpertise().getTutor().getName()
-                        + " " + lesson.getExpertise().getTutor().getSurname();
-        String subject  = lesson.getExpertise().getSubcategory().getName();
-        LocalDateTime s = lesson.getStartTime();
-        LocalDateTime e = lesson.getEndTime();
+        Lesson lesson = booking.getLesson();
+        String tutor   = resolveTutorDisplay(lesson);
+        String subject = resolveSubject(lesson);
+
+        // Null-safe times — i fallback non dovrebbero servire dopo i fix a BookingDaoJson,
+        // ma li manteniamo per sicurezza su record legacy o corrutti
+        LocalDateTime s = lesson.getStartTime() != null ? lesson.getStartTime() : LocalDateTime.now();
+        LocalDateTime e = lesson.getEndTime()   != null ? lesson.getEndTime()   : s.plusHours(1);
 
         // Card shell
         HBox card = new HBox(0);
@@ -233,6 +226,31 @@ public class MyLessonsGfxController {
         inner.getChildren().addAll(dateBadge, info, right);
         card.getChildren().addAll(accent, inner);
         return card;
+    }
+
+    // ----------------------------------------------------------------
+    // Helpers per la costruzione delle card (riduzione CC di buildCard)
+    // ----------------------------------------------------------------
+
+    /**
+     * Restituisce il nome visualizzabile del tutor.
+     * In JSON mode solo lo username è garantito nel record denormalizzato,
+     * quindi cade su username quando nome + cognome sono entrambi blank.
+     */
+    private static String resolveTutorDisplay(Lesson lesson) {
+        if (lesson.getExpertise() == null || lesson.getExpertise().getTutor() == null)
+            return "Unknown Tutor";
+        String n    = lesson.getExpertise().getTutor().getName();
+        String sn   = lesson.getExpertise().getTutor().getSurname();
+        String full = ((n != null ? n : "") + " " + (sn != null ? sn : "")).trim();
+        return full.isEmpty() ? lesson.getExpertise().getTutor().getUsername() : full;
+    }
+
+    /** Restituisce il nome della sotto-categoria, con fallback se mancante. */
+    private static String resolveSubject(Lesson lesson) {
+        if (lesson.getExpertise() == null || lesson.getExpertise().getSubcategory() == null)
+            return "Unknown Subject";
+        return lesson.getExpertise().getSubcategory().getName();
     }
 
     // ----------------------------------------------------------------

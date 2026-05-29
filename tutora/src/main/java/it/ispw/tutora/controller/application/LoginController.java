@@ -6,11 +6,13 @@ import it.ispw.tutora.dao.factory.DaoFactory;
 import it.ispw.tutora.exception.AuthenticationException;
 import it.ispw.tutora.exception.DatabaseException;
 import it.ispw.tutora.exception.UserNotFoundException;
+import it.ispw.tutora.model.Student;
 import it.ispw.tutora.model.User;
 import it.ispw.tutora.model.session.SessionManager;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.logging.Logger;
 
 /**
  * Controller applicativo responsabile del processo di autenticazione.
@@ -35,6 +37,8 @@ import java.sql.SQLException;
  * messaggio generico per entrambi i casi di errore.
  */
 public class LoginController {
+
+    private static final Logger LOGGER = Logger.getLogger(LoginController.class.getName());
 
     /**
      * Esegue il login dell'utente con le credenziali contenute nel bean.
@@ -62,10 +66,26 @@ public class LoginController {
                         "Invalid username or password.");
             }
 
-            // 4. crea la sessione e restituisce il token
+            // 4. se lo user è uno Student, ricarica l'oggetto completo (con budget)
+            //    perché findByUsername legge solo la tabella user, non student.budget
+            if (user instanceof Student) {
+                user = reloadFullStudent(factory, conn, user);
+            }
+
+            // 5. crea la sessione e restituisce il token
             String token = SessionManager.getInstance().createSession(user);
 
-            // 5. svuota la password dal Bean
+            // 6. se il tutor ha il flag "neotutor" persistito (JSON mode),
+            //    ripopola il flag in-memory e azzera quello su disco:
+            //    il LoginGfxController potrà controllare isNewlyPromotedTutor()
+            //    e TutorContentController mostrerà il popup di benvenuto.
+            if (user instanceof it.ispw.tutora.model.Tutor
+                    && factory.isNewlyPromotedTutor(user.getUsername())) {
+                SessionManager.getInstance().markAsNewlyPromotedTutor(user.getUsername());
+                factory.clearNewlyPromotedTutor(user.getUsername());
+            }
+
+            // 7. svuota la password dal Bean
             login.clearPassword();
 
             return token;
@@ -80,6 +100,15 @@ public class LoginController {
             return dao.findByUsername(conn, username);
         } catch (UserNotFoundException e) {
             throw new AuthenticationException("Invalid username or password.");
+        }
+    }
+
+    private User reloadFullStudent(DaoFactory factory, Connection conn, User user) {
+        try {
+            return factory.createStudentDao().selectStudent(conn, user.getUsername());
+        } catch (UserNotFoundException | DatabaseException e) {
+            LOGGER.warning("Could not load full student data for: " + user.getUsername());
+            return user;
         }
     }
 }

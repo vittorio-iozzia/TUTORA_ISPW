@@ -143,17 +143,12 @@ public class CreateLessonGfxController {
 
         BigDecimal price = parsePrice(priceStr);
         if (price == null) {
-            showError("Invalid price. Enter a positive number (e.g. 35.00).");
+            showError("Invalid price format. Enter a number (e.g. 35.00).");
             return;
         }
 
         LocalDateTime start = LocalDateTime.of(selectedDate, LocalTime.parse(startStr));
         LocalDateTime end   = LocalDateTime.of(selectedDate, LocalTime.parse(endStr));
-        if (!end.isAfter(start)) {
-            showError("End time must be after start time.");
-            return;
-        }
-
         boolean isRemote = remoteBtn.isSelected();
         String token = SceneManager.getInstance().getSessionToken();
 
@@ -163,6 +158,13 @@ public class CreateLessonGfxController {
         bean.setEndTime(end);
         bean.setRemote(isRemote);
         bean.setListedPrice(price);
+
+        // Validazione delle regole di dominio delegata al controller applicativo (BCE)
+        String validationError = createLessonController.validateLessonInput(bean);
+        if (validationError != null) {
+            showError(validationError);
+            return;
+        }
 
         submitBtn.setDisable(true);
 
@@ -205,12 +207,10 @@ public class CreateLessonGfxController {
         ((Stage) submitBtn.getScene().getWindow()).close();
     }
 
-    /** Parses and validates price string; returns null if invalid or non-positive. */
+    /** Parses price string; returns null only if the format is not a valid number. */
     private BigDecimal parsePrice(String raw) {
         try {
-            BigDecimal p = new BigDecimal(raw);
-            if (p.compareTo(BigDecimal.ZERO) <= 0) return null;
-            return p;
+            return new BigDecimal(raw);
         } catch (NumberFormatException e) {
             return null;
         }

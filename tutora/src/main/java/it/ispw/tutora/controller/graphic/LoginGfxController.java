@@ -27,13 +27,15 @@ public class LoginGfxController extends AuthGfxController {
     @FXML private ToggleButton tutorTab;
     @FXML private ToggleButton adminTab;
 
-    @FXML private TextField    usernameField;
+    @FXML private TextField usernameField;
     @FXML private PasswordField passwordField;
-    @FXML private Button       loginButton;
+    @FXML private Button loginButton;
 
-    private static final Set<String> promotionAcknowledged = new HashSet<>();
+    // Tiene traccia dei neotutor che hanno già visto il popup di benvenuto:
+    // dal secondo tentativo in poi con "Student" vedranno il messaggio di upgrade.
+    private static final Set<String> promotionPopupShown = new HashSet<>();
 
-    private final LoginController       loginController       = new LoginController();
+    private final LoginController loginController = new LoginController();
     private final SocialLoginController socialLoginController = new SocialLoginController();
 
     @FXML
@@ -76,18 +78,7 @@ public class LoginGfxController extends AuthGfxController {
             String token = loginController.login(bean);
             Session session = SessionManager.getInstance().getSession(token);
 
-            if (selected == studentTab && session.isTutor()) {
-                handlePromotedStudent(username, token);
-                return;
-            }
-
-            boolean roleMatch = (selected == studentTab && session.isStudent())
-                    || (selected == tutorTab && session.isTutor())
-                    || (selected == adminTab && session.isAdmin());
-            if (!roleMatch) {
-                showError("The selected role does not match your account.");
-                return;
-            }
+            if (!checkRoleMatch(username, selected, session)) return;
 
             SceneManager.getInstance().setSessionToken(token);
             navigateByRole(token);
@@ -100,14 +91,42 @@ public class LoginGfxController extends AuthGfxController {
         }
     }
 
-    private void handlePromotedStudent(String username, String token) {
-        if (promotionAcknowledged.contains(username)) {
-            showError("Your account has been upgraded. Please select the \"Tutor\" role.");
-            return;
+    /**
+     * Verifica che il ruolo selezionato corrisponda al ruolo reale dell'utente.
+     * Gestisce il caso speciale del neotutor che si logga ancora come Student.
+     *
+     * @return {@code true} se si può procedere con il login, {@code false} se il login deve essere bloccato
+     */
+    private boolean checkRoleMatch(String username, Toggle selected, Session session) {
+        if (selected == studentTab && session.isTutor()) {
+            return handlePromotedTutorLogin(username);
         }
-        promotionAcknowledged.add(username);
-        SceneManager.getInstance().setSessionToken(token);
-        navigateByRole(token);
+        boolean roleMatch = (selected == studentTab && session.isStudent())
+                || (selected == tutorTab  && session.isTutor())
+                || (selected == adminTab  && session.isAdmin());
+        if (!roleMatch) showError("The selected role does not match your account.");
+        return roleMatch;
+    }
+
+    /**
+     * Gestisce il login di un tutor che ha selezionato il ruolo Student.
+     * Alla prima volta il neotutor viene lasciato passare (il popup lo accoglierà);
+     * nei tentativi successivi viene reindirizzato al ruolo corretto.
+     *
+     * @return {@code true} se è la prima volta (neotutor), {@code false} altrimenti
+     */
+    private boolean handlePromotedTutorLogin(String username) {
+        if (promotionPopupShown.contains(username)) {
+            showError("Your account has been upgraded to Tutor. Please select \"Tutor\".");
+            return false;
+        }
+        if (SessionManager.getInstance().isNewlyPromotedTutor(username)) {
+            // Prima volta: lascia passare, TutorContentController mostrerà il popup
+            promotionPopupShown.add(username);
+            return true;
+        }
+        showError("The selected role does not match your account.");
+        return false;
     }
 
     @FXML

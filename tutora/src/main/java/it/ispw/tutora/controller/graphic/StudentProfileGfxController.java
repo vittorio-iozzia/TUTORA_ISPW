@@ -1,10 +1,6 @@
 package it.ispw.tutora.controller.graphic;
 
-import it.ispw.tutora.dao.BookingDao;
-import it.ispw.tutora.dao.StudentDao;
-import it.ispw.tutora.dao.factory.DaoFactory;
-import it.ispw.tutora.enums.PaymentStatus;
-import it.ispw.tutora.model.Booking;
+import it.ispw.tutora.controller.application.UserProfileController;
 import it.ispw.tutora.model.Student;
 import it.ispw.tutora.model.Tutor;
 import it.ispw.tutora.model.session.Session;
@@ -24,8 +20,6 @@ import java.math.BigDecimal;
 import java.util.logging.Logger;
 
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Graphic controller per student_profile.fxml.
@@ -35,6 +29,8 @@ import java.util.stream.Collectors;
 public class StudentProfileGfxController extends ProfileGfxController {
 
     private static final Logger LOGGER = Logger.getLogger(StudentProfileGfxController.class.getName());
+
+    private final UserProfileController profileController = new UserProfileController();
 
     @FXML private VBox  budgetCard;
     @FXML private VBox  lessonsCard;
@@ -79,7 +75,7 @@ public class StudentProfileGfxController extends ProfileGfxController {
         populatePreferredTutors(student);
         populateContact(student);
         populateBudgetStat(student);
-        loadBookingStats(student);
+        loadBookingStats();
 
         setupAvatarInteraction();
         applyStoredAvatar();
@@ -177,62 +173,37 @@ public class StudentProfileGfxController extends ProfileGfxController {
         }
         budgetField.setStyle(null);
 
-        Student student = (Student) currentUser;
-        Task<Void> task = new Task<>() {
+        String token = SceneManager.getInstance().getSessionToken();
+        Task<Boolean> task = new Task<>() {
             @Override
-            protected Void call() throws Exception {
-                StudentDao dao = DaoFactory.getInstance().createStudentDao();
-                dao.updateStudentBudget(
-                        DaoFactory.getInstance().getConnection(),
-                        student.getUsername(), newBudget);
-                return null;
+            protected Boolean call() {
+                return profileController.updateBudget(token, newBudget);
             }
         };
 
         task.setOnSucceeded(e -> Platform.runLater(() -> {
-            // Sync the in-memory session object
-            BigDecimal current = student.getBudget() != null ? student.getBudget() : BigDecimal.ZERO;
-            BigDecimal delta   = newBudget.subtract(current);
-            if (delta.compareTo(BigDecimal.ZERO) > 0) student.addBudget(delta);
-            else if (delta.compareTo(BigDecimal.ZERO) < 0) student.deductBudget(delta.abs());
-
+            if (!Boolean.TRUE.equals(task.getValue())) {
+                LOGGER.warning("Budget update failed silently.");
+                return;
+            }
             budgetDetailLabel.setText("€" + newBudget.toPlainString());
             animateStat(budgetValueLabel, newBudget.doubleValue(), "€%.2f");
             handleCancelBudget();
         }));
 
         task.setOnFailed(e -> Platform.runLater(() ->
-                LOGGER.warning("Budget update failed: " + task.getException().getMessage())));
+                LOGGER.warning("Budget update failed: " +
+                        (task.getException() != null ? task.getException().getMessage() : "error"))));
 
         new Thread(task, "budget-update").start();
     }
 
-    private void loadBookingStats(Student student) {
-        String uname = student.getUsername();
+    private void loadBookingStats() {
+        String token = SceneManager.getInstance().getSessionToken();
         Task<long[]> task = new Task<>() {
             @Override
-            protected long[] call() throws Exception {
-                BookingDao dao = DaoFactory.getInstance().createBookingDao();
-                List<Booking> bookings = dao.findByStudent(
-                        DaoFactory.getInstance().getConnection(), uname);
-
-                long paidCount = bookings.stream()
-                        .filter(b -> b.getPaymentStatus() == PaymentStatus.PAID)
-                        .count();
-
-                Set<String> tutorSet = bookings.stream()
-                        .filter(b -> b.getPaymentStatus() == PaymentStatus.PAID)
-                        .map(b -> {
-                            try {
-                                return b.getLesson().getExpertise().getTutor().getUsername();
-                            } catch (Exception ex) {
-                                return null;
-                            }
-                        })
-                        .filter(t -> t != null)
-                        .collect(Collectors.toSet());
-
-                return new long[]{ paidCount, tutorSet.size() };
+            protected long[] call() {
+                return profileController.getStudentStats(token);
             }
         };
 

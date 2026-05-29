@@ -5,7 +5,6 @@ import javafx.scene.Node;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
-import java.io.IOException;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
@@ -48,7 +47,7 @@ public abstract class DashboardDecorator implements DashboardComponent {
             controllerConsumer.accept(loader.getController());
             VBox.setVgrow(content, Priority.ALWAYS);
             contentArea.getChildren().add(content);
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOGGER.severe("Cannot load " + fxmlPath + ": " + e.getMessage());
         }
     }

@@ -1,11 +1,6 @@
 package it.ispw.tutora.controller.graphic;
 
-import it.ispw.tutora.dao.BookingDao;
-import it.ispw.tutora.dao.TutorExpertiseDao;
-import it.ispw.tutora.dao.factory.DaoFactory;
-import it.ispw.tutora.enums.PaymentStatus;
-import it.ispw.tutora.enums.Status;
-import it.ispw.tutora.model.Booking;
+import it.ispw.tutora.controller.application.GetTutorDashboardController;
 import it.ispw.tutora.model.Tutor;
 import it.ispw.tutora.model.TutorExpertise;
 import it.ispw.tutora.model.session.Session;
@@ -38,8 +33,10 @@ public class TutorProfileGfxController extends ProfileGfxController {
     @FXML private Label lessonsValueLabel;
 
     @FXML private FlowPane expertisePills;
-    @FXML private Label    expertisesEmptyLabel;
-    @FXML private Label    ratingDetailLabel;
+    @FXML private Label expertisesEmptyLabel;
+    @FXML private Label ratingDetailLabel;
+
+    private final GetTutorDashboardController tutorDashController = new GetTutorDashboardController();
 
     @Override
     protected String getRoleLabel() { return "TUTOR"; }
@@ -61,7 +58,7 @@ public class TutorProfileGfxController extends ProfileGfxController {
         populateRatingStat(tutor);
         populateAbout(tutor);
         populateContact(tutor);
-        loadExpertisesAndLessons(tutor);
+        loadExpertisesAndLessons();
 
         setupAvatarInteraction();
         applyStoredAvatar();
@@ -84,25 +81,14 @@ public class TutorProfileGfxController extends ProfileGfxController {
         animateStat(reviewsValueLabel, tutor.getRatingCount(), "%.0f");
     }
 
-    private void loadExpertisesAndLessons(Tutor tutor) {
-        String uname = tutor.getUsername();
+    private void loadExpertisesAndLessons() {
+        String token = SceneManager.getInstance().getSessionToken();
 
         Task<long[]> task = new Task<>() {
             @Override
-            protected long[] call() throws Exception {
-                TutorExpertiseDao expDao = DaoFactory.getInstance().createTutorExpertiseDao();
-                List<TutorExpertise> expertises = expDao.findByTutor(null, uname);
-                List<TutorExpertise> approved = expertises.stream()
-                        .filter(e -> e.getStatus() == Status.APPROVED)
-                        .toList();
-
-                BookingDao bookingDao = DaoFactory.getInstance().createBookingDao();
-                List<Booking> bookings = bookingDao.findByTutor(
-                        DaoFactory.getInstance().getConnection(), uname);
-                long paidLessons = bookings.stream()
-                        .filter(b -> b.getPaymentStatus() == PaymentStatus.PAID)
-                        .count();
-
+            protected long[] call() {
+                List<TutorExpertise> approved = tutorDashController.getApprovedExpertises(token);
+                long paidLessons = tutorDashController.getPaidBookingsCount(token);
                 Platform.runLater(() -> populateExpertisePills(approved));
                 return new long[]{ approved.size(), paidLessons };
             }

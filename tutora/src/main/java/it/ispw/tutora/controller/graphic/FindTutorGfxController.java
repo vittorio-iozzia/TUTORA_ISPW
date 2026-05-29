@@ -2,13 +2,8 @@ package it.ispw.tutora.controller.graphic;
 
 import it.ispw.tutora.controller.application.SearchTutorController;
 import it.ispw.tutora.controller.graphic.util.TutorBrowseUtil;
-import it.ispw.tutora.dao.TutorExpertiseDao;
-import it.ispw.tutora.dao.factory.DaoFactory;
-import it.ispw.tutora.enums.Status;
-import it.ispw.tutora.exception.DatabaseException;
 import it.ispw.tutora.model.Category;
 import it.ispw.tutora.model.Tutor;
-import it.ispw.tutora.model.TutorExpertise;
 import javafx.animation.*;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -26,8 +21,6 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -83,14 +76,6 @@ public class FindTutorGfxController {
         "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=200&fit=crop&crop=faces"
     );
 
-    private static final List<String> PORTRAIT_POOL = List.of(
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=200&fit=crop&crop=faces",
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&h=200&fit=crop&crop=faces",
-        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&h=200&fit=crop&crop=faces",
-        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=200&fit=crop&crop=faces",
-        "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=300&h=200&fit=crop&crop=faces",
-        "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300&h=200&fit=crop&crop=faces"
-    );
 
     // ----------------------------------------------------------------
     // Inizializzazione
@@ -98,9 +83,9 @@ public class FindTutorGfxController {
 
     @FXML
     public void initialize() {
-        allTutors     = TutorBrowseUtil.loadTutors(LOGGER);
+        allTutors     = searchController.loadAllTutors();
         allCategories = TutorBrowseUtil.loadCategories(searchController, LOGGER);
-        loadExpertises();
+        expertiseNames = searchController.loadExpertisesForTutors(allTutors);
 
         updateStatsBar();
         TutorBrowseUtil.addHoverLift(ftStatCard1);
@@ -111,29 +96,6 @@ public class FindTutorGfxController {
         buildTutorGrid(allTutors);
 
         searchField.textProperty().addListener((obs, old, val) -> filterTutors(val));
-    }
-
-    // ----------------------------------------------------------------
-    // DAO
-    // ----------------------------------------------------------------
-
-    private void loadExpertises() {
-        DaoFactory factory = DaoFactory.getInstance();
-        TutorExpertiseDao dao = factory.createTutorExpertiseDao();
-        try (Connection conn = factory.getConnection()) {
-            for (Tutor t : allTutors) {
-                List<TutorExpertise> list = dao.findByTutor(conn, t.getUsername());
-                List<String> approved = list.stream()
-                        .filter(e -> e.getStatus() == Status.APPROVED)
-                        .map(e -> e.getSubcategory().getName())
-                        .distinct()
-                        .limit(3)
-                        .toList();
-                expertiseNames.put(t.getUsername(), approved);
-            }
-        } catch (SQLException | DatabaseException e) {
-            LOGGER.warning("Cannot load expertises: " + e.getMessage());
-        }
     }
 
     // ----------------------------------------------------------------
@@ -231,16 +193,7 @@ public class FindTutorGfxController {
     }
 
     private void filterTutors(String query) {
-        String q = query.toLowerCase();
-        List<Tutor> filtered = allTutors.stream()
-                .filter(t -> t.getFullName().toLowerCase().contains(q)
-                          || t.getUsername().toLowerCase().contains(q)
-                          || (t.getDescription() != null
-                              && t.getDescription().toLowerCase().contains(q))
-                          || expertiseNames.getOrDefault(t.getUsername(), List.of())
-                                .stream().anyMatch(s -> s.toLowerCase().contains(q)))
-                .toList();
-        buildTutorGrid(filtered);
+        buildTutorGrid(searchController.filterByQuery(allTutors, expertiseNames, query));
     }
 
     // ----------------------------------------------------------------
@@ -289,7 +242,7 @@ public class FindTutorGfxController {
         card.getStyleClass().add("tutor-card");
         card.setPrefWidth(260);
 
-        StackPane photo = TutorBrowseUtil.buildPhotoHalf(tutor, poolIndex, 260, PHOTO_URLS, PORTRAIT_POOL);
+        StackPane photo = TutorBrowseUtil.buildPhotoHalf(tutor, poolIndex, 260, PHOTO_URLS);
 
         VBox body = new VBox(10);
         body.getStyleClass().add("tutor-card-body");
@@ -297,11 +250,29 @@ public class FindTutorGfxController {
         Label name = new Label(tutor.getFullName());
         name.getStyleClass().add("tutor-name");
 
-        Label desc = new Label(tutor.getDescription() != null
-                ? TutorBrowseUtil.truncate(tutor.getDescription(), 55)
-                : tutor.getUsername());
+        // Descrizione: bio truncata, oppure expertise come fallback
+        List<String> tags = expertiseNames.getOrDefault(tutor.getUsername(), List.of());
+        String descText;
+        if (tutor.getDescription() != null && !tutor.getDescription().isBlank()) {
+            descText = TutorBrowseUtil.truncate(tutor.getDescription(), 60);
+        } else if (!tags.isEmpty()) {
+            descText = String.join(" · ", tags);
+        } else {
+            descText = "Tutor";
+        }
+        Label desc = new Label(descText);
         desc.getStyleClass().add("tutor-subject");
         desc.setWrapText(true);
+
+        // Expertise tag pills
+        HBox pillBox = new HBox(6);
+        pillBox.setAlignment(Pos.CENTER_LEFT);
+        pillBox.setPadding(new Insets(2, 0, 0, 0));
+        for (String tag : tags) {
+            Label pill = new Label(tag);
+            pill.getStyleClass().add("interest-pill");
+            pillBox.getChildren().add(pill);
+        }
 
         HBox ratingRow = new HBox(5);
         ratingRow.setAlignment(Pos.CENTER_LEFT);
@@ -331,7 +302,7 @@ public class FindTutorGfxController {
         bookBtn.setOnAction(e -> TutorBrowseUtil.openBookingDialog(tutor, tutorGrid, LOGGER));
         buttons.getChildren().addAll(profileBtn, bookBtn);
 
-        body.getChildren().addAll(name, desc, ratingRow, price, buttons);
+        body.getChildren().addAll(name, desc, pillBox, ratingRow, price, buttons);
         card.getChildren().addAll(photo, body);
         return card;
     }

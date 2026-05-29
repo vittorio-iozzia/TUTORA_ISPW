@@ -1,5 +1,5 @@
 // Vittorio Iozzia
-package it.ispw.tutora.StudentReviewDomain;
+package it.ispw.tutora.TutorApplicationDomain;
 
 import it.ispw.tutora.model.Review;
 import org.junit.jupiter.api.Test;
