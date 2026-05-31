@@ -42,7 +42,7 @@ public class BookTutorController {
     private static final String ERR_SYSTEM = "System Error. Try later.";
     private static final String ERR_INVALID_ARGUMENT = "Invalid argument.";
     private static final String ERR_DUPLICATE_BOOKING =
-            "This slot overlaps with a lesson you have already booked.";
+            "You already have an active booking with this tutor for this subject.";
 
     private final StudentDao student;
     private final BookingDao booking;
@@ -107,13 +107,13 @@ public class BookTutorController {
                 bean.setErrorMessage(ERR_INSUFFICIENT_BUDGET);
                 return;
             }
-            // Vincolo anti-sovrapposto orario: lo student non può prenotare una lezione
-            // il cui orario si sovrappone a una prenotazione attiva già esistente.
+            // Vincolo anti-duplicato: lo student non può avere due booking attive
+            // con lo stesso tutor per la stessa sotto-categoria.
             String tutorName = less.getExpertise().getTutor().getUsername();
-            booking.checkNoDuplicateBooking(conn, username, less.getStartTime(), less.getEndTime());
+            String subcatName = less.getExpertise().getSubcategory().getName();
+            booking.checkNoDuplicateBooking(conn, username, tutorName, subcatName);
             // Also block duplicate requests that are still pending (no booking in cache yet)
-            checkNoPendingRequest(conn, less.getId(), tutorName, username,
-                    less.getExpertise().getSubcategory().getName());
+            checkNoPendingRequest(conn, less.getId(), tutorName, username, subcatName);
             Notification notify = new Notification.Builder()
                     .recipientUsername(less.getExpertise().getTutor().getUsername())
                     .senderUsername(stu.getUsername())

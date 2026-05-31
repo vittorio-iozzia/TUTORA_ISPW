@@ -101,20 +101,20 @@ public class BookingDaoDb implements BookingDao {
 
     /**
      * Verifica se lo student ha già una prenotazione attiva (Pending o Paid)
-     * il cui orario si sovrappone all'intervallo della nuova lezione.
-     * La condizione di sovrapposizione è: existingStart &lt; newEnd AND existingEnd &gt; newStart.
-     * I parametri sono: studentUsername, newLessonEnd, newLessonStart.
+     * con il tutor dato nella sotto-categoria data, per una lezione non ancora
+     * terminata (non Completed né Cancelled).
+     * I parametri sono: studentUsername, tutorUsername, subcategoryName.
      */
     @Language("SQL")
-    private static final String SQL_HAS_OVERLAPPING_BOOKING =
+    private static final String SQL_HAS_ACTIVE_BOOKING =
             "SELECT COUNT(*) " +
             "FROM booking b " +
             "JOIN lesson l ON b.lesson_id = l.id " +
             "WHERE b.student_username = ? " +
+            "  AND l.tutor_username = ? " +
+            "  AND l.subcategory_name = ? " +
             "  AND b.payment_status IN ('Pending', 'Paid') " +
-            "  AND l.status NOT IN ('Completed', 'Cancelled') " +
-            "  AND l.start_time < ? " +
-            "  AND l.end_time   > ?";
+            "  AND l.status NOT IN ('Completed', 'Cancelled')";
 
     /**
      * SELECT di tutte le booking per le lezioni di un tutor con JOIN su lesson,
@@ -282,30 +282,29 @@ public class BookingDaoDb implements BookingDao {
 
     /**
      * Verifica che lo student non abbia già una booking attiva (Pending o Paid)
-     * il cui orario si sovrappone all'intervallo [newLessonStart, newLessonEnd).
-     * Due intervalli si sovrappongono se: existingStart &lt; newEnd AND existingEnd &gt; newStart.
+     * con il tutor dato nella sotto-categoria data, per una lezione non ancora terminata.
      *
-     * @throws DuplicateBookingException se esiste già una booking con orario sovrapposto
+     * @throws DuplicateBookingException se esiste già una booking attiva tutor+subcategory
      */
     @Override
     public void checkNoDuplicateBooking(Connection conn,
                                         String studentUsername,
-                                        LocalDateTime newLessonStart,
-                                        LocalDateTime newLessonEnd)
+                                        String tutorUsername,
+                                        String subcategoryName)
             throws DatabaseException, DuplicateBookingException {
-        try (PreparedStatement ps = conn.prepareStatement(SQL_HAS_OVERLAPPING_BOOKING)) {
+        try (PreparedStatement ps = conn.prepareStatement(SQL_HAS_ACTIVE_BOOKING)) {
             ps.setString(1, studentUsername);
-            ps.setObject(2, newLessonEnd);    // l.start_time < newLessonEnd
-            ps.setObject(3, newLessonStart);  // l.end_time   > newLessonStart
+            ps.setString(2, tutorUsername);
+            ps.setString(3, subcategoryName);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next() && rs.getInt(1) > 0) {
-                    throw new DuplicateBookingException(studentUsername, newLessonStart, newLessonEnd);
+                    throw new DuplicateBookingException(studentUsername, tutorUsername, subcategoryName);
                 }
             }
         } catch (DuplicateBookingException e) {
             throw e;
         } catch (SQLException e) {
-            throw new DatabaseException("Error checking overlapping booking: ", e);
+            throw new DatabaseException("Error checking active booking: ", e);
         }
     }
 

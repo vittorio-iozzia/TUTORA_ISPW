@@ -7,9 +7,9 @@ import it.ispw.tutora.exception.BookingNotFoundException;
 import it.ispw.tutora.exception.DatabaseException;
 import it.ispw.tutora.exception.DuplicateBookingException;
 import it.ispw.tutora.model.Booking;
+import it.ispw.tutora.model.TutorExpertise;
 
 import java.sql.Connection;
-import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -121,32 +121,32 @@ public class BookingDaoDemo implements BookingDao {
 
     /**
      * Verifica che lo student non abbia già una booking attiva (Pending o Paid)
-     * il cui orario si sovrappone all'intervallo [newLessonStart, newLessonEnd).
+     * con il tutor dato nella sotto-categoria data, per una lezione non ancora terminata.
      * Naviga il grafo degli oggetti in-memory già presenti in cache.
-     * Due intervalli si sovrappongono se: existingStart &lt; newEnd AND existingEnd &gt; newStart.
      *
-     * @throws DuplicateBookingException se esiste già una booking con orario sovrapposto
+     * @throws DuplicateBookingException se esiste già una booking attiva tutor+subcategory
      */
     @Override
     public void checkNoDuplicateBooking(Connection conn,
                                         String studentUsername,
-                                        LocalDateTime newLessonStart,
-                                        LocalDateTime newLessonEnd)
+                                        String tutorUsername,
+                                        String subcategoryName)
             throws DatabaseException, DuplicateBookingException {
         for (Booking b : cache.values()) {
             if (!isActiveBooking(b, studentUsername)) continue;
-            LocalDateTime existingStart = b.getLesson().getStartTime();
-            LocalDateTime existingEnd   = b.getLesson().getEndTime();
-            if (existingStart != null && existingEnd != null
-                    && existingStart.isBefore(newLessonEnd) && existingEnd.isAfter(newLessonStart)) {
-                throw new DuplicateBookingException(studentUsername, newLessonStart, newLessonEnd);
+            TutorExpertise exp = b.getLesson().getExpertise();
+            if (exp == null) continue;
+            boolean sameTutor = tutorUsername.equals(exp.getTutor().getUsername());
+            boolean sameSub   = subcategoryName.equals(exp.getSubcategory().getName());
+            if (sameTutor && sameSub) {
+                throw new DuplicateBookingException(studentUsername, tutorUsername, subcategoryName);
             }
         }
     }
 
     /**
-     * Restituisce true se la booking è attiva (non rimborsata, non relativa a lezione
-     * conclusa/annullata) e appartiene allo student con il dato username.
+     * Restituisce true se la booking è attiva (Pending o Paid, lezione non
+     * Completed né Cancelled) e appartiene allo student con il dato username.
      * Estratto da checkNoDuplicateBooking per ridurre il numero di continue nel loop.
      */
     private boolean isActiveBooking(Booking b, String studentUsername) {

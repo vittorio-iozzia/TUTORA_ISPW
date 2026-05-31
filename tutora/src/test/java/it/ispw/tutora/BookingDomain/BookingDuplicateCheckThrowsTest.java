@@ -55,12 +55,11 @@ class BookingDuplicateCheckThrowsTest {
     }
 
     @Test
-    void testCheckThrowsForOverlappingTimeSlot() {
-        // La nuova lezione si sovrappone esattamente alla prenotazione esistente (now+3d, now+3d+1h).
-        LocalDateTime newStart = LocalDateTime.now().plusDays(3);
-        LocalDateTime newEnd   = LocalDateTime.now().plusDays(3).plusHours(1);
+    void testCheckThrowsForSameTutorAndSubcategory() {
+        // Lo student ha gia' una booking attiva con tutor_test per Piano:
+        // una seconda richiesta con lo stesso tutor e la stessa materia deve lanciare l'eccezione.
         assertThrows(DuplicateBookingException.class,
-                () -> bookingDao.checkNoDuplicateBooking(null, "student_test", newStart, newEnd),
-                "A lesson that overlaps an active booking should throw DuplicateBookingException.");
+                () -> bookingDao.checkNoDuplicateBooking(null, "student_test", "tutor_test", "Piano"),
+                "A second booking with the same tutor and subject should throw DuplicateBookingException.");
     }
 }

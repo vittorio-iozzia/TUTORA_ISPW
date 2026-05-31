@@ -54,13 +54,20 @@ class BookingDuplicateCheckPassesTest {
     }
 
     @Test
-    void testCheckPassesForNonOverlappingTimeSlot() {
-        // La nuova lezione è in un giorno diverso (now+5d): nessuna sovrapposizione
-        // con la prenotazione esistente (now+2d, now+2d+1h) — stesso tutor e materia, orario diverso.
-        LocalDateTime newStart = LocalDateTime.now().plusDays(5);
-        LocalDateTime newEnd   = LocalDateTime.now().plusDays(5).plusHours(1);
+    void testCheckPassesForDifferentTutor() {
+        // Lo student ha una booking attiva con tutor_test per Guitar:
+        // una richiesta con un tutor diverso deve passare senza eccezioni.
         assertDoesNotThrow(
-                () -> bookingDao.checkNoDuplicateBooking(null, "student_test", newStart, newEnd),
-                "A lesson on a different day should not be flagged as duplicate, even with the same tutor and subject.");
+                () -> bookingDao.checkNoDuplicateBooking(null, "student_test", "other_tutor", "Guitar"),
+                "A booking with a different tutor should not be flagged as duplicate.");
+    }
+
+    @Test
+    void testCheckPassesForDifferentSubcategory() {
+        // Lo student ha una booking attiva con tutor_test per Guitar:
+        // una richiesta per una materia diversa con lo stesso tutor deve passare.
+        assertDoesNotThrow(
+                () -> bookingDao.checkNoDuplicateBooking(null, "student_test", "tutor_test", "Piano"),
+                "A booking with the same tutor but a different subject should not be flagged as duplicate.");
     }
 }

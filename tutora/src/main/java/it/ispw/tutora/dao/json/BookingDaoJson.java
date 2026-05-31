@@ -153,33 +153,29 @@ public class BookingDaoJson implements BookingDao {
 
     /**
      * Verifica che lo student non abbia già una booking attiva (Pending o Paid)
-     * il cui orario si sovrappone all'intervallo [newLessonStart, newLessonEnd).
+     * con il tutor dato nella sotto-categoria data, per una lezione non ancora terminata.
      * Il lesson status corrente viene letto in tempo reale da lessons.json
      * tramite {@link #isActiveBooking} per evitare dati denormalizzati stale.
-     * Due intervalli si sovrappongono se: existingStart &lt; newEnd AND existingEnd &gt; newStart.
      *
-     * @throws DuplicateBookingException se esiste già una booking con orario sovrapposto
+     * @throws DuplicateBookingException se esiste già una booking attiva tutor+subcategory
      */
     @Override
     public void checkNoDuplicateBooking(Connection conn,
                                         String studentUsername,
-                                        LocalDateTime newLessonStart,
-                                        LocalDateTime newLessonEnd)
+                                        String tutorUsername,
+                                        String subcategoryName)
             throws DatabaseException, DuplicateBookingException {
         LessonDaoJson lessonDao = new LessonDaoJson();
         for (BookingRecord r : readAll()) {
             if (!isActiveBooking(r, studentUsername, lessonDao)) continue;
-            LocalDateTime existingStart = LocalDateTime.parse(r.lessonStartTime);
-            LocalDateTime existingEnd   = LocalDateTime.parse(r.lessonEndTime);
-            if (existingStart.isBefore(newLessonEnd) && existingEnd.isAfter(newLessonStart)) {
-                throw new DuplicateBookingException(studentUsername, newLessonStart, newLessonEnd);
+            if (tutorUsername.equals(r.tutorUsername) && subcategoryName.equals(r.subjectName)) {
+                throw new DuplicateBookingException(studentUsername, tutorUsername, subcategoryName);
             }
         }
     }
 
     private boolean isActiveBooking(BookingRecord r, String studentUsername, LessonDaoJson lessonDao) {
         if (!studentUsername.equals(r.studentUsername)) return false;
-        if (r.lessonStartTime == null || r.lessonEndTime == null) return false;
         if (REFUNDED.equals(r.paymentStatus)) return false;
         try {
             LessonStatus status = lessonDao.selectLesson(null, r.lessonId).getLessonStatus();
