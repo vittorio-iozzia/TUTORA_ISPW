@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Implementazione di TutorApplicationDao basata su file JSON.
@@ -57,9 +58,11 @@ public class TutorApplicationDaoJson implements TutorApplicationDao {
 
         List<AppRecord> records = readAll();
 
+        String newSub = normalizeSubcategory(application.getSubcategoryName());
         for (AppRecord r : records) {
             if (r.studentUsername.equals(application.getStudentUsername())
                     && r.categoryName.equals(application.getCategoryName())
+                    && Objects.equals(normalizeSubcategory(r.subcategoryName), newSub)
                     && !ApplicationStatus.valueOf(r.status).isTerminal()) {
                 throw new DuplicateApplicationException(
                         application.getStudentUsername(), application.getCategoryName());
@@ -72,6 +75,7 @@ public class TutorApplicationDaoJson implements TutorApplicationDao {
         AppRecord newRecord = new AppRecord();
         newRecord.id = id;
         newRecord.categoryName = application.getCategoryName();
+        newRecord.subcategoryName = application.getSubcategoryName();
         newRecord.studentUsername = application.getStudentUsername();
         newRecord.creationDate = application.getCreationDate().toString();
         newRecord.status = application.getStatus().name();
@@ -188,10 +192,16 @@ public class TutorApplicationDaoJson implements TutorApplicationDao {
     // POJO interno per la deserializzazione Jackson
     // ----------------------------------------------------------------
 
+    private static String normalizeSubcategory(String s) {
+        if (s == null) return null;
+        return s.trim().toLowerCase().replaceAll("\\s+", "");
+    }
+
     @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
     private static class AppRecord {
         int id;
         String categoryName;
+        String subcategoryName;
         String studentUsername;
         String creationDate;
         String status;

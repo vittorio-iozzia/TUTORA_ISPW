@@ -2,8 +2,6 @@ package it.ispw.tutora.model;
 
 import it.ispw.tutora.enums.Status;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -23,20 +21,6 @@ import java.util.List;
  * "è un". Un'expertise appartiene a un tutor, non è un tipo di tutor.
  *
  * -----------------------------------------------------------------------
- * Pattern Observer – Push Model
- * -----------------------------------------------------------------------
- * TutorExpertise è il "Subject" (Observable).
- * Quando status cambia, notifica tutti i listener registrati
- * passando DIRETTAMENTE il nuovo stato nell'evento (push), senza
- * costringere la View a fare un secondo fetch al Model.
- *
- * Utilizzo dal Controller grafico:
- *   expertise.addPropertyChangeListener(PROP_STATUS, event -> {
- *       Status newStatus = (Status) event.getNewValue();
- *       // aggiorna la UI con il nuovo stato della competenza
- *   });
- *
- * -----------------------------------------------------------------------
  * Logica di dominio
  * -----------------------------------------------------------------------
  * updateStatus() implementa una macchina a stati finiti:
@@ -48,12 +32,6 @@ import java.util.List;
  * per centralizzare la validazione del prezzo in un unico punto.
  */
 public class TutorExpertise {
-
-    // Nome della proprietà osservata — usato come chiave negli eventi push
-    public static final String PROP_STATUS = "status";
-
-    // Infrastruttura Observer di Java standard (java.beans)
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     private final Tutor tutor;
     private final SubCategory subcategory;
@@ -93,24 +71,6 @@ public class TutorExpertise {
     }
 
     // ----------------------------------------------------------------
-    // Observer – registrazione e rimozione listener
-    // ----------------------------------------------------------------
-
-    /**
-     * Il Controller grafico si registra qui per ricevere
-     * aggiornamenti push quando status cambia.
-     */
-    public void addPropertyChangeListener(String propertyName,
-                                          PropertyChangeListener listener) {
-        pcs.addPropertyChangeListener(propertyName, listener);
-    }
-
-    public void removePropertyChangeListener(String propertyName,
-                                             PropertyChangeListener listener) {
-        pcs.removePropertyChangeListener(propertyName, listener);
-    }
-
-    // ----------------------------------------------------------------
     // Logica di dominio – validazione prezzo
     // ----------------------------------------------------------------
 
@@ -125,8 +85,7 @@ public class TutorExpertise {
     // ----------------------------------------------------------------
 
     /**
-     * Aggiorna lo status applicando la macchina a stati finiti
-     * e notifica i listener con il push model.
+     * Aggiorna lo status applicando la macchina a stati finiti.
      * Throws IllegalArgumentException if the transition is not valid.
      */
     public void updateStatus(Status newStatus) {
@@ -135,10 +94,7 @@ public class TutorExpertise {
                     "Invalid transition: " + this.status + " → " + newStatus
             );
         }
-        Status oldStatus = this.status;
         this.status = newStatus;
-        // PUSH: il listener riceve direttamente il nuovo stato nell'evento
-        pcs.firePropertyChange(PROP_STATUS, oldStatus, newStatus);
     }
 
     private boolean isTransitionValid(Status from, Status to) {

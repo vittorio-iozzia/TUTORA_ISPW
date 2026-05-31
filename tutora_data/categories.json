@@ -54,6 +54,14 @@
         "required": true,
         "minChar": 50,
         "maxChar": 800
+      },
+      {
+        "name": "subcategory",
+        "label": "Subcategory",
+        "description": "What specific area do you want to teach? (e.g., Portrait, Landscape, Videomaking)",
+        "required": true,
+        "minChar": 2,
+        "maxChar": 100
       }
     ],
     "documentRequirements": [
@@ -76,6 +84,14 @@
         "required": true,
         "minChar": 50,
         "maxChar": 800
+      },
+      {
+        "name": "subcategory",
+        "label": "Subcategory",
+        "description": "What sport do you want to teach? (e.g., Tennis, Swimming, Football)",
+        "required": true,
+        "minChar": 2,
+        "maxChar": 100
       }
     ],
     "documentRequirements": [

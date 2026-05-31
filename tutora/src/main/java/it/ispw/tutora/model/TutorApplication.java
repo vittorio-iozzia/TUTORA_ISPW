@@ -2,41 +2,16 @@ package it.ispw.tutora.model;
 
 import it.ispw.tutora.enums.ApplicationStatus;
 
-import java.beans.PropertyChangeListener; // Interfaccia che deve implementare chi vuole ricevere notifiche
-import java.beans.PropertyChangeSupport; // Infrastruttura del Subject (Observable)
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-
 /**
  * Entity principale di UC-2: rappresenta la candidatura di uno studente
  * per diventare tutor in una determinata categoria.
- *
- * -----------------------------------------------------------------------
- * Pattern Observer – Push Model
- * -----------------------------------------------------------------------
- * TutorApplication è il "Subject" (Observable).
- * Quando lo status cambia, notifica tutti i listener registrati
- * passando DIRETTAMENTE il nuovo stato nell'evento (push), senza
- * costringere la View a fare un secondo fetch al Model.
- *
- * Utilizzo dal Controller grafico:
- *   application.addPropertyChangeListener(PROP_STATUS, event -> {
- *       ApplicationStatus newStatus = (ApplicationStatus) event.getNewValue();
- *       // aggiorna la UI direttamente con newStatus
- *   });
  */
 public class TutorApplication {
-
-    // Nomi delle proprietà osservabili — usati come chiave negli eventi push
-    public static final String PROP_STATUS = "status";
-    public static final String PROP_ITEMS  = "items";
-
-    // Infrastruttura Observer di Java standard (java.beans)
-    // nessuna dipendenza esterna necessaria
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     private final int id;
     private final String categoryName;
@@ -62,27 +37,11 @@ public class TutorApplication {
     }
 
     // ----------------------------------------------------------------
-    // Observer – registrazione e rimozione listener
-    // ----------------------------------------------------------------
-
-    /**
-     * La View si registra qui per ricevere
-     * aggiornamenti push quando lo status cambia.
-     */
-    public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
-        pcs.addPropertyChangeListener(propertyName, listener);
-    }
-
-    public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
-        pcs.removePropertyChangeListener(propertyName, listener);
-    }
-
-    // ----------------------------------------------------------------
     // Logica di dominio
     // ----------------------------------------------------------------
 
     /**
-     * Cambia lo status e notifica i listener con il push model.
+     * Cambia lo status applicando la macchina a stati finiti.
      * Solleva IllegalStateException se la transizione non è valida.
      *
      * Transizioni valide:
@@ -95,20 +54,14 @@ public class TutorApplication {
                     "Invalid transaction: " + this.status + " → " + newStatus
             );
         }
-        ApplicationStatus oldStatus = this.status;
         this.status = newStatus;
-        // PUSH: il listener riceve direttamente il nuovo stato nell'evento
-        pcs.firePropertyChange(PROP_STATUS, oldStatus, newStatus);
     }
 
     /**
-     * Aggiunge un item e notifica i listener.
+     * Aggiunge un item alla candidatura.
      */
     public void addItem(ApplicationItem item) {
-        List<ApplicationItem> oldItems = List.copyOf(items);
         items.add(item);
-        pcs.firePropertyChange(PROP_ITEMS, oldItems,
-                Collections.unmodifiableList(items));
     }
 
     /**
@@ -120,8 +73,8 @@ public class TutorApplication {
             if (req.isOptional()) continue;
             boolean found = items.stream()
                     .anyMatch(item ->
-                            item.getRequirementName().equals(req.getName())  // Il nome del documento deve coincidere con il nome el requisito
-                                    && item.isFilled());  // Il documento deve essere compilato
+                            item.getRequirementName().equals(req.getName())
+                                    && item.isFilled());
             if (!found) return false;
         }
         return true;
@@ -144,9 +97,11 @@ public class TutorApplication {
     public List<ApplicationItem> getItems() {
         return Collections.unmodifiableList(items);
     }
+
     public void setAdminNotes(String adminNotes) {
         this.adminNotes = adminNotes;
     }
+
     public void setEvaluatedAt(LocalDateTime evaluatedAt) {
         this.evaluatedAt = evaluatedAt;
     }

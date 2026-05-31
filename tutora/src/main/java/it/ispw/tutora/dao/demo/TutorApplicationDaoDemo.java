@@ -43,10 +43,11 @@ public class TutorApplicationDaoDemo implements TutorApplicationDao {
     @Override
     public int insert(Connection conn, TutorApplication application)
             throws DatabaseException, DuplicateApplicationException {
+        String newSub = normalizeSubcategory(application.getSubcategoryName());
         for (TutorApplication a : cache) {
             if (a.getStudentUsername().equals(application.getStudentUsername())
                     && a.getCategoryName().equals(application.getCategoryName())
-                    && Objects.equals(a.getSubcategoryName(), application.getSubcategoryName())
+                    && Objects.equals(normalizeSubcategory(a.getSubcategoryName()), newSub)
                     && !a.getStatus().isTerminal()) {
                 throw new DuplicateApplicationException(
                         application.getStudentUsername(), application.getCategoryName());
@@ -121,5 +122,11 @@ public class TutorApplicationDaoDemo implements TutorApplicationDao {
         }
         result.sort(Comparator.comparing(TutorApplication::getCreationDate).reversed());
         return result;
+    }
+
+    /** Normalizza il nome subcategory per il confronto: lowercase, trim, spazi multipli → singolo. */
+    private static String normalizeSubcategory(String s) {
+        if (s == null) return null;
+        return s.trim().toLowerCase().replaceAll("\\s+", "");
     }
 }

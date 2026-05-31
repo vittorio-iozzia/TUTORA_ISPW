@@ -11,6 +11,7 @@ import it.ispw.tutora.model.TextRequirement;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,6 +64,16 @@ public class CategoryDaoJson implements CategoryDao {
             if (c.getName().equals(name)) return c;
         }
         throw new CategoryNotFoundException(name);
+    }
+
+    @Override
+    public void ensureSubcategoryExists(Connection conn, String categoryName, String subcategoryName) {
+        // no-op: implementazione JSON, nessun FK da soddisfare
+    }
+
+    @Override
+    public String findSubcategoryName(Connection conn, String categoryName, String rawName) {
+        return rawName;
     }
 
     // ----------------------------------------------------------------

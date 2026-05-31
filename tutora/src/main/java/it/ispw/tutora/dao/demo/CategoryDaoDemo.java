@@ -5,6 +5,7 @@ import it.ispw.tutora.exception.CategoryNotFoundException;
 import it.ispw.tutora.exception.DatabaseException;
 import it.ispw.tutora.model.Category;
 
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,5 +52,15 @@ public class CategoryDaoDemo implements CategoryDao {
             if (c.getName().equals(name)) return c;
         }
         throw new CategoryNotFoundException(name);
+    }
+
+    @Override
+    public void ensureSubcategoryExists(Connection conn, String categoryName, String subcategoryName) {
+        // no-op: implementazione in memoria, nessun FK da soddisfare
+    }
+
+    @Override
+    public String findSubcategoryName(Connection conn, String categoryName, String rawName) {
+        return rawName;
     }
 }

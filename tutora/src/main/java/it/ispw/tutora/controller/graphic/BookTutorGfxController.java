@@ -3,6 +3,7 @@ package it.ispw.tutora.controller.graphic;
 import it.ispw.tutora.bean.BookingBean;
 import it.ispw.tutora.bean.LessonStudentBean;
 import it.ispw.tutora.controller.application.BookTutorController;
+import it.ispw.tutora.enums.LessonStatus;
 import it.ispw.tutora.model.Lesson;
 import it.ispw.tutora.model.Tutor;
 import it.ispw.tutora.view.SceneManager;
@@ -24,7 +25,8 @@ import java.util.Locale;
 
 public class BookTutorGfxController extends DialogGfxController {
 
-    private static final String APP_FIELD_DESC = "app-field-desc";
+    private static final String APP_FIELD_DESC        = "app-field-desc";
+    private static final String TIME_SLOT_UNAVAILABLE = "time-slot-unavailable";
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("EEE, d MMM yyyy", Locale.ENGLISH);
     private static final DateTimeFormatter TIME_FMT =
@@ -134,7 +136,16 @@ public class BookTutorGfxController extends DialogGfxController {
                 }
             });
             for (Lesson lesson : lessons) {
-                sectionBox.getChildren().add(buildLessonCard(lesson));
+                ToggleButton card = buildLessonCard(lesson);
+                sectionBox.getChildren().add(card);
+                lesson.addPropertyChangeListener(Lesson.PROP_LESSON_STATUS, evt -> {
+                    if (evt.getNewValue() != LessonStatus.AVAILABLE) {
+                        Platform.runLater(() -> {
+                            card.setDisable(true);
+                            card.getStyleClass().add(TIME_SLOT_UNAVAILABLE);
+                        });
+                    }
+                });
             }
         }
 
@@ -291,8 +302,8 @@ public class BookTutorGfxController extends DialogGfxController {
             ToggleButton btn = (ToggleButton) durationBtnsRow.getChildren().get(i);
             boolean fits = (long)(durations[i] * 60) <= totalMins;
             btn.setDisable(!fits);
-            btn.getStyleClass().remove("time-slot-unavailable");
-            if (!fits) btn.getStyleClass().add("time-slot-unavailable");
+            btn.getStyleClass().remove(TIME_SLOT_UNAVAILABLE);
+            if (!fits) btn.getStyleClass().add(TIME_SLOT_UNAVAILABLE);
             else if (firstEnabled < 0) firstEnabled = i;
         }
 
