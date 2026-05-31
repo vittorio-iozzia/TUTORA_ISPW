@@ -132,22 +132,21 @@ public class BookingDaoDemo implements BookingDao {
                                         String tutorUsername,
                                         String subcategoryName)
             throws DatabaseException, DuplicateBookingException {
-        for (Booking b : cache.values()) {
-            if (!isActiveBooking(b, studentUsername)) continue;
-            TutorExpertise exp = b.getLesson().getExpertise();
-            if (exp == null) continue;
-            boolean sameTutor = tutorUsername.equals(exp.getTutor().getUsername());
-            boolean sameSub   = subcategoryName.equals(exp.getSubcategory().getName());
-            if (sameTutor && sameSub) {
-                throw new DuplicateBookingException(studentUsername, tutorUsername, subcategoryName);
-            }
+        boolean hasDuplicate = cache.values().stream()
+                .filter(b -> isActiveBooking(b, studentUsername))
+                .map(b -> b.getLesson().getExpertise())
+                .filter(exp -> exp != null)
+                .anyMatch(exp ->
+                        tutorUsername.equals(exp.getTutor().getUsername()) &&
+                        subcategoryName.equals(exp.getSubcategory().getName()));
+        if (hasDuplicate) {
+            throw new DuplicateBookingException(studentUsername, tutorUsername, subcategoryName);
         }
     }
 
     /**
      * Restituisce true se la booking è attiva (Pending o Paid, lezione non
      * Completed né Cancelled) e appartiene allo student con il dato username.
-     * Estratto da checkNoDuplicateBooking per ridurre il numero di continue nel loop.
      */
     private boolean isActiveBooking(Booking b, String studentUsername) {
         if (b.getPaymentStatus() == PaymentStatus.REFUNDED) return false;
