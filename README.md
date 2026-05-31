@@ -215,7 +215,7 @@ Monitored via **SonarCloud** — Project: `vittorio-iozzia_TUTORA_ISPW`
 
 A walkthrough of the main features of TUTORA — login, tutor search, lesson booking, tutor application, and the admin dashboard.
 
-[![Watch the demo](assets/tutora_youtube.png)](https://www.youtube.com/@TUTORA-ISPW)
+<a href="https://www.youtube.com/@TUTORA-ISPW"><img src="assets/tutora_youtube.png" alt="Watch the demo" width="256"/></a>
 
 ---
 
