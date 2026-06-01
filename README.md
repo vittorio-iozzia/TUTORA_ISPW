@@ -56,7 +56,7 @@ The system follows the **Model-View-Controller (MVC)** architectural pattern wit
 | **Builder** | Creational | `User`, `Student`, `Tutor`, `Admin`, `Booking`, `Lesson`, `Message`, `Notification`, `Review` |
 | **Adapter** | Structural | `PayPalBoundary`, `GoogleAuthBoundary`, `MetaAuthBoundary`, `CertificateValidationBoundary` |
 | **Decorator** | Structural | `DashboardDecorator` — concrete decorators: `StudentDashboardDecorator`, `TutorDashboardDecorator`, `AdminDashboardDecorator` |
-| **Observer** | Behavioural | `TutorApplication`, `Booking`, `Lesson`, `TutorExpertise` — push model via `java.beans.PropertyChangeSupport` |
+| **Observer** | Behavioural | `Booking`, `Lesson` — push model via `java.beans.PropertyChangeSupport` |
 | **MVC** | Architectural | View (GFX/CLI controllers) → Application Controllers → Model/DAO |
 
 ---
