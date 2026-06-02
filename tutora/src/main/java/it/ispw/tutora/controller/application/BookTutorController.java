@@ -18,10 +18,8 @@ import it.ispw.tutora.model.*;
 import it.ispw.tutora.model.session.SessionManager;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -339,7 +337,7 @@ public class BookTutorController {
                     .lesson(less)
                     .student(stu)
                     .bookedAt(LocalDateTime.now())
-                    .pricePaid(less.getListedPrice())
+                    .pricePaid(price)   // usa il prezzo già calcolato e addebitato in Fase 1
                     .paymentStatus(PaymentStatus.PENDING)
                     .paymentRef(paymentRef)
                     .build();
@@ -397,31 +395,6 @@ public class BookTutorController {
             restoreBudget(username, price);
             bean.setErrorMessage(ERR_SYSTEM);
         }
-    }
-
-    // ----------------------------------------------------------------
-    // calculateProportionalPrice
-    // ----------------------------------------------------------------
-
-    /**
-     * Calcola il costo proporzionale per la durata scelta dallo student.
-     * Il prezzoOrario viene derivato dal listedPrice della slot completa:
-     *   prezzoOrario = listedPrice / (durataTotaleSlot in ore)
-     *   costo = prezzoOrario × durationHours
-
-     */
-    public BigDecimal calculateProportionalPrice(Lesson lesson, double durationHours) {
-        if (lesson == null || lesson.getStartTime() == null
-                || lesson.getEndTime() == null || lesson.getListedPrice() == null)
-            return BigDecimal.ZERO;
-        long totalMins = Duration.between(lesson.getStartTime(), lesson.getEndTime()).toMinutes();
-        if (totalMins == 0) return BigDecimal.ZERO;
-        BigDecimal hourlyRate = lesson.getListedPrice()
-                .divide(BigDecimal.valueOf(totalMins)
-                        .divide(BigDecimal.valueOf(60), 4, RoundingMode.HALF_UP),
-                        2, RoundingMode.HALF_UP);
-        return hourlyRate.multiply(BigDecimal.valueOf(durationHours))
-                .setScale(2, RoundingMode.HALF_UP);
     }
 
     // ----------------------------------------------------------------

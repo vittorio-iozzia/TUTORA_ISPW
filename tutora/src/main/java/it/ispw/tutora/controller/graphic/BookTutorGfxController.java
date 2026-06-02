@@ -16,7 +16,6 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -40,11 +39,6 @@ public class BookTutorGfxController extends DialogGfxController {
 
     private Tutor       tutor;
     private Lesson      selectedLesson;
-    private double      selectedDurationHours = 1.0;
-
-    private VBox        durationSection;
-    private HBox        durationBtnsRow;
-    private Label       priceValueLabel;
     private ToggleGroup lessonGroup;
 
     private final BookTutorController bookTutorController = new BookTutorController();
@@ -128,8 +122,6 @@ public class BookTutorGfxController extends DialogGfxController {
                 if (newT == null && oldT != null) { oldT.setSelected(true); return; }
                 if (newT != null) {
                     selectedLesson = (Lesson) newT.getUserData();
-                    selectedDurationHours = 1.0;
-                    refreshDurationSection();
                     updateBookState();
                 }
             });
@@ -139,11 +131,6 @@ public class BookTutorGfxController extends DialogGfxController {
         }
 
         formContainer.getChildren().add(sectionBox);
-
-        durationSection = buildDurationSection();
-        durationSection.setVisible(false);
-        durationSection.setManaged(false);
-        formContainer.getChildren().add(durationSection);
     }
 
     private ToggleButton buildLessonCard(Lesson lesson) {
@@ -199,120 +186,6 @@ public class BookTutorGfxController extends DialogGfxController {
         Label lbl = new Label(text);
         lbl.getStyleClass().add("lesson-meta");
         return lbl;
-    }
-
-    private VBox buildDurationSection() {
-        VBox section = new VBox(12);
-        section.getStyleClass().add("app-field-box");
-
-        HBox labelRow = new HBox(8);
-        labelRow.setAlignment(Pos.CENTER_LEFT);
-        Label stepBadge = new Label("2");
-        stepBadge.getStyleClass().add("app-step-badge");
-        Label sectionTitle = new Label("Duration");
-        sectionTitle.getStyleClass().add("app-field-label");
-        Label star = new Label("*");
-        star.setStyle("-fx-text-fill: #EF4444; -fx-font-weight: bold; -fx-font-size: 14px;");
-        labelRow.getChildren().addAll(stepBadge, sectionTitle, star);
-
-        Label desc = new Label("Choose how long your lesson will be. Options depend on the available slot.");
-        desc.getStyleClass().add(APP_FIELD_DESC);
-        desc.setWrapText(true);
-
-        durationBtnsRow = buildDurationBtnsRow();
-        VBox priceSummary = buildPriceSummary();
-
-        section.getChildren().addAll(labelRow, desc, durationBtnsRow, priceSummary);
-        return section;
-    }
-
-    private HBox buildDurationBtnsRow() {
-        HBox box = new HBox(10);
-        box.setAlignment(Pos.CENTER_LEFT);
-        ToggleGroup durationGroup = new ToggleGroup();
-
-        double[] durations = {1.0, 1.5, 2.0};
-        String[] labels    = {"1 hour", "1h 30m", "2 hours"};
-
-        for (int i = 0; i < durations.length; i++) {
-            final double dur = durations[i];
-            ToggleButton btn = new ToggleButton(labels[i]);
-            btn.getStyleClass().add("time-slot-btn");
-            btn.setToggleGroup(durationGroup);
-            btn.setUserData(dur);
-            btn.selectedProperty().addListener((obs, o, n) -> {
-                if (Boolean.TRUE.equals(n)) { selectedDurationHours = dur; updatePriceDisplay(); }
-            });
-            box.getChildren().add(btn);
-        }
-
-        durationGroup.selectedToggleProperty().addListener((obs, oldT, newT) -> {
-            if (newT == null && oldT != null) oldT.setSelected(true);
-        });
-
-        return box;
-    }
-
-    private VBox buildPriceSummary() {
-        VBox box = new VBox(8);
-        box.getStyleClass().add("booking-price-box");
-
-        HBox row = new HBox();
-        row.setAlignment(Pos.CENTER_LEFT);
-        Label label = new Label("Estimated cost");
-        label.getStyleClass().add("booking-price-label");
-        HBox.setHgrow(label, Priority.ALWAYS);
-
-        priceValueLabel = new Label("€—");
-        priceValueLabel.getStyleClass().add("booking-price-value");
-        row.getChildren().addAll(label, priceValueLabel);
-
-        Label note = new Label("Final price confirmed by the tutor upon acceptance.");
-        note.getStyleClass().add(APP_FIELD_DESC);
-        note.setWrapText(true);
-
-        box.getChildren().addAll(row, note);
-        return box;
-    }
-
-    private void refreshDurationSection() {
-        if (selectedLesson == null) {
-            durationSection.setVisible(false);
-            durationSection.setManaged(false);
-            return;
-        }
-
-        long totalMins = Duration.between(
-                selectedLesson.getStartTime(), selectedLesson.getEndTime()).toMinutes();
-
-        double[] durations = {1.0, 1.5, 2.0};
-        int firstEnabled = -1;
-        for (int i = 0; i < durationBtnsRow.getChildren().size(); i++) {
-            ToggleButton btn = (ToggleButton) durationBtnsRow.getChildren().get(i);
-            boolean fits = (long)(durations[i] * 60) <= totalMins;
-            btn.setDisable(!fits);
-            btn.getStyleClass().remove("time-slot-unavailable");
-            if (!fits) btn.getStyleClass().add("time-slot-unavailable");
-            else if (firstEnabled < 0) firstEnabled = i;
-        }
-
-        if (firstEnabled >= 0) {
-            ToggleButton first = (ToggleButton) durationBtnsRow.getChildren().get(firstEnabled);
-            first.setSelected(true);
-            selectedDurationHours = durations[firstEnabled];
-        }
-
-        durationSection.setVisible(true);
-        durationSection.setManaged(true);
-        updatePriceDisplay();
-    }
-
-    private void updatePriceDisplay() {
-        if (selectedLesson == null || priceValueLabel == null) return;
-        BigDecimal cost = bookTutorController.calculateProportionalPrice(
-                selectedLesson, selectedDurationHours);
-        if (BigDecimal.ZERO.compareTo(cost) == 0) return;
-        priceValueLabel.setText("€" + cost.toPlainString());
     }
 
     private void updateBookState() {

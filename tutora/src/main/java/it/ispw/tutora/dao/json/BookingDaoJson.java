@@ -294,7 +294,7 @@ public class BookingDaoJson implements BookingDao {
      * BigDecimal.ONE come hourlyPrice è un placeholder (il valore reale non è persistito).
      */
     private static TutorExpertise buildExpertiseFromRecord(BookingRecord r) {
-        SubCategory sub = new SubCategory(r.subjectName, null, "");
+        SubCategory sub = new SubCategory(r.subjectName, null, null);
         Tutor tutor = null;
         if (r.tutorUsername != null) {
             tutor = new Tutor.Builder()
@@ -303,7 +303,9 @@ public class BookingDaoJson implements BookingDao {
                     .surname(r.tutorSurname != null ? r.tutorSurname : "")
                     .build();
         }
-        return new TutorExpertise(tutor, sub, BigDecimal.ONE, Status.APPROVED, LocalDateTime.now());
+        // Status.APPROVED e' corretto: una booking esiste solo se l'expertise era approvata.
+        // createdAt e' null perche' non e' persistito nel record booking (valore sconosciuto).
+        return new TutorExpertise(tutor, sub, BigDecimal.ONE, Status.APPROVED, null);
     }
     // ----------------------------------------------------------------
     // POJO interno per la serializzazione Jackson
