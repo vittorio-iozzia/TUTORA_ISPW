@@ -1,1 +1,21 @@
-[]
+[ {
+  "id" : 1,
+  "tutorUsername" : "tutor_vitto",
+  "subcategoryName" : "Saxophone",
+  "startTime" : "2026-07-10T10:00:00",
+  "endTime" : "2026-07-10T11:00:00",
+  "isRemote" : false,
+  "listedPrice" : "35.00",
+  "status" : "Available",
+  "createdAt" : "2026-06-01T10:00:00"
+}, {
+  "id" : 2,
+  "tutorUsername" : "tutor_vitto",
+  "subcategoryName" : "Piano",
+  "startTime" : "2026-07-15T15:00:00",
+  "endTime" : "2026-07-15T17:00:00",
+  "isRemote" : true,
+  "listedPrice" : "30.00",
+  "status" : "Available",
+  "createdAt" : "2026-06-01T10:00:00"
+} ]

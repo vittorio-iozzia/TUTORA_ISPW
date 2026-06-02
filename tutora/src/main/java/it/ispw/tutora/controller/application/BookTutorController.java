@@ -229,6 +229,26 @@ public class BookTutorController {
 
     /**
      * Lo student effettua il pagamento dopo che il tutor ha accettato.
+     * Verifica la sessione, delega la logica delle tre fasi a handlePayment()
+     * e garantisce tramite finally che refreshSessionBudget() venga sempre
+     * eseguita, qualunque sia il percorso di uscita (successo o fallimento).
+     */
+    public void payment(BookingBean bean, String token) {
+        SessionManager sm = SessionManager.getInstance();
+        if (!sm.isSessionValid(token) || !sm.getSession(token).isStudent()) {
+            bean.setErrorMessage(ERR_UNAUTHORIZED);
+            return;
+        }
+        String username = sm.getCurrentUser(token).getUsername();
+        try {
+            handlePayment(bean, token, username);
+        } finally {
+            refreshSessionBudget(token, username);
+        }
+    }
+
+    /**
+     * Logica delle tre fasi del pagamento.
      * Il metodo e' strutturato in tre fasi distinte per evitare di tenere
      * aperta la connessione DB durante la chiamata al gateway esterno
      * (che puo' impiegare fino a 10 minuti):
@@ -243,15 +263,7 @@ public class BookTutorController {
      *            Il budget e' gia' stato scalato in Fase 1, quindi non viene
      *            toccato qui. Se la fase fallisce, restoreBudget() lo ripristina.
      */
-    public void payment(BookingBean bean, String token) {
-        SessionManager sm = SessionManager.getInstance();
-        // Verifica sessione prima di aprire la connessione
-        if (!sm.isSessionValid(token) || !sm.getSession(token).isStudent()) {
-            bean.setErrorMessage(ERR_UNAUTHORIZED);
-            return;
-        }
-        String username = sm.getCurrentUser(token).getUsername();
-
+    private void handlePayment(BookingBean bean, String token, String username) {
         // Fase 1: riserva del budget (write transaction)
         BigDecimal price;
         try (Connection conn = DaoFactory.getInstance().getConnection()) {
@@ -263,11 +275,6 @@ public class BookTutorController {
         }
         if (price == null) return;
 
-        // Fase 1 completata con successo: allinea il session user in-memory.
-        // Segue lo stesso pattern di UserProfileController.updateBudget():
-        // DAO prima, poi aggiornamento del modello in-memory.
-        syncSessionUserBudget(token, price, true);
-
         // Fase 2: chiama il gateway PayPal fuori da qualsiasi connessione DB.
         String paymentRef;
         try {
@@ -275,7 +282,6 @@ public class BookTutorController {
             bean.setPaymentRef(paymentRef);
         } catch (PaymentException | PaymentTimeoutException e) {
             restoreBudget(username, price);
-            syncSessionUserBudget(token, price, false); // annulla la detrazione di Fase 1
             bean.setErrorMessage(e.getMessage());
             return;
         }
@@ -288,11 +294,6 @@ public class BookTutorController {
             safeRefund(paymentRef, price);
             restoreBudget(username, price);
             bean.setErrorMessage(ERR_SYSTEM);
-        }
-        // Se Fase 3 ha fallito (errore interno di performPhase3Inner o eccezione del try-catch esterno),
-        // restoreBudget ha già ripristinato il datastore: allineiamo anche il session user.
-        if (bean.getErrorMessage() != null) {
-            syncSessionUserBudget(token, price, false);
         }
     }
 
@@ -463,22 +464,28 @@ public class BookTutorController {
     }
 
     /**
-     * Allinea il budget in-memory del session user dopo che il datastore e' gia' stato aggiornato.
-     * Segue il pattern di UserProfileController.updateBudget():
-     * persistenza DAO prima, aggiornamento del modello in-memory dopo.
+     * Allinea il budget del session user al valore reale presente nel datastore.
+     * Viene chiamato al termine di payment(), sia in caso di successo che di fallimento,
+     * poiche' in entrambi i casi il datastore e' gia' nello stato corretto.
      *
-     * Best-effort: se il session user e' scaduto o il budget e' inconsistente (es. modifica
-     * concorrente esterna), il fallimento viene solo loggato senza propagarsi al chiamante.
+     * Calcola la differenza tra il budget nel datastore e quello in sessione
+     * e applica addBudget / deductBudget per raggiunger il valore esatto.
+     * Se la differenza e' zero (caso demo, dove session user e oggetto DAO coincidono)
+     * il metodo e' un no-op.
+     *
+     * Best-effort: eventuali errori vengono solo loggati.
      */
-    private void syncSessionUserBudget(String token, BigDecimal amount, boolean deduct) {
-        try {
+    private void refreshSessionBudget(String token, String username) {
+        try (Connection conn = DaoFactory.getInstance().getConnection()) {
+            Student fresh = student.selectStudent(conn, username);
             User sessionUser = SessionManager.getInstance().getCurrentUser(token);
             if (!(sessionUser instanceof Student sessionStu)) return;
-            if (deduct) sessionStu.deductBudget(amount);
-            else        sessionStu.addBudget(amount);
+            BigDecimal diff = fresh.getBudget().subtract(sessionStu.getBudget());
+            if      (diff.compareTo(BigDecimal.ZERO) > 0) sessionStu.addBudget(diff);
+            else if (diff.compareTo(BigDecimal.ZERO) < 0) sessionStu.deductBudget(diff.negate());
         } catch (Exception e) {
-            LOGGER.warning("Session budget sync failed for token=" + token
-                    + " amount=" + amount + " deduct=" + deduct + ": " + e.getMessage());
+            LOGGER.warning("Session budget refresh failed for token=" + token
+                    + " username=" + username + ": " + e.getMessage());
         }
     }
 }

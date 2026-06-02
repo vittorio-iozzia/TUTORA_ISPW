@@ -449,11 +449,13 @@ CREATE TABLE `message` (
 -- 13. DATI DI ESEMPIO
 -- ============================================================
 
+-- Password di tutti gli utenti demo: Demo1234
+-- Hash BCrypt cost 10: $2a$10$aVZ17z4b/dBhn1/wCFUq..tDByVXnTt8VUzGUbRJ2P8TeOdM9RMDG
 INSERT INTO `user` (`username`, `email`, `name`, `surname`, `password_hash`, `role`) VALUES
-  ('admin_ale',     'admin@tutora.com',        'Alessio',  'Dainelli', '$2a$12$8myF.NISwLXsNdpvavzvUuU4Je8inkqeCeYsmwcd8SG4lcDmYJSCy',   'Admin'),
-  ('tutor_vitto',   'vitto@tutora.com',        'Vittorio', 'Iozzia',   '$2a$12$FfrpvJJvuKlInVNTCQ/xT.APSh16BiLnRdQijDSMGKzhT1MRWDgl.',   'Tutor'),
-  ('student_luigi', 'luigi.verdi@tutora.com',  'Luigi',    'Verdi',    '$2a$12$G5ozVjkpzq8WdaF4.rXuB.JzggbtLX37moK9RFt61QE.tk1eI.n5u',  'Student'),
-  ('student_marco', 'marco.rossi@tutora.com',  'Marco',    'Rossi',    '$2a$12$G5ozVjkpzq8WdaF4.rXuB.JzggbtLX37moK9RFt61QE.tk1eI.n5u',  'Student');
+  ('admin_ale',     'admin@tutora.com',        'Alessio',  'Dainelli', '$2a$10$aVZ17z4b/dBhn1/wCFUq..tDByVXnTt8VUzGUbRJ2P8TeOdM9RMDG', 'Admin'),
+  ('tutor_vitto',   'vitto@tutora.com',        'Vittorio', 'Iozzia',   '$2a$10$aVZ17z4b/dBhn1/wCFUq..tDByVXnTt8VUzGUbRJ2P8TeOdM9RMDG', 'Tutor'),
+  ('student_luigi', 'luigi.verdi@tutora.com',  'Luigi',    'Verdi',    '$2a$10$aVZ17z4b/dBhn1/wCFUq..tDByVXnTt8VUzGUbRJ2P8TeOdM9RMDG', 'Student'),
+  ('student_marco', 'marco.rossi@tutora.com',  'Marco',    'Rossi',    '$2a$10$aVZ17z4b/dBhn1/wCFUq..tDByVXnTt8VUzGUbRJ2P8TeOdM9RMDG', 'Student');
 
 INSERT INTO `admin`   (`username`) VALUES ('admin_ale');
 
@@ -514,6 +516,13 @@ INSERT INTO `booking` (`lesson_id`, `student_username`, `price_paid`, `payment_s
   (1, 'student_marco', 30.00, 'Paid', 'PAY-DEMO-001'),
   (2, 'student_marco', 30.00, 'Paid', 'PAY-DEMO-002'),
   (3, 'student_marco', 30.00, 'Paid', 'PAY-DEMO-003');
+
+-- Lezioni disponibili per testare il flusso BookTutor con student_luigi (budget 150)
+-- ID 4 e 5 garantiti su DB fresco (seguono i 3 Completed sopra)
+INSERT INTO `lesson` (`tutor_username`, `subcategory_name`, `start_time`, `end_time`,
+                      `is_remote`, `listed_price`, `status`) VALUES
+  ('tutor_vitto', 'Saxophone', '2026-07-10 10:00:00', '2026-07-10 11:00:00', FALSE, 30.00, 'Available'),
+  ('tutor_vitto', 'Saxophone', '2026-07-15 15:00:00', '2026-07-15 17:00:00', TRUE,  30.00, 'Available');
 
 COMMIT;
 
