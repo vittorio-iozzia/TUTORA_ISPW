@@ -241,7 +241,7 @@ public class BookTutorController {
         }
         String username = sm.getCurrentUser(token).getUsername();
         try {
-            handlePayment(bean, token, username);
+            handlePayment(bean, username);
         } finally {
             refreshSessionBudget(token, username);
         }
@@ -263,7 +263,7 @@ public class BookTutorController {
      *            Il budget e' gia' stato scalato in Fase 1, quindi non viene
      *            toccato qui. Se la fase fallisce, restoreBudget() lo ripristina.
      */
-    private void handlePayment(BookingBean bean, String token, String username) {
+    private void handlePayment(BookingBean bean, String username) {
         // Fase 1: riserva del budget (write transaction)
         BigDecimal price;
         try (Connection conn = DaoFactory.getInstance().getConnection()) {
