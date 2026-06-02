@@ -17,8 +17,6 @@ import java.math.BigDecimal;
 import java.util.logging.Level;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -248,7 +246,7 @@ public class ApplyToBecomeATutorController {
                     newStatus, application.getAdminNotes());
 
             if (newStatus == ApplicationStatus.ACCEPTED) {
-                Tutor promoted = promoteStudentToTutor(conn, application.getStudentUsername());
+                Tutor promoted = resolveOrPromoteTutor(conn, application.getStudentUsername());
                 if (promoted != null) {
                     createInitialExpertise(conn, promoted,
                             application.getCategoryName(), application.getId());
@@ -262,6 +260,33 @@ public class ApplyToBecomeATutorController {
         } catch (Exception e) {
             safeRollback(conn);
             throw new DatabaseException("Unexpected error evaluating application.", e);
+        }
+    }
+
+    /**
+     * Promuove lo studente a tutor se non lo è già; altrimenti carica il tutor esistente.
+     * Restituisce null solo se il lookup fallisce completamente.
+     */
+    private Tutor resolveOrPromoteTutor(Connection conn, String studentUsername) {
+        Tutor promoted = null;
+        try {
+            promoted = promoteStudentToTutor(conn, studentUsername);
+        } catch (DatabaseException e) {
+            LOGGER.warning("Cannot promote student to tutor: " + e.getMessage());
+        }
+        if (promoted == null) {
+            promoted = loadExistingTutor(conn, studentUsername);
+        }
+        return promoted;
+    }
+
+    /** Carica il tutor esistente — usato quando lo studente è già tutor (seconda application accettata). */
+    private Tutor loadExistingTutor(Connection conn, String studentUsername) {
+        try {
+            return DaoFactory.getInstance().createTutorDao().selectTutor(conn, studentUsername);
+        } catch (Exception ex) {
+            LOGGER.warning("Cannot load existing tutor for expertise creation: " + ex.getMessage());
+            return null;
         }
     }
 
@@ -349,34 +374,15 @@ public class ApplyToBecomeATutorController {
      * In modalità demo (conn == null) la risoluzione viene saltata e viene
      * restituito il valore grezzo, che funziona perché i DAO demo non hanno FK.
      *
-     * @param conn          connessione attiva nella transazione corrente
-     * @param categoryName  nome della categoria padre (es. "Music")
-     * @param rawName       testo inserito dallo studente nel form
-     * @return              nome esatto trovato nel DB, oppure rawName se non trovato
+     * @param conn connessione attiva nella transazione corrente
+     * @param categoryName nome della categoria padre (es. "Music")
+     * @param rawName testo inserito dallo studente nel form
+     * @return nome esatto trovato nel DB, oppure rawName se non trovato
      */
     private String resolveSubcategoryName(Connection conn, String categoryName, String rawName) {
         if (conn == null) return rawName;  // demo/json: nessun FK, ok qualsiasi valore
-        // Prima prova match esatto (case-insensitive); poi fallback su LIKE parziale.
-        // Ordine: esatto prima, parziale dopo — LIMIT 1 prende il migliore.
-        // Esempio: rawName="Guitar" → trova "Jazz Guitar" (LIKE '%guitar%').
-        String sql =
-                "SELECT name FROM subcategory " +
-                "WHERE category_name = ? " +
-                "  AND (LOWER(name) = LOWER(?) OR LOWER(name) LIKE CONCAT('%', LOWER(?), '%')) " +
-                "ORDER BY CASE WHEN LOWER(name) = LOWER(?) THEN 0 ELSE 1 END " +
-                "LIMIT 1";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, categoryName);
-            ps.setString(2, rawName);   // esatto
-            ps.setString(3, rawName);   // parziale LIKE
-            ps.setString(4, rawName);   // ORDER BY: esatto = 0
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return rs.getString("name");
-            }
-        } catch (SQLException e) {
-            LOGGER.warning("Cannot resolve subcategory name '" + rawName + "': " + e.getMessage());
-        }
-        return rawName;  // fallback: valore grezzo (il FK fallirà se non c'è match)
+        CategoryDao categoryDao = DaoFactory.getInstance().createCategoryDao();
+        return categoryDao.findSubcategoryName(conn, categoryName, rawName);
     }
 
     /**
@@ -386,14 +392,8 @@ public class ApplyToBecomeATutorController {
      */
     private void ensureSubcategoryExists(Connection conn, String categoryName, String subcategoryName) {
         if (conn == null) return;
-        String sql = "INSERT IGNORE INTO subcategory (name, category_name, description) VALUES (?, ?, '')";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, subcategoryName);
-            ps.setString(2, categoryName);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            LOGGER.warning("Cannot ensure subcategory exists '" + subcategoryName + "': " + e.getMessage());
-        }
+        CategoryDao categoryDao = DaoFactory.getInstance().createCategoryDao();
+        categoryDao.ensureSubcategoryExists(conn, categoryName, subcategoryName);
     }
 
     /** Risolve la categoria per nome; restituisce una categoria vuota se non trovata. */

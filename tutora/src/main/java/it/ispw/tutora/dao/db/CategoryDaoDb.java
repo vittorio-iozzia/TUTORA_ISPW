@@ -15,6 +15,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Implementazione JDBC di CategoryDao.
@@ -29,7 +30,21 @@ import java.util.List;
  */
 public class CategoryDaoDb implements CategoryDao {
 
+    private static final Logger LOGGER = Logger.getLogger(CategoryDaoDb.class.getName());
+
     private static final String COL_DESCRIPTION = "description";
+
+    @Language("SQL")
+    private static final String SQL_ENSURE_SUBCATEGORY =
+            "INSERT IGNORE INTO subcategory (name, category_name, description) VALUES (?, ?, '')";
+
+    @Language("SQL")
+    private static final String SQL_RESOLVE_SUBCATEGORY =
+            "SELECT name FROM subcategory " +
+            "WHERE category_name = ? " +
+            "  AND (LOWER(name) = LOWER(?) OR LOWER(name) LIKE CONCAT('%', LOWER(?), '%')) " +
+            "ORDER BY CASE WHEN LOWER(name) = LOWER(?) THEN 0 ELSE 1 END " +
+            "LIMIT 1";
 
     @Language("SQL")
     private static final String SQL_FIND_ALL =
@@ -99,6 +114,41 @@ public class CategoryDaoDb implements CategoryDao {
             throw new DatabaseException(
                     "Errore nel recupero della categoria '" + name + "'.", e);
         }
+    }
+
+    // ----------------------------------------------------------------
+    // ensureSubcategoryExists
+    // ----------------------------------------------------------------
+
+    @Override
+    public void ensureSubcategoryExists(Connection conn, String categoryName, String subcategoryName) {
+        try (PreparedStatement ps = conn.prepareStatement(SQL_ENSURE_SUBCATEGORY)) {
+            ps.setString(1, subcategoryName);
+            ps.setString(2, categoryName);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            LOGGER.warning("Cannot ensure subcategory exists '" + subcategoryName + "': " + e.getMessage());
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // findSubcategoryName
+    // ----------------------------------------------------------------
+
+    @Override
+    public String findSubcategoryName(Connection conn, String categoryName, String rawName) {
+        try (PreparedStatement ps = conn.prepareStatement(SQL_RESOLVE_SUBCATEGORY)) {
+            ps.setString(1, categoryName);
+            ps.setString(2, rawName);
+            ps.setString(3, rawName);
+            ps.setString(4, rawName);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getString("name");
+            }
+        } catch (SQLException e) {
+            LOGGER.warning("Cannot resolve subcategory name '" + rawName + "': " + e.getMessage());
+        }
+        return rawName;
     }
 
     // ----------------------------------------------------------------

@@ -383,7 +383,11 @@ public class StudentContentController {
             empty.setStyle(EMPTY_LESSON_STYLE);
             upcomingList.getChildren().add(empty);
         } else {
-            for (Booking b : upcoming) upcomingList.getChildren().add(buildLessonCard(b, true));
+            for (Booking b : upcoming) {
+                upcomingList.getChildren().add(buildLessonCard(b, true));
+                b.addPropertyChangeListener(Booking.PROP_PAYMENT_STATUS,
+                        evt -> Platform.runLater(this::refreshUpcomingLessons));
+            }
         }
     }
 

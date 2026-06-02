@@ -40,6 +40,16 @@ public class TutorApplicationDaoDb implements TutorApplicationDao {
             "VALUES (?, ?, ?, ?)";
 
     @Language("SQL")
+    private static final String SQL_CHECK_DUPLICATE_SUBCATEGORY =
+            "SELECT COUNT(*) FROM tutor_application a " +
+            "JOIN application_item i ON i.application_id = a.id " +
+            "WHERE a.student_username = ? " +
+            "AND a.category_name = ? " +
+            "AND i.requirement_name = 'subcategory' " +
+            "AND LOWER(REPLACE(i.text_content, ' ', '')) = LOWER(REPLACE(?, ' ', '')) " +
+            "AND a.status NOT IN ('Accepted', 'Rejected')";
+
+    @Language("SQL")
     private static final String SQL_UPDATE_STATUS =
             "UPDATE tutor_application SET status = ? WHERE id = ?";
 
@@ -80,12 +90,31 @@ public class TutorApplicationDaoDb implements TutorApplicationDao {
     public int insert(Connection conn, TutorApplication application)
             throws DatabaseException, DuplicateApplicationException {
 
+        // Pre-check: blocca solo se stessa categoria+subcategory attiva (coerente con DEMO/JSON)
+        if (application.getSubcategoryName() != null) {
+            try (PreparedStatement check = conn.prepareStatement(SQL_CHECK_DUPLICATE_SUBCATEGORY)) {
+                check.setString(1, application.getStudentUsername());
+                check.setString(2, application.getCategoryName());
+                check.setString(3, application.getSubcategoryName());
+                try (ResultSet rs = check.executeQuery()) {
+                    if (rs.next() && rs.getInt(1) > 0) {
+                        throw new DuplicateApplicationException(
+                                application.getStudentUsername(), application.getCategoryName());
+                    }
+                }
+            } catch (DuplicateApplicationException e) {
+                throw e;
+            } catch (SQLException e) {
+                throw new DatabaseException("Error checking duplicate application.", e);
+            }
+        }
+
         try (PreparedStatement ps = conn.prepareStatement(
                 SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, application.getCategoryName());
             ps.setString(2, application.getStudentUsername());
-            ps.setString(3, application.getStudentUsername()); // active_key per DRAFT
+            ps.setString(3, buildActiveKey(application)); // active_key include subcategory
             ps.setString(4, toDbStatus(application.getStatus()));
             ps.executeUpdate();
 
@@ -230,5 +259,18 @@ public class TutorApplicationDaoDb implements TutorApplicationDao {
             case "Rejected"  -> ApplicationStatus.REJECTED;
             default -> throw new IllegalArgumentException("Unknown DB status: " + s);
         };
+    }
+
+    /**
+     * Costruisce l'active_key per il vincolo UNIQUE (category_name, active_key).
+     * Include la subcategory normalizzata così studente+categoria+subcategory diversa
+     * non genera conflitto — permette Guitar e Drums nella stessa categoria Music.
+     * Alla chiusura (ACCEPTED/REJECTED) il vincolo usa CONCAT(id, '_closed').
+     */
+    private static String buildActiveKey(TutorApplication application) {
+        String sub = application.getSubcategoryName();
+        if (sub == null || sub.isBlank()) return application.getStudentUsername();
+        String normalizedSub = sub.trim().toLowerCase().replaceAll("\\s+", "");
+        return application.getStudentUsername() + "|" + normalizedSub;
     }
 }
