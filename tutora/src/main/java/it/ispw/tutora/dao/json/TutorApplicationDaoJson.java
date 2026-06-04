@@ -183,6 +183,7 @@ public class TutorApplicationDaoJson implements TutorApplicationDao {
                 r.studentUsername,
                 LocalDateTime.parse(r.creationDate),
                 ApplicationStatus.valueOf(r.status));
+        app.setSubcategoryName(r.subcategoryName);
         app.setAdminNotes(r.adminNotes);
         if (r.evaluatedAt != null) app.setEvaluatedAt(LocalDateTime.parse(r.evaluatedAt));
         return app;
