@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -18,7 +19,7 @@ class TutorApplicationStatusTransitionTest {
     void setUp() {
         application = new TutorApplication(
                 1, "Music", "student_test",
-                LocalDateTime.of(2025, 6, 1, 10, 0), ApplicationStatus.DRAFT);
+                LocalDateTime.of(2025, Month.JUNE, 1, 10, 0), ApplicationStatus.DRAFT);
     }
 
     @Test

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -23,14 +24,14 @@ class TutorApplicationDaoTest {
 
         dao.insert(null, new TutorApplication(
                 0, "Music", "student_test",
-                LocalDateTime.of(2025, 6, 1, 10, 0), ApplicationStatus.DRAFT));
+                LocalDateTime.of(2025, Month.JUNE, 1, 10, 0), ApplicationStatus.DRAFT));
     }
 
     @Test
     void testInsertingDuplicateActiveApplicationThrows() {
         TutorApplication duplicate = new TutorApplication(
                 0, "Music", "student_test",
-                LocalDateTime.of(2025, 6, 1, 10, 0), ApplicationStatus.DRAFT);
+                LocalDateTime.of(2025, Month.JUNE, 1, 10, 0), ApplicationStatus.DRAFT);
 
         assertThrows(DuplicateApplicationException.class,
                 () -> dao.insert(null, duplicate),

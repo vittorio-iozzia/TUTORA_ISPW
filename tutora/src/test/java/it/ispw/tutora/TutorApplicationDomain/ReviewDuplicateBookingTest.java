@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.Month;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -44,7 +45,7 @@ class ReviewDuplicateBookingTest {
 
         firstReview = new Review.Builder()
                 .id(0).booking(booking).student(student)
-                .tutor(tutor).rating(5).createdAt(LocalDateTime.of(2025, 6, 1, 10, 0)).build();
+                .tutor(tutor).rating(5).createdAt(LocalDateTime.of(2025, Month.JUNE, 1, 10, 0)).build();
 
         reviewDao.insertReview(null, firstReview);
     }

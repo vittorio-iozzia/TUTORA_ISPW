@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.Month;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
@@ -37,15 +38,15 @@ class BookingDuplicateCheckPassesTest {
         Category music = new Category("Music", "Music lessons");
         SubCategory guitar = new SubCategory("Guitar", music, "Guitar lessons");
         TutorExpertise expertise = new TutorExpertise(
-                tutor, guitar, new BigDecimal("30.00"), Status.APPROVED, LocalDateTime.of(2025, 6, 1, 10, 0));
+                tutor, guitar, new BigDecimal("30.00"), Status.APPROVED, LocalDateTime.of(2025, Month.JUNE, 1, 10, 0));
 
         Lesson lesson = new Lesson.Builder()
                 .expertise(expertise)
-                .startTime(LocalDateTime.of(2025, 6, 1, 10, 0).plusDays(2))
-                .endTime(LocalDateTime.of(2025, 6, 1, 10, 0).plusDays(2).plusHours(1))
+                .startTime(LocalDateTime.of(2025, Month.JUNE, 1, 10, 0).plusDays(2))
+                .endTime(LocalDateTime.of(2025, Month.JUNE, 1, 10, 0).plusDays(2).plusHours(1))
                 .lessonStatus(LessonStatus.BOOKED)
                 .listedPrice(new BigDecimal("30.00"))
-                .createdAt(LocalDateTime.of(2025, 6, 1, 10, 0))
+                .createdAt(LocalDateTime.of(2025, Month.JUNE, 1, 10, 0))
                 .build();
 
         bookingDao.insertBooking(null, new Booking.Builder()

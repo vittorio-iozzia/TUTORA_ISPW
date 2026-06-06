@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -21,7 +22,7 @@ class TutorApplicationReadyToSubmitTest {
     void setUp() {
         application = new TutorApplication(
                 1, "Music", "student_test",
-                LocalDateTime.of(2025, 6, 1, 10, 0), ApplicationStatus.DRAFT);
+                LocalDateTime.of(2025, Month.JUNE, 1, 10, 0), ApplicationStatus.DRAFT);
 
         mandatoryReq = new TextRequirement(
                 "Music", "motivation_letter", "Motivation Letter",
