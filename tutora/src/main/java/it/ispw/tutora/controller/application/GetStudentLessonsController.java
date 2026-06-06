@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -62,7 +63,7 @@ public class GetStudentLessonsController {
         SessionManager sm = SessionManager.getInstance();
         if (!sm.isSessionValid(token)) return Collections.emptyList();
         String username = sm.getCurrentUser(token).getUsername();
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
         try (Connection conn = DaoFactory.getInstance().getConnection()) {
             return bookingDao.findByStudent(conn, username).stream()
                     .filter(b -> b.getPaymentStatus() == PaymentStatus.PAID)
@@ -85,7 +86,7 @@ public class GetStudentLessonsController {
         SessionManager sm = SessionManager.getInstance();
         if (!sm.isSessionValid(token)) return Collections.emptyList();
         String username = sm.getCurrentUser(token).getUsername();
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
         try (Connection conn = DaoFactory.getInstance().getConnection()) {
             return bookingDao.findByStudent(conn, username).stream()
                     .filter(b -> b.getPaymentStatus() == PaymentStatus.PAID)
@@ -137,7 +138,8 @@ public class GetStudentLessonsController {
             long totalMinutes = past.stream()
                     .filter(b -> b.getLesson().getEndTime() != null)
                     .mapToLong(b -> java.time.Duration
-                            .between(b.getLesson().getStartTime(), b.getLesson().getEndTime())
+                            .between(b.getLesson().getStartTime().atZone(ZoneId.systemDefault()),
+                                     b.getLesson().getEndTime().atZone(ZoneId.systemDefault()))
                             .toMinutes())
                     .sum();
 

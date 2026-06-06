@@ -17,6 +17,7 @@ import javafx.scene.layout.*;
 import javafx.util.Duration;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.logging.Logger;
@@ -143,7 +144,7 @@ public class MyLessonsGfxController {
 
         // Null-safe times — i fallback non dovrebbero servire dopo i fix a BookingDaoJson,
         // ma li manteniamo per sicurezza su record legacy o corrutti
-        LocalDateTime s = lesson.getStartTime() != null ? lesson.getStartTime() : LocalDateTime.now();
+        LocalDateTime s = lesson.getStartTime() != null ? lesson.getStartTime() : LocalDateTime.now(ZoneId.systemDefault());
         LocalDateTime e = lesson.getEndTime()   != null ? lesson.getEndTime()   : s.plusHours(1);
 
         // Card shell

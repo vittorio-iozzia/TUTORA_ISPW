@@ -6,6 +6,7 @@ import it.ispw.tutora.model.Tutor;
 import it.ispw.tutora.model.User;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 /**
  * Rappresenta una sessione utente attiva.
@@ -42,7 +43,7 @@ public class Session {
     Session(User user, String token) {
         this.user = user;
         this.token = token;
-        this.loginTime = LocalDateTime.now();
+        this.loginTime = LocalDateTime.now(ZoneId.systemDefault());
     }
 
     // ----------------------------------------------------------------

@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -66,7 +67,7 @@ public class DocumentDaoJson implements DocumentDao {
         newRecord.contentBase64 = document.getContent() != null
                 ? Base64.getEncoder().encodeToString(document.getContent())
                 : null;
-        newRecord.uploadedAt = LocalDateTime.now().toString();
+        newRecord.uploadedAt = LocalDateTime.now(ZoneId.systemDefault()).toString();
 
         records.add(newRecord);
         writeAll(records);

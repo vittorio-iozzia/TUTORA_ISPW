@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -305,7 +306,7 @@ public class UserDaoJson implements UserDao {
         r.active = user.isActive();
         r.createdAt = user.getCreatedAt() != null
                 ? user.getCreatedAt().toString()
-                : LocalDateTime.now().toString();
+                : LocalDateTime.now(ZoneId.systemDefault()).toString();
 
         if (user instanceof Tutor tutor) {
             r.rating = tutor.getRating() != null

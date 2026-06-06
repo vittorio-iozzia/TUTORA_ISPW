@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.logging.Logger;
 
 /**
@@ -48,7 +49,7 @@ import java.util.logging.Logger;
  * -----------------------------------------------------------------------
  * Nota su active e createdAt
  * -----------------------------------------------------------------------
- * active=true e createdAt=LocalDateTime.now() vengono impostati
+ * active=true e createdAt=LocalDateTime.now(ZoneId.systemDefault()) vengono impostati
  * esplicitamente nel Builder anche se nel DB hanno DEFAULT — nel model
  * Java i DEFAULT del DB non esistono, quindi vanno valorizzati qui.
  */
@@ -92,7 +93,7 @@ public class RegistrationController {
                 .surname(bean.getSurname())
                 .passwordHash(passwordHash)
                 .active(true)
-                .createdAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(ZoneId.systemDefault()))
                 .budget(BigDecimal.ZERO)
                 .build();
         // Passo 4: ottieni la connessione e persisti in una transazione atomica

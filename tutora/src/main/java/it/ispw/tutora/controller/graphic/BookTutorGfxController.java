@@ -17,6 +17,8 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
@@ -134,7 +136,9 @@ public class BookTutorGfxController extends DialogGfxController {
     }
 
     private ToggleButton buildLessonCard(Lesson lesson) {
-        long totalMins = Duration.between(lesson.getStartTime(), lesson.getEndTime()).toMinutes();
+        long totalMins = Duration.between(
+                lesson.getStartTime().atZone(ZoneId.systemDefault()),
+                lesson.getEndTime().atZone(ZoneId.systemDefault())).toMinutes();
         String subject  = lesson.getExpertise().getSubcategory().getName();
         String dateStr  = lesson.getStartTime().format(DATE_FMT);
         String timeStr  = lesson.getStartTime().format(TIME_FMT)

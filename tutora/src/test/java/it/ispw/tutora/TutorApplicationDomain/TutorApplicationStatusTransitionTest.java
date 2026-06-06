@@ -18,7 +18,7 @@ class TutorApplicationStatusTransitionTest {
     void setUp() {
         application = new TutorApplication(
                 1, "Music", "student_test",
-                LocalDateTime.now(), ApplicationStatus.DRAFT);
+                LocalDateTime.of(2025, 6, 1, 10, 0), ApplicationStatus.DRAFT);
     }
 
     @Test

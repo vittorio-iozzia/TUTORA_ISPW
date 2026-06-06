@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Connection;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -85,7 +86,7 @@ public class ReviewDaoJson implements ReviewDao {
         newRecord.tutorUsername = rev.getTutor().getUsername();
         newRecord.rating = rev.getRating();
         newRecord.comment = rev.getComment();
-        newRecord.createdAt = LocalDateTime.now().toString();
+        newRecord.createdAt = LocalDateTime.now(ZoneId.systemDefault()).toString();
 
         records.add(newRecord);
         writeAll(records);

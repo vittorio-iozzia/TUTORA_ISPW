@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.logging.Logger;
@@ -122,7 +123,7 @@ public class BookTutorController {
                             + ". Accept or decline from your notifications.")
                     .type(NotificationType.LESSON_BOOKED)
                     .targetId(less.getId())
-                    .timestamp(LocalDateTime.now())
+                    .timestamp(LocalDateTime.now(ZoneId.systemDefault()))
                     .build();
             notification.insert(conn, notify);
         } catch (DuplicateBookingException e) {
@@ -191,7 +192,7 @@ public class BookTutorController {
                                 + tutorUsername + ". You can browse other available tutors.")
                         .type(NotificationType.LESSON_REJECTED)
                         .targetId(bean.getLessonId())
-                        .timestamp(LocalDateTime.now())
+                        .timestamp(LocalDateTime.now(ZoneId.systemDefault()))
                         .build();
                 notification.insert(conn, n);
                 if (conn != null) conn.commit();
@@ -207,7 +208,7 @@ public class BookTutorController {
                             + tutorUsername + ". Please proceed with payment to confirm your booking.")
                     .type(NotificationType.LESSON_ACCEPTED)
                     .targetId(bean.getLessonId())
-                    .timestamp(LocalDateTime.now())
+                    .timestamp(LocalDateTime.now(ZoneId.systemDefault()))
                     .build();
             notification.insert(conn, notification1);
             if (conn != null) conn.commit();
@@ -337,7 +338,7 @@ public class BookTutorController {
             Booking booking1 = new Booking.Builder()
                     .lesson(less)
                     .student(stu)
-                    .bookedAt(LocalDateTime.now())
+                    .bookedAt(LocalDateTime.now(ZoneId.systemDefault()))
                     .pricePaid(price)   // usa il prezzo già calcolato e addebitato in Fase 1
                     .paymentStatus(PaymentStatus.PENDING)
                     .paymentRef(paymentRef)
@@ -355,7 +356,7 @@ public class BookTutorController {
                             + ". The booking is now confirmed.")
                     .type(NotificationType.PAYMENT_CONFIRMED)
                     .targetId(bean.getId())
-                    .timestamp(LocalDateTime.now())
+                    .timestamp(LocalDateTime.now(ZoneId.systemDefault()))
                     .build();
             notification.insert(conn, tutorNotif);
             Notification studentNotif = new Notification.Builder()
@@ -366,7 +367,7 @@ public class BookTutorController {
                             + " was successful. Transaction ref: " + paymentRef + ".")
                     .type(NotificationType.PAYMENT_CONFIRMED)
                     .targetId(bean.getId())
-                    .timestamp(LocalDateTime.now())
+                    .timestamp(LocalDateTime.now(ZoneId.systemDefault()))
                     .build();
             notification.insert(conn, studentNotif);
             if (conn != null) conn.commit();

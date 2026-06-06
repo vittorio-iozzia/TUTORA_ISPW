@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -233,7 +234,7 @@ public class LessonDaoJson implements LessonDao {
         lessonRecord.status = toJsonStatus(lesson.getLessonStatus());
         lessonRecord.createdAt = lesson.getCreatedAt() != null
                 ? lesson.getCreatedAt().toString()
-                : LocalDateTime.now().toString();
+                : LocalDateTime.now(ZoneId.systemDefault()).toString();
         return lessonRecord;
     }
 

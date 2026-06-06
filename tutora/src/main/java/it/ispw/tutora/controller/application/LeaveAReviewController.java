@@ -18,6 +18,7 @@ import it.ispw.tutora.model.session.SessionManager;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.logging.Logger;
 
 /**
@@ -80,7 +81,7 @@ public class LeaveAReviewController {
                 .tutor(tutor)
                 .rating(bean.getRating())
                 .comment(bean.getComment() != null ? bean.getComment().trim() : "")
-                .createdAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(ZoneId.systemDefault()))
                 .build();
 
         try (Connection conn = factory.getConnection()) {
@@ -112,7 +113,7 @@ public class LeaveAReviewController {
                             + bean.getRating() + "★ review" + preview)
                     .type(NotificationType.NEW_REVIEW)
                     .targetId(bean.getBookingId())
-                    .timestamp(LocalDateTime.now())
+                    .timestamp(LocalDateTime.now(ZoneId.systemDefault()))
                     .read(false)
                     .build();
 

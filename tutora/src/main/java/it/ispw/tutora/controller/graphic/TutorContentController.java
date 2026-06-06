@@ -14,6 +14,7 @@ import it.ispw.tutora.view.SceneManager;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
@@ -81,7 +82,7 @@ public class TutorContentController {
     @FXML private VBox  thisWeekList;
 
     // Calendar state
-    private YearMonth currentMonth    = YearMonth.now();
+    private YearMonth currentMonth    = YearMonth.now(ZoneId.systemDefault());
     private LocalDate selectedCalendarDate = null;
     private Set<LocalDate> lessonDates = Set.of();
 
@@ -235,7 +236,7 @@ public class TutorContentController {
             grid.getColumnConstraints().add(cc);
         }
 
-        LocalDate today     = LocalDate.now();
+        LocalDate today     = LocalDate.now(ZoneId.systemDefault());
         LocalDate firstDay  = currentMonth.atDay(1);
         LocalDate lastDay   = currentMonth.atEndOfMonth();
         int startCol = firstDay.getDayOfWeek().getValue() - 1; // Mon=0, Sun=6

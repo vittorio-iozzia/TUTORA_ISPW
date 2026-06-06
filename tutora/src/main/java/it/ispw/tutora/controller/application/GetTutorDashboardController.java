@@ -19,6 +19,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -81,7 +82,7 @@ public class GetTutorDashboardController {
         SessionManager sm = SessionManager.getInstance();
         if (!sm.isSessionValid(token)) return Collections.emptyList();
         String username = sm.getCurrentUser(token).getUsername();
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
         try (Connection conn = DaoFactory.getInstance().getConnection()) {
             return bookingDao.findByTutor(conn, username).stream()
                     .filter(b -> b.getPaymentStatus() == PaymentStatus.PAID)

@@ -19,6 +19,7 @@ import java.util.logging.Level;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -174,7 +175,7 @@ public class ApplyToBecomeATutorController {
 
             TutorApplication application = new TutorApplication(
                     0, bean.getCategoryName(), studentUsername,
-                    LocalDateTime.now(), ApplicationStatus.SUBMITTED);
+                    LocalDateTime.now(ZoneId.systemDefault()), ApplicationStatus.SUBMITTED);
             application.setSubcategoryName(subcategoryName);
             int applicationId = appDao.insert(conn, application);
             for (ApplicationItemBean itemBean : bean.getItems()) {
@@ -238,7 +239,7 @@ public class ApplyToBecomeATutorController {
             ApplicationStatus newStatus = bean.getStatus();
             applyStatusUpdate(application, newStatus);
             application.setAdminNotes(bean.getAdminNotes());
-            application.setEvaluatedAt(LocalDateTime.now());
+            application.setEvaluatedAt(LocalDateTime.now(ZoneId.systemDefault()));
             appDao.updateStatus(conn, application);
             notifDao.markReadByTargetIdAndRecipient(conn, application.getId(), adminUsername);
             sendNotificationToStudent(conn, notifDao, adminUsername,
@@ -353,7 +354,7 @@ public class ApplyToBecomeATutorController {
 
             SubCategory subcategory = new SubCategory(subcategoryName, category, "");
             TutorExpertise expertise = new TutorExpertise(
-                    tutor, subcategory, price, Status.APPROVED, LocalDateTime.now());
+                    tutor, subcategory, price, Status.APPROVED, LocalDateTime.now(ZoneId.systemDefault()));
             expertiseDao.insertExpertise(conn, expertise);
 
         } catch (DuplicateTutorExpertiseException e) {
@@ -589,7 +590,7 @@ public class ApplyToBecomeATutorController {
                 itemBean.getMimeType(),
                 itemBean.getSizeBytes(),
                 itemBean.getContent(),
-                LocalDateTime.now()
+                LocalDateTime.now(ZoneId.systemDefault())
         );
 
         int documentId = documentDao.insert(conn, document); // Dopo che viene inserito ID auto-incremented viene aggiornato dal db
@@ -631,7 +632,7 @@ public class ApplyToBecomeATutorController {
                         + categoryName + "'.")
                 .type(NotificationType.APPLICATION_UPDATE)
                 .targetId(applicationId)
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(ZoneId.systemDefault()))
                 .read(false)
                 .build();
 
@@ -654,7 +655,7 @@ public class ApplyToBecomeATutorController {
                         + categoryName + "' has been received and is under review.")
                 .type(NotificationType.APPLICATION_UPDATE)
                 .targetId(applicationId)
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(ZoneId.systemDefault()))
                 .read(false)
                 .build();
 
@@ -687,7 +688,7 @@ public class ApplyToBecomeATutorController {
                 .message(message)
                 .type(NotificationType.APPLICATION_UPDATE)
                 .targetId(applicationId)
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(ZoneId.systemDefault()))
                 .read(false)
                 .build();
 

@@ -23,14 +23,14 @@ class TutorApplicationDaoTest {
 
         dao.insert(null, new TutorApplication(
                 0, "Music", "student_test",
-                LocalDateTime.now(), ApplicationStatus.DRAFT));
+                LocalDateTime.of(2025, 6, 1, 10, 0), ApplicationStatus.DRAFT));
     }
 
     @Test
     void testInsertingDuplicateActiveApplicationThrows() {
         TutorApplication duplicate = new TutorApplication(
                 0, "Music", "student_test",
-                LocalDateTime.now(), ApplicationStatus.DRAFT);
+                LocalDateTime.of(2025, 6, 1, 10, 0), ApplicationStatus.DRAFT);
 
         assertThrows(DuplicateApplicationException.class,
                 () -> dao.insert(null, duplicate),

@@ -23,6 +23,7 @@ import java.net.URI;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -177,7 +178,7 @@ public class SocialLoginController {
                 .surname(profile.getSurname().isBlank() ? "–" : profile.getSurname())
                 .passwordHash(null)
                 .active(true)
-                .createdAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(ZoneId.systemDefault()))
                 .budget(BigDecimal.ZERO)
                 .build();
 

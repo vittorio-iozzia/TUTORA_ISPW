@@ -7,9 +7,8 @@ import it.ispw.tutora.exception.BookingNotFoundException;
 import it.ispw.tutora.exception.DatabaseException;
 import it.ispw.tutora.exception.DuplicateBookingException;
 import it.ispw.tutora.model.Booking;
-import it.ispw.tutora.model.TutorExpertise;
-
 import java.sql.Connection;
+import java.util.Objects;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -135,7 +134,7 @@ public class BookingDaoDemo implements BookingDao {
         boolean hasDuplicate = cache.values().stream()
                 .filter(b -> isActiveBooking(b, studentUsername))
                 .map(b -> b.getLesson().getExpertise())
-                .filter(exp -> exp != null)
+                .filter(Objects::nonNull)
                 .anyMatch(exp ->
                         tutorUsername.equals(exp.getTutor().getUsername()) &&
                         subcategoryName.equals(exp.getSubcategory().getName()));

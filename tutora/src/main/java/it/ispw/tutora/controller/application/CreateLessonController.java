@@ -16,6 +16,7 @@ import it.ispw.tutora.model.session.SessionManager;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 
@@ -92,7 +93,7 @@ public class CreateLessonController {
                     .remote(bean.isRemote())
                     .listedPrice(bean.getListedPrice())
                     .lessonStatus(LessonStatus.AVAILABLE)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now(ZoneId.systemDefault()))
                     .build();
 
             lessonDao.insertLesson(conn, lesson);

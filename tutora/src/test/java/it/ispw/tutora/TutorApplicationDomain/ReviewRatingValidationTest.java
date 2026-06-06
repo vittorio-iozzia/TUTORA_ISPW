@@ -12,7 +12,7 @@ class ReviewRatingValidationTest {
 
     @Test
     void testRatingZeroThrows() {
-        Review.Builder builder = new Review.Builder().id(0).rating(0).createdAt(LocalDateTime.now());
+        Review.Builder builder = new Review.Builder().id(0).rating(0).createdAt(LocalDateTime.of(2025, 6, 1, 10, 0));
         assertThrows(IllegalArgumentException.class, builder::build,
                 "Rating of 0 should throw IllegalArgumentException.");
     }

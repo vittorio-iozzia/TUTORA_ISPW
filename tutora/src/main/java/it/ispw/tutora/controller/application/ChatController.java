@@ -13,6 +13,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -98,7 +99,7 @@ public class ChatController {
                             .senderUsername(senderUsername)
                             .recipientUsername(recipientUsername)
                             .content(content)
-                            .sentAt(LocalDateTime.now())
+                            .sentAt(LocalDateTime.now(ZoneId.systemDefault()))
                             .build());
             return true;
         } catch (DatabaseException | SQLException e) {
@@ -218,7 +219,7 @@ public class ChatController {
 
     private String formatTime(LocalDateTime dt) {
         if (dt == null) return "";
-        return dt.toLocalDate().equals(LocalDate.now())
+        return dt.toLocalDate().equals(LocalDate.now(ZoneId.systemDefault()))
                 ? dt.format(TIME_FMT)
                 : dt.format(DATE_FMT);
     }

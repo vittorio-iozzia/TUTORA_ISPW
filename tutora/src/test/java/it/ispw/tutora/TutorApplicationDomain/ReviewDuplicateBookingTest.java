@@ -44,7 +44,7 @@ class ReviewDuplicateBookingTest {
 
         firstReview = new Review.Builder()
                 .id(0).booking(booking).student(student)
-                .tutor(tutor).rating(5).createdAt(LocalDateTime.now()).build();
+                .tutor(tutor).rating(5).createdAt(LocalDateTime.of(2025, 6, 1, 10, 0)).build();
 
         reviewDao.insertReview(null, firstReview);
     }

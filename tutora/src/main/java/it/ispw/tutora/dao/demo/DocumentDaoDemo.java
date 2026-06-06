@@ -7,6 +7,7 @@ import it.ispw.tutora.model.Document;
 
 import java.sql.Connection;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,7 +48,7 @@ public class DocumentDaoDemo implements DocumentDao {
                 document.getMimeType(),
                 document.getSizeBytes(),
                 document.getContent(),
-                LocalDateTime.now()
+                LocalDateTime.now(ZoneId.systemDefault())
         ));
         return id;
     }

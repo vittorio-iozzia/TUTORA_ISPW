@@ -24,6 +24,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.logging.Level;
@@ -511,7 +512,7 @@ public class ChatGfxController {
 
     private String formatTime(LocalDateTime dt) {
         if (dt == null) return "";
-        return dt.toLocalDate().equals(java.time.LocalDate.now())
+        return dt.toLocalDate().equals(java.time.LocalDate.now(ZoneId.systemDefault()))
                 ? dt.format(TIME_FMT)
                 : dt.format(DATE_FMT);
     }

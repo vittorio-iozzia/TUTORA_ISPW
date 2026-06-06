@@ -18,6 +18,7 @@ import org.mindrot.jbcrypt.BCrypt;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 /**
  * Concrete Factory che produce implementazioni in memoria (demo).
@@ -214,7 +215,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .passwordHash(hash)
                 .description("System administrator")
                 .active(true)
-                .createdAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(ZoneId.systemDefault()))
                 .build();
         userDao.insert(null, admin);
 
@@ -227,7 +228,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .passwordHash(hash)
                 .description("Music enthusiast looking for a guitar teacher")
                 .active(true)
-                .createdAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(ZoneId.systemDefault()))
                 .budget(new BigDecimal("200.00"))
                 .build();
         studentDao.insert(null, studentLuigi);
@@ -241,7 +242,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .passwordHash(hash)
                 .description("Professional saxophonist with 10 years of teaching experience")
                 .active(true)
-                .createdAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(ZoneId.systemDefault()))
                 .rating(new BigDecimal("4.8"))
                 .ratingCount(24)
                 .build();
@@ -256,7 +257,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .passwordHash(hash)
                 .description("Classical and electric guitar teacher with conservatory degree")
                 .active(true)
-                .createdAt(LocalDateTime.now().minusDays(30))
+                .createdAt(LocalDateTime.now(ZoneId.systemDefault()).minusDays(30))
                 .rating(new BigDecimal("4.6"))
                 .ratingCount(18)
                 .build();
@@ -271,7 +272,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .passwordHash(hash)
                 .description("Portrait and landscape photographer, 8 years of professional experience")
                 .active(true)
-                .createdAt(LocalDateTime.now().minusDays(60))
+                .createdAt(LocalDateTime.now(ZoneId.systemDefault()).minusDays(60))
                 .rating(new BigDecimal("4.9"))
                 .ratingCount(31)
                 .build();
@@ -286,7 +287,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .passwordHash(hash)
                 .description("Certified tennis coach, former regional champion")
                 .active(true)
-                .createdAt(LocalDateTime.now().minusDays(15))
+                .createdAt(LocalDateTime.now(ZoneId.systemDefault()).minusDays(15))
                 .rating(new BigDecimal("4.7"))
                 .ratingCount(12)
                 .build();
@@ -297,7 +298,7 @@ public class DemoDaoFactory extends DaoFactory {
     private void populateExpertises()
             throws DatabaseException, DuplicateTutorExpertiseException {
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
 
         // ── tutor_vitto: Music ──────────────────────────────────────────
         Tutor vitto;
@@ -367,7 +368,7 @@ public class DemoDaoFactory extends DaoFactory {
 
     private void populateApplications() throws DatabaseException, DuplicateApplicationException {
 
-        LocalDateTime submittedAt = LocalDateTime.now().minusDays(2);
+        LocalDateTime submittedAt = LocalDateTime.now(ZoneId.systemDefault()).minusDays(2);
 
         TutorApplication application = new TutorApplication(
                 1,
@@ -413,7 +414,7 @@ public class DemoDaoFactory extends DaoFactory {
         var pianoExpertise  = expertises.get(1);
         var saxExpertise    = expertises.get(2);
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
 
         // ── Upcoming lesson 1: Guitar – in 2 days, BOOKED ──────────────
         Lesson guitarLesson = new Lesson.Builder()
@@ -525,7 +526,7 @@ public class DemoDaoFactory extends DaoFactory {
                 .message("Your application for Music has been received and is under review.")
                 .type(NotificationType.APPLICATION_UPDATE)
                 .targetId(1)
-                .timestamp(LocalDateTime.now().minusDays(2))
+                .timestamp(LocalDateTime.now(ZoneId.systemDefault()).minusDays(2))
                 .read(false)
                 .build();
         notificationDao.insert(null, appNotif);
@@ -537,7 +538,7 @@ public class DemoDaoFactory extends DaoFactory {
                         + " Please review and evaluate.")
                 .type(NotificationType.APPLICATION_UPDATE)
                 .targetId(1)
-                .timestamp(LocalDateTime.now().minusDays(2))
+                .timestamp(LocalDateTime.now(ZoneId.systemDefault()).minusDays(2))
                 .read(false)
                 .build();
         notificationDao.insert(null, adminAppNotif);
@@ -557,7 +558,7 @@ public class DemoDaoFactory extends DaoFactory {
                         + "Saxophone. Please review and respond.")
                 .type(NotificationType.LESSON_BOOKED)
                 .targetId(saxLessonId)
-                .timestamp(LocalDateTime.now().minusHours(1))
+                .timestamp(LocalDateTime.now(ZoneId.systemDefault()).minusHours(1))
                 .read(true)
                 .build();
         notificationDao.insert(null, tutorNotif);
@@ -569,14 +570,14 @@ public class DemoDaoFactory extends DaoFactory {
                         + "Guitar. Please review and respond.")
                 .type(NotificationType.LESSON_BOOKED)
                 .targetId(guitarLessonId)
-                .timestamp(LocalDateTime.now().minusMinutes(20))
+                .timestamp(LocalDateTime.now(ZoneId.systemDefault()).minusMinutes(20))
                 .read(true)
                 .build();
         notificationDao.insert(null, tutorNotif2);
     }
 
     private void populateMessages() throws DatabaseException {
-        LocalDateTime base = LocalDateTime.now().minusHours(2);
+        LocalDateTime base = LocalDateTime.now(ZoneId.systemDefault()).minusHours(2);
 
         messageDao.insert(null, new Message.Builder()
                 .senderUsername(USER_STUDENT).recipientUsername(USER_TUTOR)
@@ -607,7 +608,7 @@ public class DemoDaoFactory extends DaoFactory {
 
     private void populateReviews() throws DatabaseException, DuplicateReviewException {
 
-        LocalDateTime base = LocalDateTime.now().minusMonths(6);
+        LocalDateTime base = LocalDateTime.now(ZoneId.systemDefault()).minusMonths(6);
         int bookingId = 1000;
         for (int i = 0; i < 20; i++) {
             Booking stub = new Booking.Builder()

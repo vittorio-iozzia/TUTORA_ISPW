@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -204,7 +205,7 @@ public class BookingDaoJson implements BookingDao {
         // startTime — legacy records senza il campo: dummy passato (filtrato da isAfter)
         LocalDateTime startTime = r.lessonStartTime != null
                 ? LocalDateTime.parse(r.lessonStartTime)
-                : LocalDateTime.of(2000, 1, 1, 0, 0);
+                : LocalDateTime.of(2000, Month.JANUARY, 1, 0, 0);
 
         // endTime — richiesto da Lesson.checkTime(); fallback startTime+1h
         LocalDateTime endTime = r.lessonEndTime != null

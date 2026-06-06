@@ -35,6 +35,8 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -706,7 +708,9 @@ public class NotificationGfxController {
     }
 
     private String relativeTime(LocalDateTime ts) {
-        long mins = ChronoUnit.MINUTES.between(ts, LocalDateTime.now());
+        long mins = ChronoUnit.MINUTES.between(
+                ts.atZone(ZoneId.systemDefault()),
+                ZonedDateTime.now(ZoneId.systemDefault()));
         if (mins < 1)  return "Just now";
         if (mins < 60) return mins + " min ago";
         long hours = mins / 60;
