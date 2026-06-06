@@ -1,1 +1,55 @@
-[]
+[ {
+  "id" : 1,
+  "recipientUsername" : "admin",
+  "senderUsername" : "student_luigi",
+  "message" : "New tutor application from 'student_luigi' for category 'Photography'.",
+  "type" : "APPLICATION_UPDATE",
+  "targetId" : 1,
+  "timestamp" : "2026-06-04T13:55:18.055556100",
+  "read" : false
+}, {
+  "id" : 2,
+  "recipientUsername" : "student_luigi",
+  "senderUsername" : "admin",
+  "message" : "Application update: your application for 'Photography' has been received and is under review.",
+  "type" : "APPLICATION_UPDATE",
+  "targetId" : 1,
+  "timestamp" : "2026-06-04T13:55:18.060830400",
+  "read" : true
+}, {
+  "id" : 3,
+  "recipientUsername" : "admin",
+  "senderUsername" : "student_luigi",
+  "message" : "New tutor application from 'student_luigi' for category 'Photography'.",
+  "type" : "APPLICATION_UPDATE",
+  "targetId" : 2,
+  "timestamp" : "2026-06-04T13:55:52.902615900",
+  "read" : false
+}, {
+  "id" : 4,
+  "recipientUsername" : "student_luigi",
+  "senderUsername" : "admin",
+  "message" : "Application update: your application for 'Photography' has been received and is under review.",
+  "type" : "APPLICATION_UPDATE",
+  "targetId" : 2,
+  "timestamp" : "2026-06-04T13:55:52.904119500",
+  "read" : true
+}, {
+  "id" : 5,
+  "recipientUsername" : "admin",
+  "senderUsername" : "student_luigi",
+  "message" : "New tutor application from 'student_luigi' for category 'Photography'.",
+  "type" : "APPLICATION_UPDATE",
+  "targetId" : 3,
+  "timestamp" : "2026-06-04T13:56:18.774393300",
+  "read" : false
+}, {
+  "id" : 6,
+  "recipientUsername" : "student_luigi",
+  "senderUsername" : "admin",
+  "message" : "Application update: your application for 'Photography' has been received and is under review.",
+  "type" : "APPLICATION_UPDATE",
+  "targetId" : 3,
+  "timestamp" : "2026-06-04T13:56:18.776408800",
+  "read" : true
+} ]

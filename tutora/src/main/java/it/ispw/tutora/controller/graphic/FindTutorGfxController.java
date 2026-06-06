@@ -159,7 +159,7 @@ public class FindTutorGfxController {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/fxml/tutor_application.fxml"));
             Parent root = loader.load();
-            TutorApplicationGfxController ctrl = loader.getController();
+            ApplyToBecomeATutorGfxController ctrl = loader.getController();
             ctrl.initCategory(selectedCategory);
 
             javafx.scene.Parent parentRoot = applyBtn.getScene().getRoot();

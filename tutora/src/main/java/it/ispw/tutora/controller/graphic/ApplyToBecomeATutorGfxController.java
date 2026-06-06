@@ -1,222 +1,155 @@
 package it.ispw.tutora.controller.graphic;
 
 import it.ispw.tutora.bean.ApplicationItemBean;
-import it.ispw.tutora.bean.CategoryBean;
 import it.ispw.tutora.bean.RequirementBean;
 import it.ispw.tutora.bean.TutorApplicationBean;
 import it.ispw.tutora.controller.application.ApplyToBecomeATutorController;
-import it.ispw.tutora.controller.application.SearchTutorController;
 import it.ispw.tutora.enums.ItemType;
 import it.ispw.tutora.exception.*;
 import it.ispw.tutora.view.SceneManager;
-import javafx.collections.FXCollections;
+import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
-/**
- * Controller grafico per UC-2: Apply to Become a Tutor.
- *
- * -----------------------------------------------------------------------
- * Flusso in due fasi
- * -----------------------------------------------------------------------
- * Fase 1 – Selezione categoria:
- *   Mostra la ListView delle categorie disponibili.
- *   Al click su "Next" carica i requisiti della categoria selezionata.
- *
- * Fase 2 – Compilazione form:
- *   Costruisce dinamicamente i campi in base ai requisiti (TEXT o DOCUMENT).
- *   Al click su "Submit" raccoglie i dati, valida client-side e delega
- *   la sottomissione ad ApplyToBecomeATutorController su un thread separato
- *   per non bloccare il thread JavaFX durante la validazione certificati.
- *
- * -----------------------------------------------------------------------
- * Thread management
- * -----------------------------------------------------------------------
- * submitApplication() può richiedere fino a 3 minuti (timer certificati).
- * Viene eseguito su un Task JavaFX: il thread FX rimane responsivo e
- * il pulsante Submit viene disabilitato per tutta la durata dell'operazione.
- */
-public class ApplyToBecomeATutorGfxController {
+public class ApplyToBecomeATutorGfxController extends DialogGfxController {
 
-    private static final Logger LOGGER = Logger.getLogger(
-            ApplyToBecomeATutorGfxController.class.getName());
-    private static final String FIELD_PREFIX = "Field \"";
-    private static final String CHARACTERS   = " characters";
+    private static final Logger LOGGER =
+            Logger.getLogger(ApplyToBecomeATutorGfxController.class.getName());
+
+    private static final String HOURLY_PRICE_KEY = "hourly_price";
 
     // ----------------------------------------------------------------
-    // FXML – Fase 1: selezione categoria
+    // FXML
     // ----------------------------------------------------------------
 
-    @FXML private VBox categorySection;
-    @FXML private ListView<String> categoryListView;
-    @FXML private Label categoryDescriptionLabel;
-    @FXML private Label categoryErrorLabel;
-    @FXML private Button nextButton;
+    @FXML private Label     titleLabel;
+    @FXML private Label     subtitleLabel;
+    @FXML private Label     applyingForLabel;
+    @FXML private Button    submitBtn;
+    @FXML private Button    backBtn;
+    @FXML private CheckBox  agreeCheckBox;
+    @FXML private Label     agreeLabel;
 
     // ----------------------------------------------------------------
-    // FXML – Fase 2: form requisiti
+    // State
     // ----------------------------------------------------------------
 
-    @FXML private VBox formSection;
-    @FXML private Label selectedCategoryLabel;
-    @FXML private VBox formContent;
-    @FXML private Label messageLabel;
-    @FXML private Button submitButton;
+    private String categoryName;
+    private List<RequirementBean> requirements = List.of();
 
-    // ----------------------------------------------------------------
-    // Stato interno
-    // ----------------------------------------------------------------
+    private final Map<String, TextArea> textFields    = new LinkedHashMap<>();
+    private final Map<String, File[]>   documentFiles = new LinkedHashMap<>();
 
-    private final ApplyToBecomeATutorController controller =
+    private TextField hourlyRateField;
+
+    private final ApplyToBecomeATutorController appController =
             new ApplyToBecomeATutorController();
-    private final SearchTutorController searchTutorController =
-            new SearchTutorController();
 
-    private List<RequirementBean> requirements;
-
-    // requirementName → TextArea (TEXT) o Label placeholder (DOCUMENT)
-    private final Map<String, TextArea> textFieldMap = new HashMap<>();
-
-    // requirementName → contenuto file (DOCUMENT)
-    private final Map<String, byte[]> fileContentMap = new HashMap<>();
-    private final Map<String, String> fileNameMap = new HashMap<>();
-    private final Map<String, String> fileMimeMap = new HashMap<>();
-    private final Map<String, Long> fileSizeMap = new HashMap<>();
     // ----------------------------------------------------------------
-    // Inizializzazione
+    // Lifecycle
     // ----------------------------------------------------------------
 
     @FXML
-    public void initialize() {
-        categoryErrorLabel.setVisible(false);
-        messageLabel.setVisible(false);
-        formSection.setVisible(false);
-        formSection.setManaged(false);
-
-        loadCategories();
-    }
-
-    private void loadCategories() {
-        try {
-            List<CategoryBean> categories = searchTutorController.loadCategoriesAsBean();
-            List<String> names = categories.stream()
-                    .map(CategoryBean::getName)
-                    .toList();
-            categoryListView.setItems(FXCollections.observableArrayList(names));
-
-            // Mostra descrizione categoria al cambio selezione
-            categoryListView.getSelectionModel().selectedItemProperty()
-                    .addListener((obs, oldVal, newName) ->
-                        categories.stream()
-                                .filter(c -> c.getName().equals(newName))
-                                .findFirst()
-                                .ifPresent(c -> categoryDescriptionLabel.setText(c.getDescription())));
-
-        } catch (DatabaseException e) {
-            LOGGER.warning("Cannot load categories: " + e.getMessage());
-            categoryErrorLabel.setText("Cannot load categories. Please try again.");
-            categoryErrorLabel.setVisible(true);
-        }
+    private void initialize() {
+        setupIconBox(headerIconWrap, headerIconView, "1f393", 22); // graduation cap
+        setupIconBox(bannerIconWrap, bannerIconView, "1f3f7", 13); // tag
+        setupIconBox(successIconWrap, successIconView, "2705", 34); // check
+        applyRoundedClip(dialogRoot);
     }
 
     // ----------------------------------------------------------------
-    // Fase 1 → Fase 2
+    // Entry point
     // ----------------------------------------------------------------
 
-    @FXML
-    public void handleNext() {
-        String selectedCategory = categoryListView.getSelectionModel().getSelectedItem();
-        if (selectedCategory == null) {
-            categoryErrorLabel.setText("Please select a category.");
-            categoryErrorLabel.setVisible(true);
-            return;
-        }
+    public void initCategory(String categoryName) {
+        this.categoryName = categoryName;
+
+        titleLabel.setText("Apply as " + categoryName + " Tutor");
+        subtitleLabel.setText(
+                "Fill out the form below to apply as a tutor in the " + categoryName + " category.");
+        applyingForLabel.setText("Applying for: " + categoryName + " Category");
+
+        agreeLabel.setText(
+                "I agree to the Tutor Terms of Service and understand that my application for the "
+                + categoryName + " category will be reviewed by the TUTORA team.");
+        agreeCheckBox.selectedProperty().addListener((obs, o, n) -> updateSubmitState());
 
         try {
-            requirements = controller.loadRequirements(selectedCategory);
-        } catch (CategoryNotFoundException e) {
-            categoryErrorLabel.setText("Category not found. Please reload.");
-            categoryErrorLabel.setVisible(true);
-            return;
-        } catch (DatabaseException e) {
-            categoryErrorLabel.setText("Cannot load requirements. Please try again.");
-            categoryErrorLabel.setVisible(true);
-            return;
-        }
-
-        selectedCategoryLabel.setText(selectedCategory);
-        buildForm(requirements);
-
-        categorySection.setVisible(false);
-        categorySection.setManaged(false);
-        formSection.setVisible(true);
-        formSection.setManaged(true);
-    }
-
-    @FXML
-    public void handleBack() {
-        textFieldMap.clear();
-        fileContentMap.clear();
-        fileNameMap.clear();
-        fileMimeMap.clear();
-        fileSizeMap.clear();
-        formContent.getChildren().clear();
-
-        formSection.setVisible(false);
-        formSection.setManaged(false);
-        categorySection.setVisible(true);
-        categorySection.setManaged(true);
-        messageLabel.setVisible(false);
-    }
-
-    // ----------------------------------------------------------------
-    // Costruzione dinamica del form
-    // ----------------------------------------------------------------
-
-    private void buildForm(List<RequirementBean> reqs) {
-        formContent.getChildren().clear();
-        textFieldMap.clear();
-        fileContentMap.clear();
-        fileNameMap.clear();
-        fileMimeMap.clear();
-        fileSizeMap.clear();
-
-        for (RequirementBean req : reqs) {
-            VBox fieldBox = buildFieldBox(req);
-            formContent.getChildren().add(fieldBox);
+            requirements = appController.loadRequirements(categoryName);
+            buildForm();
+        } catch (Exception e) {
+            LOGGER.warning("Cannot load requirements for " + categoryName + ": " + e.getMessage());
+            Label fallback = new Label("Unable to load requirements. Please try again later.");
+            fallback.setStyle("-fx-text-fill: #9C2121; -fx-font-size: 13px;");
+            formContainer.getChildren().add(fallback);
         }
     }
 
-    private VBox buildFieldBox(RequirementBean req) {
-        VBox box = new VBox(4);
-        box.setPadding(new Insets(0, 0, 8, 0));
+    // ----------------------------------------------------------------
+    // Form builder
+    // ----------------------------------------------------------------
 
-        // Label titolo (obbligatorio segnato con *)
-        String labelText = req.isRequired()
-                ? req.getLabel() + " *"
-                : req.getLabel();
-        Label title = new Label(labelText);
-        title.setStyle("-fx-font-weight: bold;");
-        box.getChildren().add(title);
+    private void buildForm() {
+        formContainer.getChildren().clear();
+        textFields.clear();
+        documentFiles.clear();
 
-        // Descrizione opzionale
+        int step = 1;
+        if (requirements.isEmpty()) {
+            Label empty = new Label("No requirements found for this category.");
+            empty.setStyle("-fx-text-fill: #6B7280; -fx-font-size: 13px;");
+            formContainer.getChildren().add(empty);
+        } else {
+            for (RequirementBean req : requirements) {
+                formContainer.getChildren().add(buildFieldBox(req, step++));
+            }
+        }
+
+        formContainer.getChildren().add(buildHourlyRateSection(step));
+        updateSubmitState();
+    }
+
+    private VBox buildFieldBox(RequirementBean req, int step) {
+        VBox box = new VBox(10);
+        box.getStyleClass().add("app-field-box");
+
+        HBox labelRow = new HBox(8);
+        labelRow.setAlignment(Pos.CENTER_LEFT);
+
+        Label stepLbl = new Label(String.valueOf(step));
+        stepLbl.getStyleClass().add("app-step-badge");
+
+        Label fieldLabel = new Label(req.getLabel());
+        fieldLabel.getStyleClass().add("app-field-label");
+        labelRow.getChildren().addAll(stepLbl, fieldLabel);
+
+        if (req.isRequired()) {
+            Label star = new Label("*");
+            star.setStyle("-fx-text-fill: #EF4444; -fx-font-weight: bold; -fx-font-size: 14px;");
+            labelRow.getChildren().add(star);
+        } else {
+            Label opt = new Label("(optional)");
+            opt.getStyleClass().add("app-optional-label");
+            labelRow.getChildren().add(opt);
+        }
+        box.getChildren().add(labelRow);
+
         if (req.getDescription() != null && !req.getDescription().isBlank()) {
             Label desc = new Label(req.getDescription());
-            desc.setStyle("-fx-font-size: 11; -fx-text-fill: #888888;");
+            desc.getStyleClass().add("app-field-desc");
             desc.setWrapText(true);
             box.getChildren().add(desc);
         }
@@ -224,228 +157,237 @@ public class ApplyToBecomeATutorGfxController {
         if (req.getItemType() == ItemType.TEXT) {
             box.getChildren().add(buildTextArea(req));
         } else {
-            box.getChildren().add(buildFileRow(req.getName()));
+            box.getChildren().add(buildFileRow(req));
         }
-
         return box;
     }
 
     private TextArea buildTextArea(RequirementBean req) {
         TextArea ta = new TextArea();
-        ta.setWrapText(true);
+        ta.setPromptText("Write here…");
         ta.setPrefRowCount(4);
-
-        String prompt = buildTextPrompt(req);
-        ta.setPromptText(prompt);
-
-        textFieldMap.put(req.getName(), ta);
+        ta.setWrapText(true);
+        ta.getStyleClass().add("app-text-area");
+        if (req.getMaxLength() > 0) {
+            ta.setTextFormatter(new TextFormatter<>(change ->
+                    change.getControlNewText().length() > req.getMaxLength() ? null : change));
+        }
+        ta.textProperty().addListener((obs, o, n) -> updateSubmitState());
+        textFields.put(req.getName(), ta);
         return ta;
     }
 
-    private String buildTextPrompt(RequirementBean req) {
-        if (req.getMinChar() > 0 && req.getMaxLength() > 0) {
-            return "Between " + req.getMinChar() + " and " + req.getMaxLength() + CHARACTERS;
-        } else if (req.getMaxLength() > 0) {
-            return "Max " + req.getMaxLength() + CHARACTERS;
-        } else if (req.getMinChar() > 0) {
-            return "At least " + req.getMinChar() + CHARACTERS;
-        }
-        return "";
-    }
+    private HBox buildFileRow(RequirementBean req) {
+        File[] holder = new File[1];
+        documentFiles.put(req.getName(), holder);
 
-    private HBox buildFileRow(String reqName) {
-        HBox row = new HBox(10);
-        row.setStyle("-fx-alignment: CENTER_LEFT;");
+        HBox row = new HBox(12);
+        row.setAlignment(Pos.CENTER_LEFT);
 
-        Button chooseBtn = new Button("Choose file…");
-        Label fileLabel = new Label("No file selected");
-        fileLabel.setStyle("-fx-text-fill: #666666;");
+        ImageView uploadIcon = loadTwemoji("1f4c2", 15);
 
-        chooseBtn.setOnAction(e -> handleFileChooser(reqName, fileLabel, chooseBtn));
-        row.getChildren().addAll(chooseBtn, fileLabel);
+        Button pickBtn = new Button("Choose file…");
+        pickBtn.setGraphic(uploadIcon);
+        pickBtn.getStyleClass().add("app-file-btn");
+
+        Label fileNameLbl = new Label("No file selected");
+        fileNameLbl.getStyleClass().add("app-filename-label");
+
+        pickBtn.setOnAction(e -> {
+            FileChooser fc = new FileChooser();
+            fc.setTitle("Select " + req.getLabel());
+            fc.getExtensionFilters().add(
+                    new FileChooser.ExtensionFilter(
+                            "Documents", "*.pdf", "*.doc", "*.docx", "*.jpg", "*.png"));
+            File chosen = fc.showOpenDialog(submitBtn.getScene().getWindow());
+            if (chosen != null) {
+                holder[0] = chosen;
+                fileNameLbl.setText(chosen.getName());
+                fileNameLbl.setStyle("-fx-text-fill: #2A5C45; -fx-font-size: 12px; -fx-font-weight: 600;");
+                updateSubmitState();
+            }
+        });
+        row.getChildren().addAll(pickBtn, fileNameLbl);
         return row;
     }
 
     // ----------------------------------------------------------------
-    // File chooser
+    // Hourly rate field
     // ----------------------------------------------------------------
 
-    private void handleFileChooser(String reqName, Label fileLabel, Button chooseBtn) {
-        FileChooser fc = new FileChooser();
-        fc.setTitle("Select document for: " + reqName);
-        fc.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Documents", "*.pdf", "*.jpg", "*.jpeg", "*.png"),
-                new FileChooser.ExtensionFilter("All files", "*.*")
-        );
+    private VBox buildHourlyRateSection(int step) {
+        VBox section = new VBox(10);
+        section.getStyleClass().add("app-field-box");
 
-        File file = fc.showOpenDialog(chooseBtn.getScene().getWindow());
-        if (file == null) return;
+        HBox labelRow = new HBox(8);
+        labelRow.setAlignment(Pos.CENTER_LEFT);
 
+        Label stepLbl = new Label(String.valueOf(step));
+        stepLbl.getStyleClass().add("app-step-badge");
+
+        Label title = new Label("Hourly Rate (€)");
+        title.getStyleClass().add("app-field-label");
+
+        Label star = new Label("*");
+        star.setStyle("-fx-text-fill: #EF4444; -fx-font-weight: bold; -fx-font-size: 14px;");
+
+        labelRow.getChildren().addAll(stepLbl, title, star);
+
+        Label desc = new Label("Set your hourly rate for this subject. You can update it later from your profile.");
+        desc.getStyleClass().add("app-field-desc");
+        desc.setWrapText(true);
+
+        hourlyRateField = new TextField();
+        hourlyRateField.setPromptText("e.g. 35.00");
+        hourlyRateField.getStyleClass().add("lesson-field");
+        hourlyRateField.textProperty().addListener((obs, o, n) -> updateSubmitState());
+
+        section.getChildren().addAll(labelRow, desc, hourlyRateField);
+        return section;
+    }
+
+    // ----------------------------------------------------------------
+    // Submit state
+    // ----------------------------------------------------------------
+
+    private void updateSubmitState() {
+        submitBtn.setDisable(!isFormComplete());
+    }
+
+    private boolean isFormComplete() {
+        for (RequirementBean req : requirements) {
+            if (req.isRequired() && !isRequirementMet(req)) return false;
+        }
+        return isHourlyRateValid() && agreeCheckBox.isSelected();
+    }
+
+    private boolean isRequirementMet(RequirementBean req) {
+        if (req.getItemType() == ItemType.TEXT) {
+            TextArea ta = textFields.get(req.getName());
+            return ta != null && !ta.getText().isBlank();
+        }
+        File[] holder = documentFiles.get(req.getName());
+        return holder != null && holder[0] != null;
+    }
+
+    private boolean isHourlyRateValid() {
+        if (hourlyRateField == null || hourlyRateField.getText().isBlank()) return false;
         try {
-            byte[] bytes = Files.readAllBytes(file.toPath());
-            String mime = Files.probeContentType(file.toPath());
-
-            fileContentMap.put(reqName, bytes);
-            fileNameMap.put(reqName, file.getName());
-            fileSizeMap.put(reqName, file.length());
-            fileMimeMap.put(reqName, mime != null ? mime : "application/octet-stream");
-
-            fileLabel.setText(file.getName());
-            fileLabel.setStyle("-fx-text-fill: #2e7d32;");
-        } catch (IOException e) {
-            fileLabel.setText("Error reading file.");
-            fileLabel.setStyle("-fx-text-fill: red;");
+            BigDecimal price = new BigDecimal(hourlyRateField.getText().trim().replace(",", "."));
+            return price.compareTo(BigDecimal.ZERO) > 0;
+        } catch (NumberFormatException e) {
+            return false;
         }
     }
 
     // ----------------------------------------------------------------
-    // Fase 2 – Submit
+    // FXML handlers
     // ----------------------------------------------------------------
 
     @FXML
-    public void handleSubmit() {
-        TutorApplicationBean appBean = collectBean();
-        if (appBean == null) return; // validazione client-side fallita
+    private void handleSubmit() {
+        showError(null);
+        submitBtn.setDisable(true);
+        submitBtn.setText("Submitting…");
 
         String token = SceneManager.getInstance().getSessionToken();
-        submitButton.setDisable(true);
-        showMessage("Submitting application — this may take a few minutes…", false);
+        TutorApplicationBean bean = buildBean();
 
         Task<Integer> task = new Task<>() {
             @Override
-            protected Integer call()
-                    throws AuthenticationException,
-                    ValidationTimeoutException,
-                    ValidationServiceException,
-                    InvalidDocumentException,
-                    DuplicateApplicationException,
-                    DatabaseException {
-                return controller.submitApplication(appBean, token);
+            protected Integer call() throws Exception {
+                return appController.submitApplication(bean, token);
             }
         };
 
-        task.setOnSucceeded(e -> {
-            int id = task.getValue();
-            showMessage("Application submitted successfully! (ID: " + id + ")", false);
-            submitButton.setDisable(false);
-        });
-
+        task.setOnSucceeded(e -> Platform.runLater(this::showSuccess));
         task.setOnFailed(e -> {
-            Throwable ex = task.getException();
-            submitButton.setDisable(false);
-            handleSubmitError(ex);
+            String msg = resolveErrorMessage(task.getException());
+            Platform.runLater(() -> {
+                showError(msg);
+                submitBtn.setDisable(false);
+                submitBtn.setText("Submit application");
+            });
         });
 
-        Thread taskThread = new Thread(task);
-        taskThread.setDaemon(true);
-        taskThread.start();
+        Thread t = new Thread(task, "tutor-application-submit");
+        t.setDaemon(true);
+        t.start();
     }
 
-    /**
-     * Raccoglie i dati dal form e li mette nel Bean.
-     * Restituisce null se la validazione client-side fallisce.
-     */
-    private TutorApplicationBean collectBean() {
+    @Override
+    protected void showSuccess() {
+        super.showSuccess();
+        HomeGfxController.refreshBadgeStatic();
+    }
+
+    @FXML
+    private void handleClose() {
+        ((Stage) successPane.getScene().getWindow()).close();
+    }
+
+    @FXML
+    private void handleBack() {
+        ((Stage) submitBtn.getScene().getWindow()).close();
+    }
+
+    // ----------------------------------------------------------------
+    // Bean assembly
+    // ----------------------------------------------------------------
+
+    private TutorApplicationBean buildBean() {
+        TutorApplicationBean bean = new TutorApplicationBean();
+        bean.setCategoryName(categoryName);
+
         List<ApplicationItemBean> items = new ArrayList<>();
         for (RequirementBean req : requirements) {
-            ApplicationItemBean item = collectItem(req);
-            if (item == null) return null;
-            if (isItemNonEmpty(item)) items.add(item);
+            ApplicationItemBean item = new ApplicationItemBean();
+            item.setRequirementName(req.getName());
+            item.setItemType(req.getItemType());
+
+            if (req.getItemType() == ItemType.TEXT) {
+                TextArea ta = textFields.get(req.getName());
+                item.setTextContent(ta != null ? ta.getText().trim() : "");
+            } else {
+                populateDocumentItem(item, req.getName());
+            }
+            items.add(item);
         }
-        TutorApplicationBean bean = new TutorApplicationBean();
-        bean.setCategoryName(selectedCategoryLabel.getText());
+        ApplicationItemBean priceItem = new ApplicationItemBean();
+        priceItem.setRequirementName(HOURLY_PRICE_KEY);
+        priceItem.setItemType(ItemType.TEXT);
+        priceItem.setTextContent(hourlyRateField.getText().trim().replace(",", "."));
+        items.add(priceItem);
+
         bean.setItems(items);
         return bean;
     }
 
-    private ApplicationItemBean collectItem(RequirementBean req) {
-        return req.getItemType() == ItemType.TEXT
-                ? collectTextItem(req)
-                : collectDocumentItem(req);
-    }
-
-    private boolean isItemNonEmpty(ApplicationItemBean item) {
-        return item.getItemType() == ItemType.TEXT
-                ? !item.getTextContent().isEmpty()
-                : item.getContent() != null;
-    }
-
-    private ApplicationItemBean collectTextItem(RequirementBean req) {
-        TextArea ta = textFieldMap.get(req.getName());
-        String text = ta != null ? ta.getText().trim() : "";
-
-        if (req.isRequired() && text.isEmpty()) {
-            showMessage(FIELD_PREFIX + req.getLabel() + "\" is required.", true);
-            return null;
-        }
-        if (req.getMinChar() > 0 && !text.isEmpty() && text.length() < req.getMinChar()) {
-            showMessage(FIELD_PREFIX + req.getLabel() + "\" needs at least "
-                    + req.getMinChar() + CHARACTERS + ".", true);
-            return null;
-        }
-        if (req.getMaxLength() > 0 && text.length() > req.getMaxLength()) {
-            showMessage(FIELD_PREFIX + req.getLabel() + "\" must not exceed "
-                    + req.getMaxLength() + CHARACTERS + ".", true);
-            return null;
-        }
-
-        ApplicationItemBean item = new ApplicationItemBean();
-        item.setRequirementName(req.getName());
-        item.setItemType(ItemType.TEXT);
-        item.setTextContent(text);
-        return item;
-    }
-
-    private ApplicationItemBean collectDocumentItem(RequirementBean req) {
-        byte[] content = fileContentMap.get(req.getName());
-
-        if (req.isRequired() && content == null) {
-            showMessage("Document \"" + req.getLabel() + "\" is required.", true);
-            return null;
-        }
-
-        ApplicationItemBean item = new ApplicationItemBean();
-        item.setRequirementName(req.getName());
-        item.setItemType(ItemType.DOCUMENT);
-        item.setContent(content);
-        item.setOriginalFilename(fileNameMap.get(req.getName()));
-        item.setMimeType(fileMimeMap.get(req.getName()));
-        Long size = fileSizeMap.get(req.getName());
-        item.setSizeBytes(size != null ? size : 0L);
-        return item;
-    }
-
-    // ----------------------------------------------------------------
-    // Gestione errori dal Task
-    // ----------------------------------------------------------------
-
-    private void handleSubmitError(Throwable ex) {
-        if (ex instanceof ValidationTimeoutException) {
-            showMessage("Certificate validation timed out. Please try again.", true);
-        } else if (ex instanceof ValidationServiceException) {
-            showMessage("Validation service error. Please try again later.", true);
-        } else if (ex instanceof InvalidDocumentException) {
-            showMessage("One or more documents are invalid. Please resubmit.", true);
-        } else if (ex instanceof DuplicateApplicationException) {
-            showMessage("You already have an active application for this category.", true);
-        } else if (ex instanceof AuthenticationException) {
-            showMessage("Session expired. Please log in again.", true);
-            SceneManager.getInstance().showLogin();
-        } else {
-            LOGGER.severe("Unexpected submit error: " + ex.getMessage());
-            showMessage("An unexpected error occurred. Please try again.", true);
+    private void populateDocumentItem(ApplicationItemBean item, String reqName) {
+        File[] holder = documentFiles.get(reqName);
+        File f = holder != null ? holder[0] : null;
+        if (f == null) return;
+        item.setOriginalFilename(f.getName());
+        item.setDocumentPath(f.getAbsolutePath());
+        item.setSizeBytes(f.length());
+        try {
+            item.setContent(Files.readAllBytes(f.toPath()));
+            String mime = Files.probeContentType(f.toPath());
+            item.setMimeType(mime != null ? mime : "application/octet-stream");
+        } catch (IOException ex) {
+            LOGGER.warning("Cannot read file: " + ex.getMessage());
         }
     }
 
-    // ----------------------------------------------------------------
-    // Utility UI
-    // ----------------------------------------------------------------
-
-    private void showMessage(String text, boolean isError) {
-        messageLabel.setText(text);
-        messageLabel.setStyle(isError
-                ? "-fx-text-fill: #c62828;"
-                : "-fx-text-fill: #2e7d32;");
-        messageLabel.setVisible(true);
+    private String resolveErrorMessage(Throwable e) {
+        if (e instanceof DuplicateApplicationException)
+            return "You have already submitted a pending application for this subject in this category.";
+        if (e instanceof InvalidDocumentException)
+            return "One or more documents are invalid. Please re-upload and try again.";
+        if (e instanceof ValidationTimeoutException)
+            return "Validation timed out. Please try again later.";
+        if (e instanceof AuthenticationException)
+            return "Your session has expired. Please log in again.";
+        return "An error occurred while submitting. Please try again later.";
     }
 }

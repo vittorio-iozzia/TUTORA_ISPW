@@ -7,7 +7,7 @@
 
 <VBox xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="it.ispw.tutora.controller.graphic.TutorApplicationGfxController"
+      fx:controller="it.ispw.tutora.controller.graphic.ApplyToBecomeATutorGfxController"
       fx:id="dialogRoot"
       stylesheets="@../css/home.css"
       styleClass="app-dialog-root app-dialog-form"

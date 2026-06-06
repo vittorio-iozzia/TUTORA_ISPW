@@ -11,7 +11,7 @@ import javafx.scene.effect.DropShadow;
 
 /**
  * Base condivisa tra {@link BookTutorGfxController} e
- * {@link TutorApplicationGfxController}.
+ * {@link ApplyToBecomeATutorGfxController}.
  *
  * Contiene le FXML fields comuni (dialog root, form, success pane, error label,
  * icon wraps) e i metodi condivisi: clip arrotondata, icon setup, twemoji loader,

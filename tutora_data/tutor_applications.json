@@ -1,1 +1,28 @@
-[]
+[ {
+  "id" : 1,
+  "categoryName" : "Photography",
+  "subcategoryName" : "Landscape",
+  "studentUsername" : "student_luigi",
+  "creationDate" : "2026-06-04T13:55:17.973685300",
+  "status" : "SUBMITTED",
+  "adminNotes" : null,
+  "evaluatedAt" : null
+}, {
+  "id" : 2,
+  "categoryName" : "Photography",
+  "subcategoryName" : "Videomaking",
+  "studentUsername" : "student_luigi",
+  "creationDate" : "2026-06-04T13:55:52.832748400",
+  "status" : "SUBMITTED",
+  "adminNotes" : null,
+  "evaluatedAt" : null
+}, {
+  "id" : 3,
+  "categoryName" : "Photography",
+  "subcategoryName" : "Portrait",
+  "studentUsername" : "student_luigi",
+  "creationDate" : "2026-06-04T13:56:18.697216700",
+  "status" : "SUBMITTED",
+  "adminNotes" : null,
+  "evaluatedAt" : null
+} ]
